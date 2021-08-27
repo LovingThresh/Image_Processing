@@ -1,14 +1,15 @@
-import matplotlib.pyplot as plt
-
-import data
-import os
-import pylib as py
 import tensorflow as tf
 import argparse
 import numpy as np
 from PIL import Image
 import module
 from keras import backend as K
+import seaborn as sns
+import matplotlib.pyplot as plt
+import datetime
+
+gpus = tf.config.experimental.list_physical_devices('GPU')
+tf.config.experimental.set_memory_growth(gpus[0], True)
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', default='95')
@@ -154,16 +155,45 @@ def F1(y_true, y_pred):
     return f1
 
 
+def IOU(y_true, y_pred):
+    predict = K.round(K.clip(y_pred, 0, 1))
+    Intersection = K.sum(y_true * predict)
+    Union = K.sum(y_true + predict)
+    iou = Intersection / (Union - Intersection)
+    return iou
+
+
+# CallBack
+a = str(datetime.datetime.now())
+b = list(a)
+b[10] = '-'
+b[13] = '-'
+b[16] = '-'
+c = ''.join(b)
+
+tensorboard = tf.keras.callbacks.TensorBoard(log_dir='./output/{}/tensorboard/'.format(c))
+checkpoint = tf.keras.callbacks.ModelCheckpoint('./output/{}/checkpoint/'.format(c) + 'ep{epoch:03d}-val_loss{'
+                                                                                      'val_loss:.3f}-val_acc{'
+                                                                                      'val_accuracy:.3f}.h5',
+                                                monitor='val_accuracy', verbose=0,
+                                                save_best_only=False, save_weights_only=False, mode='auto', period=1)
+
+
 model.compile(optimizer=optimizer,
               loss='binary_crossentropy',
-              metrics=['accuracy', Precision, Recall, F1])
-history = model.fit_generator(train_dataset,
-                              steps_per_epoch=max(1, num_train // batch_size),
-                              epochs=1,
-                              validation_data=validation_dataset,
-                              validation_steps=max(1, num_val // batch_size),
-                              initial_epoch=0)
+              metrics=['accuracy', Precision, Recall, F1, IOU])
+model.fit(train_dataset,
+          steps_per_epoch=max(1, num_train // batch_size),
+          epochs=50,
+          validation_data=validation_dataset,
+          validation_steps=max(1, num_val // batch_size),
+          initial_epoch=0,
+          callbacks=[tensorboard, checkpoint])
 
 
-
-
+def plot_heatmap(predict_array):
+    if predict_array.ndim == 4:
+        sns.heatmap(predict_array[:, :, :, 0].reshape(227, 227))
+    else:
+        sns.heatmap(predict_array.reshape(227, 227))
+    plt.show()

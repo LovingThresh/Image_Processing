@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 import tf2lib as tl
+from PIL import Image
 
 
 def make_dataset(img_paths, batch_size, load_size, crop_size, training, drop_remainder=True, shuffle=True, repeat=1):
@@ -16,7 +17,8 @@ def make_dataset(img_paths, batch_size, load_size, crop_size, training, drop_rem
     else:
         @tf.function
         def _map_fn(img):  # preprocessing
-            img = tf.image.resize(img, [crop_size, crop_size])  # or img = tf.image.resize(img, [load_size, load_size]); img = tl.center_crop(img, crop_size)
+            img = tf.image.resize(img, [crop_size, crop_size])
+            # or img = tf.image.resize(img, [load_size, load_size]); img = tl.center_crop(img, crop_size)
             img = tf.clip_by_value(img, 0, 255) / 255.0  # or img = tl.minmax_norm(img)
             img = img * 2 - 1
             return img
@@ -80,3 +82,94 @@ class ItemPool:
         return tf.stack(out_items, axis=0)
 
 
+A_img_paths = r'I:\Image Processing\Rebuild_Image_95/'
+B_img_paths = r'I:\Image Processing\Mix_img\95\label/'
+
+
+def get_data():
+    """
+    获取样本和标签对应的行：获取训练集和验证集的数量
+    :return: lines： 样本和标签的对应行： [num_train, num_val] 训练集和验证集数量
+    """
+
+    # 读取训练样本和样本对应关系的文件 lines -> [1.jpg;1.jpg\n', '10.jpg;10.png\n', ......]
+    # .jpg:样本  ：  .jpg：标签
+
+    with open(r'I:\Image Processing\train.txt', 'r') as f:
+        lines = f.readlines()
+
+    print(lines)
+
+    # 打乱行， 打乱数据有利于训练
+    np.random.seed(10101)
+    np.random.shuffle(lines)
+    np.random.seed(None)
+
+    # 切分训练样本， 90% 训练： 10% 验证
+    num_val = int(len(lines) * 0.1)
+    num_train = len(lines) - num_val
+
+    return lines, num_train, num_val
+
+
+def get_dataset_label(lines, batch_size):
+    """
+        生成器， 读取图片， 并对图片进行处理， 生成（样本，标签）
+        :param lines: 样本和标签的对应行
+        :param batch_size: 一次处理的图片数
+        :return:  返回（样本， 标签）
+        """
+
+    numbers = len(lines)
+    read_line = 0
+    while True:
+
+        x_train = []
+        y_train = []
+
+        # 一次获取batch——size大小的数据
+
+        for t in range(batch_size):
+            np.random.shuffle(lines)
+
+        # 1. 获取训练文件的名字
+        train_x_name = lines[read_line].split(',')[0]
+
+        # 根据图片名字读取图片
+        img = Image.open(A_img_paths + train_x_name)
+        img = img.resize((227, 227))
+        img_array = np.array(img)
+
+        img_array = img_array / 255.0  # 标准化
+        img_array = img_array * 2 - 1
+        x_train.append(img_array)
+
+        # 2. 获取训练样本标签的名字
+        train_y_name = lines[read_line].split(',')[1].replace('\n', '')
+
+        # 根据图片名字读取图片
+        img = Image.open(B_img_paths + train_y_name)
+        # img.show()
+        # print(train_y_name)
+        img = img.resize((227, 227))  # 改变图片大小 -> (227, 227)
+        img_array = np.array(img)
+        # img_array, 三个通道数相同， 没法做交叉熵， 所以下面要进行”图像分层“
+
+        # 生成标签， 标签的shape是（224， 224， class_numbers) = (224, 224, 2), 里面的值全是0
+        labels = np.zeros((227, 227, 2), np.int)
+
+        # 下面将(224,224,3) => (224,224,2),不仅是通道数的变化，还有，
+        # 原本背景和裂缝在一个通道里面，现在将斑马线和背景放在不同的通道里面。
+        # 如，labels,第0通道放背景，是背景的位置，显示为1，其余位置显示为0
+        # labels, 第1通道放斑马线，图上斑马线的位置，显示1，其余位置显示为0
+        # 相当于合并的图层分层！！！！
+
+        labels[:, :, 0] = (img_array[:, :, 1] == 1).astype(int).reshape((227, 227))
+        labels[:, :, 1] = (img_array[:, :, 1] != 1).astype(int).reshape((227, 227))
+
+        y_train.append(labels)
+
+        # 遍历所有数据，记录现在所处的行， 读取完所有数据后，read_line=0,打乱重新开始
+        read_line = (read_line + 1) % numbers
+
+        yield np.array(x_train), np.array(y_train)

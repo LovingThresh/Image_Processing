@@ -8,9 +8,11 @@
 import argparse
 import datetime
 
+
 import pylib as py
 from Metrics import *
 from data import *
+from Callback import *
 import module
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
@@ -56,7 +58,7 @@ b[10] = '-'
 b[13] = '-'
 b[16] = '-'
 c = ''.join(b)
-
+os.makedirs(r'./output/{}'.format(c))
 tensorboard = tf.keras.callbacks.TensorBoard(log_dir='./output/{}/tensorboard/'.format(c))
 checkpoint = tf.keras.callbacks.ModelCheckpoint('./output/{}/checkpoint/'.format(c) +
                                                 'ep{epoch:03d}-val_loss{'
@@ -65,8 +67,12 @@ checkpoint = tf.keras.callbacks.ModelCheckpoint('./output/{}/checkpoint/'.format
                                                 monitor='val_accuracy', verbose=0,
                                                 save_best_only=False, save_weights_only=False,
                                                 mode='auto', period=1)
+checkpoints_directory = r'./output/{}/checkpoints/'.format(c)
+checkpoints = CheckpointSaver(checkpoints_directory)
 
-py.args_from_json('./output/{}/settings.yml', args)
+
+py.args_to_yaml('./output/{}/settings.yml'.format(c), args)
+
 
 # ----------------------------------------------------------------------
 #                               train
@@ -77,8 +83,8 @@ model.compile(optimizer=optimizer,
               metrics=['accuracy', Precision, Recall, F1, IOU])
 model.fit(train_dataset,
           steps_per_epoch=max(1, num_train // batch_size),
-          epochs=50,
+          epochs=1,
           validation_data=validation_dataset,
           validation_steps=max(1, num_val // batch_size),
           initial_epoch=0,
-          callbacks=[tensorboard, checkpoint])
+          callbacks=[tensorboard, checkpoint, checkpoints])

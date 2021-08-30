@@ -8,12 +8,15 @@
 import argparse
 import datetime
 
+import tensorflow.keras as keras
+import keras.models
 
 import pylib as py
 from Metrics import *
-from data import *
+from I_data import *
 from Callback import *
 import module
+from plot import plot_heatmap
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(gpus[0], True)
@@ -70,21 +73,41 @@ checkpoint = tf.keras.callbacks.ModelCheckpoint('./output/{}/checkpoint/'.format
 checkpoints_directory = r'./output/{}/checkpoints/'.format(c)
 checkpoints = CheckpointSaver(checkpoints_directory)
 
-
 py.args_to_yaml('./output/{}/settings.yml'.format(c), args)
-
 
 # ----------------------------------------------------------------------
 #                               train
 # ----------------------------------------------------------------------
-
+training = False
 model.compile(optimizer=optimizer,
               loss='binary_crossentropy',
               metrics=['accuracy', Precision, Recall, F1, IOU])
-model.fit(train_dataset,
-          steps_per_epoch=max(1, num_train // batch_size),
-          epochs=1,
-          validation_data=validation_dataset,
-          validation_steps=max(1, num_val // batch_size),
-          initial_epoch=0,
-          callbacks=[tensorboard, checkpoint, checkpoints])
+if training:
+    model.fit(train_dataset,
+              steps_per_epoch=max(1, num_train // batch_size),
+              epochs=50,
+              validation_data=validation_dataset,
+              validation_steps=max(1, num_val // batch_size),
+              initial_epoch=0,
+              callbacks=[tensorboard, checkpoint, checkpoints])
+
+# ---------------------------------------------------------------------
+#                               test
+# ----------------------------------------------------------------------
+test_path = r'I:\Image Processing\text.txt'
+test_lines, num_test = get_data(test_path, training=False)
+batch_size = 5
+A_test_img_paths = r'I:\Image Processing\Test_Image\images/'
+B_test_img_paths = r'I:\Image Processing\Test_Image\outputs\attachments/'
+test_dataset_label = get_test_dataset_label(test_lines, A_test_img_paths, B_test_img_paths)
+model = keras.models.load_model(r'output/2021-08-27-16-08-21.971270/checkpoint/ep049-val_loss0.030-val_acc0.993.h5',
+                                custom_objects={'Precision': Precision,
+                                                'Recall': Recall,
+                                                'F1': F1,
+                                                'IOU': IOU})
+model.compile(optimizer=optimizer,
+              loss='binary_crossentropy',
+              metrics=['accuracy', Precision, Recall, F1, IOU])
+model.evaluate(test_dataset_label[0], test_dataset_label[1], batch_size=batch_size)
+predict = model.predict(test_dataset_label[0][0].reshape(1, 227, 227, 3))
+plot_heatmap(predict)

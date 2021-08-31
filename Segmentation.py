@@ -31,6 +31,7 @@ parser.add_argument('--datasets_dir', default='Mix_img')
 parser.add_argument('--load_size', type=int, default=227)
 parser.add_argument('--crop_size', type=int, default=227)
 parser.add_argument('--batch_size', type=int, default=1)
+parser.add_argument('--model', default='U_Net')
 parser.add_argument("--mode", default='client')
 parser.add_argument("--port", default=52162)
 args = parser.parse_args()
@@ -48,7 +49,8 @@ validation_dataset = get_dataset_label(lines[num_train:], batch_size)
 #                               model
 # ----------------------------------------------------------------------
 
-model = module.ResnetGenerator()
+# model = module.ResnetGenerator()
+model = module.U_Net(227, 227)
 optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.0005)
 
 # ----------------------------------------------------------------------
@@ -78,7 +80,7 @@ py.args_to_yaml('./output/{}/settings.yml'.format(c), args)
 # ----------------------------------------------------------------------
 #                               train
 # ----------------------------------------------------------------------
-training = False
+training = True
 model.compile(optimizer=optimizer,
               loss='binary_crossentropy',
               metrics=['accuracy', Precision, Recall, F1, IOU])
@@ -94,20 +96,22 @@ if training:
 # ---------------------------------------------------------------------
 #                               test
 # ----------------------------------------------------------------------
-test_path = r'I:\Image Processing\text.txt'
-test_lines, num_test = get_data(test_path, training=False)
-batch_size = 5
-A_test_img_paths = r'I:\Image Processing\Test_Image\images/'
-B_test_img_paths = r'I:\Image Processing\Test_Image\outputs\attachments/'
-test_dataset_label = get_test_dataset_label(test_lines, A_test_img_paths, B_test_img_paths)
-model = keras.models.load_model(r'output/2021-08-27-16-08-21.971270/checkpoint/ep049-val_loss0.030-val_acc0.993.h5',
-                                custom_objects={'Precision': Precision,
-                                                'Recall': Recall,
-                                                'F1': F1,
-                                                'IOU': IOU})
-model.compile(optimizer=optimizer,
-              loss='binary_crossentropy',
-              metrics=['accuracy', Precision, Recall, F1, IOU])
-model.evaluate(test_dataset_label[0], test_dataset_label[1], batch_size=batch_size)
-predict = model.predict(test_dataset_label[0][0].reshape(1, 227, 227, 3))
-plot_heatmap(predict)
+test = False
+if test:
+    test_path = r'I:\Image Processing\text.txt'
+    test_lines, num_test = get_data(test_path, training=False)
+    batch_size = 1
+    A_test_img_paths = r'I:\Image Processing\Test_Image\images/'
+    B_test_img_paths = r'I:\Image Processing\Test_Image\outputs\attachments/'
+    test_dataset_label = get_test_dataset_label(test_lines, A_test_img_paths, B_test_img_paths)
+    model = keras.models.load_model(r'output/2021-08-27-16-08-21.971270/checkpoint/ep049-val_loss0.030-val_acc0.993.h5',
+                                    custom_objects={'Precision': Precision,
+                                                    'Recall': Recall,
+                                                    'F1': F1,
+                                                    'IOU': IOU})
+    model.compile(optimizer=optimizer,
+                  loss='binary_crossentropy',
+                  metrics=['accuracy', Precision, Recall, F1, IOU])
+    model.evaluate(test_dataset_label[0], test_dataset_label[1], batch_size=batch_size)
+    predict = model.predict(test_dataset_label[0][0].reshape(1, 227, 227, 3))
+    plot_heatmap(predict)

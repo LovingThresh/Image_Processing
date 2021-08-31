@@ -126,7 +126,7 @@ def get_dataset_label(lines, batch_size, A_img_paths=r'I:\Image Processing\Rebui
 
     numbers = len(lines)
     read_line = 0
-    if training:
+    while True:
 
         x_train = []
         y_train = []

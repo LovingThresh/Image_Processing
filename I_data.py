@@ -2,6 +2,7 @@ import numpy as np
 import tensorflow as tf
 import tf2lib as tl
 from PIL import Image
+import cv2
 
 
 def make_dataset(img_paths, batch_size, load_size, crop_size, training, drop_remainder=True, shuffle=True, repeat=1):
@@ -113,9 +114,10 @@ def get_data(path=r'I:\Image Processing\train.txt', training=True):
 
 
 def get_dataset_label(lines, batch_size, A_img_paths=r'I:\Image Processing\Rebuild_Image_95/',
-                      B_img_paths=r'I:\Image Processing\Mix_img\95\label/', training=True):
+                      B_img_paths=r'I:\Image Processing\Mix_img\95\label/', training=True, size=(227, 227)):
     """
         生成器， 读取图片， 并对图片进行处理， 生成（样本，标签）
+        :param size:
         :param training:
         :param B_img_paths:
         :param A_img_paths:
@@ -136,49 +138,52 @@ def get_dataset_label(lines, batch_size, A_img_paths=r'I:\Image Processing\Rebui
         for t in range(batch_size):
             np.random.shuffle(lines)
 
-        # 1. 获取训练文件的名字
-        train_x_name = lines[read_line].split(',')[0]
+            # 1. 获取训练文件的名字
+            train_x_name = lines[read_line].split(',')[0]
 
-        # 根据图片名字读取图片
-        img = Image.open(A_img_paths + train_x_name)
-        img = img.resize((227, 227))
-        img_array = np.array(img)
+            # 根据图片名字读取图片
+            img = Image.open(A_img_paths + train_x_name)
+            img = img.resize(size)
+            img_array = np.array(img)
 
-        img_array = img_array / 255.0  # 标准化
-        img_array = img_array * 2 - 1
-        x_train.append(img_array)
+            img_array = img_array / 255.0  # 标准化
+            img_array = img_array * 2 - 1
+            x_train.append(img_array)
 
-        # 2. 获取训练样本标签的名字
-        train_y_name = lines[read_line].split(',')[1].replace('\n', '')
+            # 2. 获取训练样本标签的名字
+            train_y_name = lines[read_line].split(',')[1].replace('\n', '')
 
-        # 根据图片名字读取图片
-        img = Image.open(B_img_paths + train_y_name)
-        # img.show()
-        # print(train_y_name)
-        img = img.resize((227, 227))  # 改变图片大小 -> (227, 227)
-        img_array = np.array(img)
-        # img_array, 三个通道数相同， 没法做交叉熵， 所以下面要进行”图像分层“
+            # 根据图片名字读取图片
+            img_array = cv2.imread(B_img_paths + train_y_name)
+            # img.show()
+            # print(train_y_name)
+            # img = img.resize(size)  # 改变图片大小 -> (227, 227)
+            # img_array = np.array(img)
+            # img_array = img[:, :, :2]
+            # img_array, 三个通道数相同， 没法做交叉熵， 所以下面要进行”图像分层“
 
-        # 生成标签， 标签的shape是（227， 227， class_numbers) = (227, 227, 2), 里面的值全是0
-        labels = np.zeros((227, 227, 2), np.int)
+            # 生成标签， 标签的shape是（227， 227， class_numbers) = (227, 227, 2), 里面的值全是0
+            labels = np.zeros((size[0], size[1], 2), np.int)
 
-        # 下面将(224,224,3) => (224,224,2),不仅是通道数的变化，还有，
-        # 原本背景和裂缝在一个通道里面，现在将斑马线和背景放在不同的通道里面。
-        # 如，labels,第0通道放背景，是背景的位置，显示为1，其余位置显示为0
-        # labels, 第1通道放斑马线，图上斑马线的位置，显示1，其余位置显示为0
-        # 相当于合并的图层分层！！！！
-        labels[:, :, 0] = (img_array[:, :, 1] == 1).astype(int).reshape((227, 227))
-        labels[:, :, 1] = (img_array[:, :, 1] != 1).astype(int).reshape((227, 227))
-        y_train.append(labels)
+            # 下面将(224,224,3) => (224,224,2),不仅是通道数的变化，还有，
+            # 原本背景和裂缝在一个通道里面，现在将斑马线和背景放在不同的通道里面。
+            # 如，labels,第0通道放背景，是背景的位置，显示为1，其余位置显示为0
+            # labels, 第1通道放斑马线，图上斑马线的位置，显示1，其余位置显示为0
+            # 相当于合并的图层分层！！！！
+            labels[:, :, 0] = (img_array[:, :, 1] == 255).astype(int).reshape(size)
+            labels[:, :, 1] = (img_array[:, :, 1] != 255).astype(int).reshape(size)
+            # labels[:, :, 0] = (img_array[:, :, 1] == 1).astype(int).reshape(size)
+            # labels[:, :, 1] = (img_array[:, :, 1] != 1).astype(int).reshape(size)
+            y_train.append(labels)
 
-        # 遍历所有数据，记录现在所处的行， 读取完所有数据后，read_line=0,打乱重新开始
-        read_line = (read_line + 1) % numbers
+            # 遍历所有数据，记录现在所处的行， 读取完所有数据后，read_line=0,打乱重新开始
+            read_line = (read_line + 1) % numbers
 
         yield np.array(x_train), np.array(y_train)
 
 
 def get_test_dataset_label(lines, A_img_paths=r'I:\Image Processing\Rebuild_Image_95/',
-                           B_img_paths=r'I:\Image Processing\Mix_img\95\label/'):
+                           B_img_paths=r'I:\Image Processing\Mix_img\95\label/', size=(512, 512)):
     numbers = len(lines)
     read_line = 0
 
@@ -190,7 +195,7 @@ def get_test_dataset_label(lines, A_img_paths=r'I:\Image Processing\Rebuild_Imag
 
         # 根据图片名字读取图片
         img = Image.open(A_img_paths + train_x_name)
-        img = img.resize((227, 227))
+        img = img.resize(size)
         img_array = np.array(img)
 
         img_array = img_array / 255.0  # 标准化
@@ -201,23 +206,23 @@ def get_test_dataset_label(lines, A_img_paths=r'I:\Image Processing\Rebuild_Imag
         train_y_name = lines[read_line].split(',')[1].replace('\n', '')
 
         # 根据图片名字读取图片
-        img = Image.open(B_img_paths + train_y_name)
+        img_array = cv2.imread(B_img_paths + train_y_name)
         # img.show()
         # print(train_y_name)
-        img = img.resize((227, 227))  # 改变图片大小 -> (227, 227)
-        img_array = np.array(img)
+        # img = img.resize(size)  # 改变图片大小 -> (227, 227)
+        # img_array = np.array(img)
         # img_array, 三个通道数相同， 没法做交叉熵， 所以下面要进行”图像分层“
 
         # 生成标签， 标签的shape是（227， 227， class_numbers) = (227, 227, 2), 里面的值全是0
-        labels = np.zeros((227, 227, 2), np.int)
+        labels = np.zeros((size[0], size[1], 2), np.int)
 
         # 下面将(224,224,3) => (224,224,2),不仅是通道数的变化，还有，
         # 原本背景和裂缝在一个通道里面，现在将斑马线和背景放在不同的通道里面。
         # 如，labels,第0通道放背景，是背景的位置，显示为1，其余位置显示为0
         # labels, 第1通道放斑马线，图上斑马线的位置，显示1，其余位置显示为0
         # 相当于合并的图层分层！！！！
-        labels[:, :, 0] = (img_array[:, :, 1] == 0).astype(int).reshape((227, 227))
-        labels[:, :, 1] = (img_array[:, :, 1] != 0).astype(int).reshape((227, 227))
+        labels[:, :, 0] = (img_array[:, :, 0] == 255).astype(int).reshape(size)
+        labels[:, :, 1] = (img_array[:, :, 0] != 255).astype(int).reshape(size)
 
         y_train.append(labels)
 

@@ -4,7 +4,6 @@
 # @Author : Ye
 # @File : Segmentation.py
 # @SoftWare : Pycharm
-
 import argparse
 import datetime
 
@@ -26,68 +25,78 @@ tf.config.experimental.set_memory_growth(gpus[0], True)
 # ----------------------------------------------------------------------
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', default='95')
-parser.add_argument('--datasets_dir', default='Mix_img')
-parser.add_argument('--load_size', type=int, default=227)
-parser.add_argument('--crop_size', type=int, default=227)
+parser.add_argument('--dataset', default='HEYE')
+parser.add_argument('--datasets_dir', default='HEYE_img')
+parser.add_argument('--load_size', type=int, default=512)
+parser.add_argument('--crop_size', type=int, default=512)
 parser.add_argument('--batch_size', type=int, default=1)
-parser.add_argument('--model', default='U_Net')
+parser.add_argument('--loss', default='mse')
+parser.add_argument('--model', default='ReSNet')
 parser.add_argument("--mode", default='client')
 parser.add_argument("--port", default=52162)
+parser.add_argument('--Illustrate', default='使用ResNetGenerator验证其性能')
 args = parser.parse_args()
 
 # ----------------------------------------------------------------------
 #                               dataset
 # ----------------------------------------------------------------------
 
-lines, num_train, num_val = get_data()
-batch_size = 10
-train_dataset = get_dataset_label(lines[:num_train], batch_size)
-validation_dataset = get_dataset_label(lines[num_train:], batch_size)
+# lines, num_train, num_val = get_data()
+# batch_size = 10
+# train_dataset = get_dataset_label(lines[:num_train], batch_size)
+# validation_dataset = get_dataset_label(lines[num_train:], batch_size)
+
+train_lines, num_train = get_data(path=r'train_HEYE.txt', training=False)
+validation_lines, num_val = get_data(path=r'validation_HEYE.txt', training=False)
+batch_size = 1
+train_dataset = get_dataset_label(train_lines, batch_size, A_img_paths=r'C:\Users\liuye\Desktop\data\train\img/',
+                                  B_img_paths=r'C:\Users\liuye\Desktop\data\train\mask/', size=(512, 512))
+validation_dataset = get_dataset_label(validation_lines, batch_size, A_img_paths=r'C:\Users\liuye\Desktop\data\val\img/'
+                                       , B_img_paths=r'C:\Users\liuye\Desktop\data\val\mask/', size=(512, 512))
 
 # ----------------------------------------------------------------------
 #                               model
 # ----------------------------------------------------------------------
 
-# model = module.ResnetGenerator()
-model = module.U_Net(227, 227)
+model = module.ResnetGenerator(attention=True)
+# model = module.U_Net(227, 227)
 optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.0005)
 
 # ----------------------------------------------------------------------
 #                               output
 # ----------------------------------------------------------------------
+training = True
+if training:
+    a = str(datetime.datetime.now())
+    b = list(a)
+    b[10] = '-'
+    b[13] = '-'
+    b[16] = '-'
+    c = ''.join(b)
+    os.makedirs(r'./output/{}'.format(c))
+    tensorboard = tf.keras.callbacks.TensorBoard(log_dir='./output/{}/tensorboard/'.format(c))
+    checkpoint = tf.keras.callbacks.ModelCheckpoint('./output/{}/checkpoint/'.format(c) +
+                                                    'ep{epoch:03d}-val_loss{'
+                                                    'val_loss:.3f}-val_acc{'
+                                                    'val_accuracy:.3f}.h5',
+                                                    monitor='val_accuracy', verbose=0,
+                                                    save_best_only=False, save_weights_only=False,
+                                                    mode='auto', period=1)
+    checkpoints_directory = r'./output/{}/checkpoints/'.format(c)
+    checkpoints = CheckpointSaver(checkpoints_directory)
 
-a = str(datetime.datetime.now())
-b = list(a)
-b[10] = '-'
-b[13] = '-'
-b[16] = '-'
-c = ''.join(b)
-os.makedirs(r'./output/{}'.format(c))
-tensorboard = tf.keras.callbacks.TensorBoard(log_dir='./output/{}/tensorboard/'.format(c))
-checkpoint = tf.keras.callbacks.ModelCheckpoint('./output/{}/checkpoint/'.format(c) +
-                                                'ep{epoch:03d}-val_loss{'
-                                                'val_loss:.3f}-val_acc{'
-                                                'val_accuracy:.3f}.h5',
-                                                monitor='val_accuracy', verbose=0,
-                                                save_best_only=False, save_weights_only=False,
-                                                mode='auto', period=1)
-checkpoints_directory = r'./output/{}/checkpoints/'.format(c)
-checkpoints = CheckpointSaver(checkpoints_directory)
-
-py.args_to_yaml('./output/{}/settings.yml'.format(c), args)
+    py.args_to_yaml('./output/{}/settings.yml'.format(c), args)
 
 # ----------------------------------------------------------------------
 #                               train
 # ----------------------------------------------------------------------
-training = True
 model.compile(optimizer=optimizer,
               loss='binary_crossentropy',
               metrics=['accuracy', Precision, Recall, F1, IOU])
 if training:
     model.fit(train_dataset,
               steps_per_epoch=max(1, num_train // batch_size),
-              epochs=50,
+              epochs=20,
               validation_data=validation_dataset,
               validation_steps=max(1, num_val // batch_size),
               initial_epoch=0,
@@ -98,20 +107,20 @@ if training:
 # ----------------------------------------------------------------------
 test = False
 if test:
-    test_path = r'I:\Image Processing\text.txt'
+    test_path = r'I:\Image Processing\validation_HEYE.txt'
     test_lines, num_test = get_data(test_path, training=False)
-    batch_size = 1
-    A_test_img_paths = r'I:\Image Processing\Test_Image\images/'
-    B_test_img_paths = r'I:\Image Processing\Test_Image\outputs\attachments/'
+    batch_size = 50
+    A_test_img_paths = r'C:\Users\liuye\Desktop\data\val\img/'
+    B_test_img_paths = r'C:\Users\liuye\Desktop\data\val\mask/'
     test_dataset_label = get_test_dataset_label(test_lines, A_test_img_paths, B_test_img_paths)
-    model = keras.models.load_model(r'output/2021-08-27-16-08-21.971270/checkpoint/ep049-val_loss0.030-val_acc0.993.h5',
+    model = keras.models.load_model(r'I:\Image Processing\output\2021-09-14-09-36-18.481646\checkpoint\ep036-val_loss0.022-val_acc0.992.h5',
                                     custom_objects={'Precision': Precision,
                                                     'Recall': Recall,
                                                     'F1': F1,
                                                     'IOU': IOU})
     model.compile(optimizer=optimizer,
-                  loss='binary_crossentropy',
+                  loss='mse',
                   metrics=['accuracy', Precision, Recall, F1, IOU])
     model.evaluate(test_dataset_label[0], test_dataset_label[1], batch_size=batch_size)
-    predict = model.predict(test_dataset_label[0][0].reshape(1, 227, 227, 3))
+    predict = model.predict(test_dataset_label[0].reshape(1, 512, 512, 3))
     plot_heatmap(predict)

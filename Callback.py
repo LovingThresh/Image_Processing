@@ -5,7 +5,7 @@ import tf2lib as tl
 
 
 # checkpoint
-
+# 目前存在的问题是只能输出最后一个checkpoints
 class CheckpointSaver(keras.callbacks.Callback):
     def __init__(self, checkpoints_directory):
         super(CheckpointSaver, self).__init__()

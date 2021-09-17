@@ -11,7 +11,7 @@ print("Using {} device".format(device))
 
 class ResNetGenerator(nn.Module):
     def __init__(self, input_channels=3, output_channels=2, dim=64, n_downsamplings=2,
-                 n_blocks=9, image_size=227):
+                 n_blocks=9, image_size=512):
         super(ResNetGenerator, self).__init__()
         self.input_channels = input_channels
         self.output_channels = output_channels
@@ -64,4 +64,4 @@ class ResNetGenerator(nn.Module):
 
 model = ResNetGenerator().to(device)
 print(model)
-summary(model, (3, 227, 227), 10)
+summary(model, (3, 512, 512), 10)

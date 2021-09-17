@@ -20,13 +20,16 @@ def _get_norm_layer(norm):
         return keras.layers.LayerNormalization
 
 
-def ResnetGenerator(input_shape=(227, 227, 3),
+def ResnetGenerator(input_shape=(512, 512, 3),
                     output_channels=2,
                     dim=64,
                     n_downsamplings=2,
-                    n_blocks=9,
-                    norm='instance_norm'):
+                    n_blocks=8,
+                    norm='instance_norm',
+                    attention=False):
     Norm = _get_norm_layer(norm)
+    if attention:
+        output_channels = output_channels + 1
 
     # 受保护的用法
     def _residual_block(x):
@@ -75,7 +78,16 @@ def ResnetGenerator(input_shape=(227, 227, 3),
 
     # 5
     h = tf.pad(h, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='REFLECT')
-    h = keras.layers.Conv2D(output_channels, 8, padding='valid')(h)
+    if input_shape == (227, 227, 3):
+        h = keras.layers.Conv2D(output_channels, 8, padding='valid')(h)
+    elif input_shape == (512, 512, 3):
+        h = keras.layers.Conv2D(output_channels, 7, padding='valid')(h)
+    if attention:
+        attention_mask = tf.sigmoid(h[:, :, :, 1])
+        content_mask = h[:, :, :, 1:]
+        attention_mask = tf.expand_dims(attention_mask, axis=3)
+        attention_mask = tf.concat([attention_mask, attention_mask], axis=3)
+        h = content_mask * attention_mask
     h = tf.tanh(h)
 
     return keras.Model(inputs=inputs, outputs=h)

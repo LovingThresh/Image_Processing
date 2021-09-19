@@ -114,11 +114,10 @@ def get_data(path=r'I:\Image Processing\train.txt', training=True):
 
 
 def get_dataset_label(lines, batch_size, A_img_paths=r'I:\Image Processing\Rebuild_Image_95/',
-                      B_img_paths=r'I:\Image Processing\Mix_img\95\label/', training=True, size=(227, 227)):
+                      B_img_paths=r'I:\Image Processing\Mix_img\95\label/', size=(227, 227)):
     """
         生成器， 读取图片， 并对图片进行处理， 生成（样本，标签）
         :param size:
-        :param training:
         :param B_img_paths:
         :param A_img_paths:
         :param lines: 样本和标签的对应行
@@ -229,4 +228,76 @@ def get_test_dataset_label(lines, A_img_paths=r'I:\Image Processing\Rebuild_Imag
     return np.array(x_train), np.array(y_train)
 
 
+# 开始构建自己的标准化的Data_Loader
+# 可以获取文件路径，然后再使用map函数进行transform
+def load_data_from_filelist(filelist, batch_size, buffer_size, map_func):
+    data_filelist = tf.constant(filelist)
+    dataset = tf.data.Dataset.from_tensor_slices(data_filelist)
+
+    batch_size = batch_size
+    # 对数据进行map，完成数据路径 Str 向 Data 的transform
+    dataset = dataset.map(map_func, num_parallel_calls=tf.data.experimental.AUTOTUNE)
+    # 对数据进行Batch，Shuffle，Repeat操作
+    dataset = dataset.batch(batch_size=batch_size).shuffle(buffer_size=buffer_size).repeat()
+
+    data_iter = iter(dataset)
+    while True:
+        try:
+            data = next(data_iter)
+            print(data[0].shape)
+        except StopIteration:
+            print('Load End')
+
+
+# 设计常用的map函数
+def map_function(file_path: str or list,
+                   file_mode: str,
+                   label_mode: str or None or int,
+                   label_num: int or None):
+    """
+    无标签的图像Load_Map函数
+    带数字标签的图像Load_Map函数
+    :param label_num: 标签的种类数目
+    :param label_mode: 标签的格式
+    :param file_mode: 指定图像的格式
+    :param file_path: 图像数据的绝对路径
+    :return: 单张图像数据的Tensor
+    """
+    def data_load(img_data_file_path):
+
+        data_byte = tf.io.read_file(img_data_file_path)
+        if file_mode is 'png':
+            data_decode = tf.image.decode_png(data_byte)
+        elif file_mode is 'jpg':
+            data_decode = tf.image.decode_jpeg(data_byte)
+        # 设置Tensor数据的数据形式
+        data_decode = tf.cast(data_decode, tf.float32)
+        data_decode = (data_decode - 127.5) / 255.
+
+        return data_decode
+
+    def label_load(img_label_file_path):
+        # 假设是图像分类的问题，Label是数字，即img_label_file_path是数字
+        label = tf.constant(img_label_file_path)
+        label = tf.one_hot(indices=label, depth=label_num, on_value=1., off_value=0., axis=-1)
+        # print(label.shape)
+        return label
+
+    if file_path is str:
+        data = data_load(file_path)
+        return data
+
+    if file_path is list:
+        data_file_path = file_path[0]
+        data = data_load(data_file_path)
+        label_file_path = file_path[1]
+
+        if label_mode is int:
+            label = label_load(label_file_path)
+            return data, label
+
+        elif label_mode is str:
+            # 这种情况是指两张对应图片的情况
+            label = data_load(label_file_path)
+            return data, label
 

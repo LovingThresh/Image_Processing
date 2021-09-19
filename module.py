@@ -83,7 +83,7 @@ def ResnetGenerator(input_shape=(512, 512, 3),
     elif input_shape == (512, 512, 3):
         h = keras.layers.Conv2D(output_channels, 7, padding='valid')(h)
     if attention:
-        attention_mask = tf.sigmoid(h[:, :, :, 1])
+        attention_mask = tf.sigmoid(h[:, :, :, :1])
         content_mask = h[:, :, :, 1:]
         attention_mask = tf.expand_dims(attention_mask, axis=3)
         attention_mask = tf.concat([attention_mask, attention_mask], axis=3)
@@ -270,3 +270,28 @@ def U_Net(Height=227, Width=227):
     model.summary()
 
     return model
+
+tf.keras.metrics.Precision
+# 模型的子类写法
+class MyModel(tf.keras.Model):
+
+    # 如果不写get_config,将无法在TensorBoard中载入模型图(model Graph)
+
+    def __init__(self, num_classes=10, input_shape=None):
+        super(MyModel, self).__init__(name='my_model')
+        self.data_input_shape = input_shape
+        self.num_classes = num_classes
+        # 定义自己需要的层
+        self.dense_1 = Dense(32, activation='relu', input_shape=(100, 32))  #
+        self.dense_2 = Dense(num_classes)
+
+    def call(self, inputs, training=None, mask=None):
+        # 定义前向传播
+        # 使用在 (in `__init__`)定义的层
+        x = self.dense_1(inputs)
+        x = self.dense_2(x)
+        return x
+
+    def model(self):
+        x = Input(shape=self.data_input_shape)
+        return Model(inputs=[x], outputs=self.call(x))

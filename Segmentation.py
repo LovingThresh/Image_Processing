@@ -10,6 +10,7 @@ import datetime
 import tensorflow.keras as keras
 import keras.models
 
+import Metrics
 import pylib as py
 from Metrics import *
 from I_data import *
@@ -30,11 +31,11 @@ parser.add_argument('--datasets_dir', default='HEYE_img')
 parser.add_argument('--load_size', type=int, default=512)
 parser.add_argument('--crop_size', type=int, default=512)
 parser.add_argument('--batch_size', type=int, default=1)
-parser.add_argument('--loss', default='mse')
+parser.add_argument('--loss', default='my losses mse')
 parser.add_argument('--model', default='ReSNet')
 parser.add_argument("--mode", default='client')
 parser.add_argument("--port", default=52162)
-parser.add_argument('--Illustrate', default='使用ResNetGenerator验证其性能')
+parser.add_argument('--Illustrate', default=' Define My Losses with Attention')
 args = parser.parse_args()
 
 # ----------------------------------------------------------------------
@@ -91,12 +92,12 @@ if training:
 #                               train
 # ----------------------------------------------------------------------
 model.compile(optimizer=optimizer,
-              loss='binary_crossentropy',
+              loss=Metrics.Asymmetry_Binary_Loss,
               metrics=['accuracy', Precision, Recall, F1, IOU])
 if training:
     model.fit(train_dataset,
               steps_per_epoch=max(1, num_train // batch_size),
-              epochs=20,
+              epochs=300,
               validation_data=validation_dataset,
               validation_steps=max(1, num_val // batch_size),
               initial_epoch=0,
@@ -113,7 +114,8 @@ if test:
     A_test_img_paths = r'C:\Users\liuye\Desktop\data\val\img/'
     B_test_img_paths = r'C:\Users\liuye\Desktop\data\val\mask/'
     test_dataset_label = get_test_dataset_label(test_lines, A_test_img_paths, B_test_img_paths)
-    model = keras.models.load_model(r'I:\Image Processing\output\2021-09-14-09-36-18.481646\checkpoint\ep036-val_loss0.022-val_acc0.992.h5',
+    model = keras.models.load_model(r'I:\Image Processing\output\2021-09-14-09-36-18.481646\checkpoint\ep036'
+                                    r'-val_loss0.022-val_acc0.992.h5',
                                     custom_objects={'Precision': Precision,
                                                     'Recall': Recall,
                                                     'F1': F1,

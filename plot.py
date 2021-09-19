@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 
 
-def plot_heatmap(predict_array, size=(512, 512)):
+def plot_heatmap(predict_array, size=(227, 227)):
     if predict_array.ndim == 4:
         sns.heatmap(predict_array[:, :, :, 0].reshape(size))
     else:

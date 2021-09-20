@@ -83,11 +83,13 @@ def ResnetGenerator(input_shape=(512, 512, 3),
     elif input_shape == (512, 512, 3):
         h = keras.layers.Conv2D(output_channels, 7, padding='valid')(h)
     if attention:
-        attention_mask = tf.sigmoid(h[:, :, :, :1])
+        attention_mask = tf.sigmoid(h[:, :, :, 0])
+        # attention_mask = tf.sigmoid(h[:, :, :, :1])
         content_mask = h[:, :, :, 1:]
         attention_mask = tf.expand_dims(attention_mask, axis=3)
         attention_mask = tf.concat([attention_mask, attention_mask], axis=3)
         h = content_mask * attention_mask
+        # content_mask.shape=(B,H,W,C[通道数是输入时的C，此例中为2])  attention_mask.shape=(B,H,W,1) *[可解释为expand] C)
     h = tf.tanh(h)
 
     return keras.Model(inputs=inputs, outputs=h)
@@ -271,8 +273,8 @@ def U_Net(Height=227, Width=227):
 
     return model
 
-tf.keras.metrics.Precision
-# 模型的子类写法
+
+# 模型的子类写法，这是一个简单的实例，不用于使用
 class MyModel(tf.keras.Model):
 
     # 如果不写get_config,将无法在TensorBoard中载入模型图(model Graph)
@@ -295,3 +297,28 @@ class MyModel(tf.keras.Model):
     def model(self):
         x = Input(shape=self.data_input_shape)
         return Model(inputs=[x], outputs=self.call(x))
+
+
+class SELayer(tf.keras.layers.Layer):
+    def __init__(self, channels, reduction=16):
+        super(SELayer, self).__init__()
+        self.channels = channels
+        self.reduction = reduction
+        self.avg_poll = GlobalAvgPool2D()
+        self.fc = tf.keras.Sequential([
+            Dense(self.channels // self.reduction, use_bias=False),
+            ReLU(),
+            Dense(self.channels, use_bias=False)
+        ])
+        self.sigmoid = tf.keras.activations.sigmoid
+
+    def call(self, inputs, *args, **kwargs):
+        b, _, _, c = inputs.shape
+        y = self.avg_poll(inputs)
+        y = tf.reshape(y, (y.shape[0], 1, 1, y.shape[1]))
+        y = self.fc(y)
+        y = self.sigmoid(y)
+        # mask.shape = (B, 1, 1, C)
+        return inputs * y, y
+
+

@@ -28,6 +28,7 @@ tf.config.experimental.set_memory_growth(gpus[0], True)
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', default='HEYE')
 parser.add_argument('--datasets_dir', default='HEYE_img')
+parser.add_argument('--epoch', type=int, default=5)
 parser.add_argument('--load_size', type=int, default=512)
 parser.add_argument('--crop_size', type=int, default=512)
 parser.add_argument('--batch_size', type=int, default=1)
@@ -84,8 +85,11 @@ if training:
                                                     save_best_only=False, save_weights_only=False,
                                                     mode='auto', period=1)
     checkpoints_directory = r'./output/{}/checkpoints/'.format(c)
-    checkpoints = CheckpointSaver(checkpoints_directory)
 
+    checkpoints = tf.train.Checkpoint()
+    manager = tf.train.CheckpointManager(checkpoints, directory=os.path.join(checkpoints_directory, "ckpt"),
+                                         max_to_keep=3)
+    checkpoints = CheckpointSaver(manager=manager)
     py.args_to_yaml('./output/{}/settings.yml'.format(c), args)
 
 # ----------------------------------------------------------------------
@@ -97,7 +101,7 @@ model.compile(optimizer=optimizer,
 if training:
     model.fit(train_dataset,
               steps_per_epoch=max(1, num_train // batch_size),
-              epochs=300,
+              epochs=args.epoch,
               validation_data=validation_dataset,
               validation_steps=max(1, num_val // batch_size),
               initial_epoch=0,

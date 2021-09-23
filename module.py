@@ -131,7 +131,10 @@ def ConvDiscriminator(input_shape=(256, 256, 3),
 # =                          learning rate scheduler                           =
 # ==============================================================================
 
-class LinearDecay(keras.optimizers.schedules.LearningRateSchedule):
+class LinearDecay(tf.keras.optimizers.schedules.LearningRateSchedule):
+    def get_config(self):
+        pass
+
     # if `step` < `step_decay`: use fixed learning rate
     # else: linearly decay the learning rate to zero
 
@@ -277,6 +280,9 @@ def U_Net(Height=227, Width=227):
 # 模型的子类写法，这是一个简单的实例，不用于使用
 class MyModel(tf.keras.Model):
 
+    def get_config(self):
+        pass
+
     # 如果不写get_config,将无法在TensorBoard中载入模型图(model Graph)
 
     def __init__(self, num_classes=10, input_shape=None):
@@ -322,3 +328,32 @@ class SELayer(tf.keras.layers.Layer):
         return inputs * y, y
 
 
+# 何叶师姐的注意力机制，这是好像是通道域的提取
+class AttentionModuleHeye(keras.layers.Layer):
+    def __init__(self, F_g, F_l, F_int):
+        self.F_g = F_g
+        self.F_l = F_l
+        self.F_int = F_int
+        super(AttentionModuleHeye, self).__init__()
+        self.W_g = keras.models.Sequential([
+            Conv2D(F_int, (1, 1), (1, 1), padding='same', use_bias=True),
+            BatchNormalization()
+        ])
+        self.W_x = keras.models.Sequential([
+            Conv2D(F_int, (1, 1), (1, 1), padding='same', use_bias=True),
+            BatchNormalization()
+        ])
+        self.psi = keras.models.Sequential([
+            Conv2D(1, (1, 1), (1, 1), padding='same', use_bias=True),
+            BatchNormalization(),
+        ])
+        self.sigmoid = keras.activations.sigmoid
+        self.relu = ReLU()
+
+    def call(self, inputs, g=None):
+        g1 = self.W_g(g)
+        x1 = self.W_x(inputs)
+        psi = self.relu(g1+x1)
+        psi = self.psi(psi)
+        psi = self.sigmoid(psi)
+        return inputs * psi, psi

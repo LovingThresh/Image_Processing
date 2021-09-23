@@ -17,6 +17,8 @@ from I_data import *
 from Callback import *
 import module
 from plot import plot_heatmap
+from tensorflow.keras import models
+import matplotlib.pyplot as plt
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(gpus[0], True)
@@ -67,7 +69,7 @@ optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.0005)
 # ----------------------------------------------------------------------
 #                               output
 # ----------------------------------------------------------------------
-training = True
+training = False
 if training:
     a = str(datetime.datetime.now())
     b = list(a)
@@ -110,23 +112,47 @@ if training:
 # ---------------------------------------------------------------------
 #                               test
 # ----------------------------------------------------------------------
-test = False
+test = True
+plot_predict = False
+plot_mask = True
 if test:
     test_path = r'I:\Image Processing\validation_HEYE.txt'
     test_lines, num_test = get_data(test_path, training=False)
-    batch_size = 50
+    batch_size = 1
     A_test_img_paths = r'C:\Users\liuye\Desktop\data\val\img/'
     B_test_img_paths = r'C:\Users\liuye\Desktop\data\val\mask/'
     test_dataset_label = get_test_dataset_label(test_lines, A_test_img_paths, B_test_img_paths)
-    model = keras.models.load_model(r'I:\Image Processing\output\2021-09-14-09-36-18.481646\checkpoint\ep036'
-                                    r'-val_loss0.022-val_acc0.992.h5',
+    model = keras.models.load_model(r'I:\Image Processing\output\2021-09-17-13-40-41.901808\checkpoint\ep470'
+                                    r'-val_loss7.181-val_acc0.918.h5',
                                     custom_objects={'Precision': Precision,
                                                     'Recall': Recall,
                                                     'F1': F1,
-                                                    'IOU': IOU})
+                                                    'IOU': IOU,
+                                                    'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss
+                                                    })
     model.compile(optimizer=optimizer,
-                  loss='mse',
+                  loss=Metrics.Asymmetry_Binary_Loss,
                   metrics=['accuracy', Precision, Recall, F1, IOU])
-    model.evaluate(test_dataset_label[0], test_dataset_label[1], batch_size=batch_size)
-    predict = model.predict(test_dataset_label[0].reshape(1, 512, 512, 3))
-    plot_heatmap(predict)
+
+    # 输出模型预测结果
+    if plot_predict:
+        model.evaluate(test_dataset_label[0], test_dataset_label[1], batch_size=batch_size)
+        predict = model.predict(test_dataset_label[0][0].reshape(1, 512, 512, 3))
+        plot_heatmap(predict)
+
+    # 输出模型中的Mask
+    if plot_mask:
+
+        # 本次实验中使用到的mask是layer的[84]
+        Mask_out = model.layers[84].output
+        attention_mask_model = models.Model(inputs=model.input, outputs=model.layers[84].output)
+        predict_img = test_dataset_label[0][0].reshape(1, 512, 512, 3)
+        predict_img = tf.convert_to_tensor(predict_img)
+        mask = attention_mask_model.predict(predict_img)
+        plt.imshow(mask.reshape(512, 512))
+        plt.axis('off')
+        plt.xticks([])
+        plt.yticks([])
+        plt.show()
+
+

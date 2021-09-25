@@ -6,6 +6,7 @@
 # @SoftWare : Pycharm
 import argparse
 import datetime
+import time
 
 import tensorflow.keras as keras
 import keras.models
@@ -113,8 +114,8 @@ if training:
 #                               test
 # ----------------------------------------------------------------------
 test = True
-plot_predict = False
-plot_mask = True
+plot_predict = True
+plot_mask = False
 if test:
     test_path = r'I:\Image Processing\validation_HEYE.txt'
     test_lines, num_test = get_data(test_path, training=False)
@@ -137,8 +138,15 @@ if test:
     # 输出模型预测结果
     if plot_predict:
         model.evaluate(test_dataset_label[0], test_dataset_label[1], batch_size=batch_size)
-        predict = model.predict(test_dataset_label[0][0].reshape(1, 512, 512, 3))
-        plot_heatmap(predict)
+        a = test_dataset_label[0][0].reshape(1, 512, 512, 3)
+        # start = datetime.datetime.now()
+        start = time.time()
+        predict = model.predict(a)
+        end = time.time()
+        # end = datetime.datetime.now()
+        t = end - start
+        print(t)
+        # plot_heatmap(predict)
 
     # 输出模型中的Mask
     if plot_mask:

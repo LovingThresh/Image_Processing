@@ -328,7 +328,7 @@ class SELayer(tf.keras.layers.Layer):
         return inputs * y, y
 
 
-# 何叶师姐的注意力机制，这是好像是通道域的提取
+# 何叶师姐的注意力机制，这是好像是空间域的提取
 class AttentionModuleHeye(keras.layers.Layer):
     def __init__(self, F_g, F_l, F_int):
         self.F_g = F_g
@@ -353,7 +353,58 @@ class AttentionModuleHeye(keras.layers.Layer):
     def call(self, inputs, g=None):
         g1 = self.W_g(g)
         x1 = self.W_x(inputs)
-        psi = self.relu(g1+x1)
+        psi = self.relu(g1 + x1)
         psi = self.psi(psi)
         psi = self.sigmoid(psi)
-        return inputs * psi, psi
+        return inputs * psi
+
+
+keras.backend.set_image_data_format('channels_first')
+
+
+def squeeze_middle2axes_operator(x4d, C, output_size):
+    shape = tf.shape(x4d)  # get dynamic tensor shape
+    x4d = tf.reshape(x4d, [shape[0], shape[1], shape[2] * 2, shape[4] * 2])
+    return x4d
+
+
+def squeeze_middle2axes_shape(output_size):
+    in_batch, C, in_rows, _, in_cols, _ = output_size
+
+    if None in [in_rows, in_cols]:
+        output_shape = (in_batch, C, None, None)
+    else:
+        output_shape = (in_batch, C, in_rows, in_cols)
+    return output_shape
+
+
+class pixelshuffle(tf.keras.layers.Layer):
+    """Sub-pixel convolution layer.
+    See https://arxiv.org/abs/1609.05158
+    """
+
+    def __init__(self, scale, trainable=False, **kwargs):
+        self.scale = scale
+        super().__init__(trainable=trainable, **kwargs)
+
+    def call(self, t, *args, **kwargs):
+        upscale_factor = self.scale
+        input_size = t.shape.as_list()
+        dimensionality = len(input_size) - 2
+        new_shape = self.compute_output_shape(input_size)
+        C = new_shape[1]
+
+        output_size = new_shape[2:]
+        x = [upscale_factor] * dimensionality
+        old_h = input_size[-2] if input_size[-2] is not None else -1
+        old_w = input_size[-1] if input_size[-1] is not None else -1
+
+        shape = tf.shape(t)
+        t = tf.reshape(t, [-1, C, x[0], x[1], shape[-2], shape[-1]])
+
+        perms = [0, 1, 5, 2, 4, 3]
+        t = tf.transpose(t, perm=perms)
+        t = Lambda(squeeze_middle2axes_operator, output_shape=squeeze_middle2axes_shape,
+                          arguments={'C': C, 'output_size': output_size})(t)
+        t = tf.transpose(t, [0, 1, 3, 2])
+        return t

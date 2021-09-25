@@ -10,7 +10,7 @@ print("Using {} device".format(device))
 
 
 class ResNetGenerator(nn.Module):
-    def __init__(self, input_channels=3, output_channels=2, dim=64, n_downsamplings=2,
+    def __init__(self, input_channels=3, output_channels=3, dim=64, n_downsamplings=2,
                  n_blocks=9, image_size=512):
         super(ResNetGenerator, self).__init__()
         self.input_channels = input_channels
@@ -38,6 +38,10 @@ class ResNetGenerator(nn.Module):
             nn.InstanceNorm2d(256),
             nn.ReLU(),
             nn.Conv2d(256, 256, (3, 3), stride=(1, 1), padding=(1, 1), padding_mode='reflect', bias=False),
+            nn.InstanceNorm2d(256),
+            nn.InstanceNorm2d(256),
+            nn.ReLU(),
+            nn.Conv2d(256, 256, (3, 3), stride=(1, 1), padding=(1, 1), padding_mode='reflect', bias=False),
             nn.InstanceNorm2d(256)
         )
         self.main_2 = nn.Sequential(
@@ -62,6 +66,31 @@ class ResNetGenerator(nn.Module):
         return output
 
 
-model = ResNetGenerator().to(device)
-print(model)
-summary(model, (3, 512, 512), 10)
+class Attention_block(nn.Module):
+    def __init__(self, F_g, F_l, F_int):
+        super(Attention_block, self).__init__()
+        self.W_g = nn.Sequential(
+            nn.Conv2d(F_g, F_int, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.BatchNorm2d(F_int)
+        )
+        self.W_x = nn.Sequential(
+            nn.Conv2d(F_l, F_int, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.BatchNorm2d(F_int)
+        )
+        self.psi = nn.Sequential(
+            nn.Conv2d(F_int, 1, kernel_size=1, stride=1, padding=0, bias=True),
+            nn.BatchNorm2d(1),
+            nn.Sigmoid()
+        )
+        self.relu = nn.ReLU(inplace=True)
+
+    def forward(self, g, x):
+        g1 = self.W_g(g)
+        x1 = self.W_x(x)
+        psi = self.relu(g1 + x1)
+        psi = self.psi(psi)
+        return x * psi
+
+# model = ResNetGenerator().to(device)
+# print(model)
+# summary(model, (3, 512, 512), 10)

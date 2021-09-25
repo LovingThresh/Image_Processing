@@ -408,3 +408,11 @@ class pixelshuffle(tf.keras.layers.Layer):
                           arguments={'C': C, 'output_size': output_size})(t)
         t = tf.transpose(t, [0, 1, 3, 2])
         return t
+    def compute_output_shape(self, input_shape):
+        r = self.scale
+        rrC, H, W = np.array(input_shape[1:])
+        assert rrC % (r ** 2) == 0
+        height = H * r if H is not None else -1
+        width = W * r if W is not None else -1
+
+        return input_shape[0], rrC // (r ** 2), height, width

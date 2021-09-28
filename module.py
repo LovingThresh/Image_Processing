@@ -10,6 +10,8 @@ from tensorflow.keras.models import *
 # =                                  networks                                  =
 # ==============================================================================
 
+
+# ==================================Res-Net======================================
 def _get_norm_layer(norm):
     if norm == 'none':
         return lambda: lambda x: x
@@ -128,33 +130,7 @@ def ConvDiscriminator(input_shape=(256, 256, 3),
     return keras.Model(inputs=inputs, outputs=h)
 
 
-# ==============================================================================
-# =                          learning rate scheduler                           =
-# ==============================================================================
-
-class LinearDecay(tf.keras.optimizers.schedules.LearningRateSchedule):
-    def get_config(self):
-        pass
-
-    # if `step` < `step_decay`: use fixed learning rate
-    # else: linearly decay the learning rate to zero
-
-    def __init__(self, initial_learning_rate, total_steps, step_decay):
-        super(LinearDecay, self).__init__()
-        self._initial_learning_rate = initial_learning_rate
-        self._steps = total_steps
-        self._step_decay = step_decay
-        self.current_learning_rate = tf.Variable(initial_value=initial_learning_rate, trainable=False, dtype=tf.float32)
-
-    def __call__(self, step):
-        self.current_learning_rate.assign(tf.cond(
-            step >= self._step_decay,
-            true_fn=lambda: self._initial_learning_rate * (
-                    1 - 1 / (self._steps - self._step_decay) * (step - self._step_decay)),
-            false_fn=lambda: self._initial_learning_rate
-        ))
-        return self.current_learning_rate
-
+# ==================================U-Net=======================================
 
 class_number = 2  # 分类数
 
@@ -278,6 +254,104 @@ def U_Net(Height=227, Width=227):
     return model
 
 
+# =============================Attention Cycle GAN==============================
+def AttentionCycleGAN_v1_Generator(input_shape=(227, 227, 3), output_channel=3,
+                                   n_downsampling=2, n_ResBlock=9,
+                                   norm='batch_norm', attention=False):
+    Norm = _get_norm_layer(norm)
+    input_layer = keras.Input(shape=input_shape)
+    h = tf.pad(input_layer, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='REFLECT')
+    model_layer_1 = keras.models.Sequential([
+        Conv2D(64, (7, 7), (1, 1), 'valid'),
+        Norm(),
+    ], name='input_layer_1')
+    h = model_layer_1(h)
+
+    n_downsampling = n_downsampling
+    n_ResBlock = n_ResBlock
+    if attention:
+        output_channel = output_channel + 1
+    for i in range(n_downsampling):
+        mult = 2 ** i
+        model_layer_2 = keras.models.Sequential([
+            Conv2D(64 * mult * 2, (3, 3), (2, 2), 'same'),
+            Norm(),
+            ReLU(),
+        ])
+        h = model_layer_2(h)
+
+    mult = 2 ** n_downsampling
+    for i in range(n_ResBlock):
+        x = h
+
+        model_layer_3 = keras.models.Sequential([
+            Conv2D(64 * mult, (3, 3), padding='valid'),
+            Norm(),
+        ])
+
+        h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='REFLECT')
+        h = model_layer_3(h)
+        h = ReLU()(h)
+        h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='REFLECT')
+        h = model_layer_3(h)
+
+        h = x + h
+
+    upsampling = n_downsampling
+
+    for i in range(upsampling):
+        model_layer_4 = keras.models.Sequential([
+            Conv2DTranspose(64 * mult / 2, (3, 3), (2, 2), 'same'),
+            Norm(),
+            ReLU(),
+        ])
+        h = model_layer_4(h)
+        mult = mult / 2
+
+    h = tf.pad(h, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='REFLECT')
+    h = Conv2D(output_channel, (8, 8), (1, 1), 'valid')(h)
+    result_layer = h
+    if attention:
+        attention_mask = tf.sigmoid(h[:, :, :, :1])
+        content_mask = h[:, :, :, 1:]
+        attention_mask = tf.concat([attention_mask, attention_mask, attention_mask], axis=3)
+        result_layer = content_mask * attention_mask + input_layer * (1 - attention_mask)
+
+    return keras.Model(inputs=input_layer, outputs=result_layer)
+
+
+
+
+
+
+# ==============================================================================
+# =                          learning rate scheduler                           =
+# ==============================================================================
+
+class LinearDecay(tf.keras.optimizers.schedules.LearningRateSchedule):
+    def get_config(self):
+        pass
+
+    # if `step` < `step_decay`: use fixed learning rate
+    # else: linearly decay the learning rate to zero
+
+    def __init__(self, initial_learning_rate, total_steps, step_decay):
+        super(LinearDecay, self).__init__()
+        self._initial_learning_rate = initial_learning_rate
+        self._steps = total_steps
+        self._step_decay = step_decay
+        self.current_learning_rate = tf.Variable(initial_value=initial_learning_rate, trainable=False, dtype=tf.float32)
+
+    def __call__(self, step):
+        self.current_learning_rate.assign(tf.cond(
+            step >= self._step_decay,
+            true_fn=lambda: self._initial_learning_rate * (
+                    1 - 1 / (self._steps - self._step_decay) * (step - self._step_decay)),
+            false_fn=lambda: self._initial_learning_rate
+        ))
+        return self.current_learning_rate
+
+
 # 模型的子类写法，这是一个简单的实例，不用于使用
 class MyModel(tf.keras.Model):
 
@@ -306,6 +380,9 @@ class MyModel(tf.keras.Model):
         return Model(inputs=[x], outputs=self.call(x))
 
 
+# ==============================================================================
+# =                          Attention Module Layer                            =
+# ==============================================================================
 class SELayer(tf.keras.layers.Layer):
     def __init__(self, channels, reduction=16):
         super(SELayer, self).__init__()
@@ -360,10 +437,15 @@ class AttentionModuleHeye(keras.layers.Layer):
         return inputs * psi
 
 
-keras.backend.set_image_data_format('channels_first')
+# ==============================================================================
+# =                               Network Layer                                =
+# ==============================================================================
+
+# ==================================U-Net=======================================
 
 
 def squeeze_middle2axes_operator(x4d, C, output_size):
+    keras.backend.set_image_data_format('channels_first')
     shape = tf.shape(x4d)  # get dynamic tensor shape
     x4d = tf.reshape(x4d, [shape[0], shape[1], shape[2] * 2, shape[4] * 2])
     return x4d
@@ -406,9 +488,10 @@ class pixelshuffle(tf.keras.layers.Layer):
         perms = [0, 1, 5, 2, 4, 3]
         t = tf.transpose(t, perm=perms)
         t = Lambda(squeeze_middle2axes_operator, output_shape=squeeze_middle2axes_shape,
-                          arguments={'C': C, 'output_size': output_size})(t)
+                   arguments={'C': C, 'output_size': output_size})(t)
         t = tf.transpose(t, [0, 1, 3, 2])
         return t
+
     def compute_output_shape(self, input_shape):
         r = self.scale
         rrC, H, W = np.array(input_shape[1:])

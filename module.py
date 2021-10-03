@@ -310,6 +310,8 @@ def AttentionCycleGAN_v1_Generator(input_shape=(227, 227, 3), output_channel=3,
 
     h = tf.pad(h, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='REFLECT')
     h = Conv2D(output_channel, (8, 8), (1, 1), 'valid')(h)
+    h = Norm()(h)
+    h = tf.tanh(h)
     result_layer = h
     if attention:
         attention_mask = tf.sigmoid(h[:, :, :, :1])
@@ -389,12 +391,14 @@ class SELayer(tf.keras.layers.Layer):
         self.channels = channels
         self.reduction = reduction
         self.avg_poll = GlobalAvgPool2D()
-        self.fc = tf.keras.Sequential([
-            Dense(self.channels // self.reduction, use_bias=False),
-            ReLU(),
-            Dense(self.channels, use_bias=False)
-        ])
         self.sigmoid = tf.keras.activations.sigmoid
+
+    def fc(self, x):
+        x = Dense(self.channels // self.reduction, use_bias=False)(x),
+        x = ReLU()(x),
+        x = Dense(self.channels, use_bias=False)(x)
+
+        return x
 
     def call(self, inputs, *args, **kwargs):
         b, _, _, c = inputs.shape
@@ -413,20 +417,23 @@ class AttentionModuleHeye(keras.layers.Layer):
         self.F_l = F_l
         self.F_int = F_int
         super(AttentionModuleHeye, self).__init__()
-        self.W_g = keras.models.Sequential([
-            Conv2D(F_int, (1, 1), (1, 1), padding='same', use_bias=True),
-            BatchNormalization()
-        ])
-        self.W_x = keras.models.Sequential([
-            Conv2D(F_int, (1, 1), (1, 1), padding='same', use_bias=True),
-            BatchNormalization()
-        ])
-        self.psi = keras.models.Sequential([
-            Conv2D(1, (1, 1), (1, 1), padding='same', use_bias=True),
-            BatchNormalization(),
-        ])
         self.sigmoid = keras.activations.sigmoid
         self.relu = ReLU()
+
+    def W_g(self, x):
+        x = Conv2D(self.F_int, (1, 1), (1, 1), padding='same', use_bias=True)(x),
+        x = BatchNormalization()(x)
+        return  x
+
+    def W_x(self, x):
+        x = Conv2D(self.F_int, (1, 1), (1, 1), padding='same', use_bias=True)(x),
+        x = BatchNormalization()(x)
+        return x
+
+    def psi(self, x):
+        x = Conv2D(1, (1, 1), (1, 1), padding='same', use_bias=True)(x),
+        x = BatchNormalization()(x)
+        return x
 
     def call(self, inputs, g=None):
         g1 = self.W_g(g)

@@ -1,6 +1,7 @@
 import cv2
 import seaborn as sns
 import matplotlib.pyplot as plt
+import numpy as np
 from PIL import Image
 
 
@@ -29,4 +30,10 @@ def crop_image(image_path, size=227):
         i += 1
 
 
-# def plot_mask(mask):
+# 此函数是为了将原始的细长裂缝的裂缝图像227×227填充至512×512，然后调用分割效果极好的模型进行分割
+def pad_img(img, pad_size=(512, 512), values=255):
+
+    new_image = np.pad(img, ((512 - img.shape[0], 0), (512 - img.shape[1], 0), (0, 0)), 'constant',
+                       constant_values=values)
+
+    return new_image

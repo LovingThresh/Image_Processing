@@ -114,8 +114,9 @@ if training:
 #                               test
 # ----------------------------------------------------------------------
 test = True
+out_tensorflow_lite = True
 plot_predict = False
-plot_mask = True
+plot_mask = False
 if test:
     test_path = r'I:\Image Processing\validation_HEYE.txt'
     test_lines, num_test = get_data(test_path, training=False)
@@ -134,6 +135,17 @@ if test:
     model.compile(optimizer=optimizer,
                   loss=Metrics.Asymmetry_Binary_Loss,
                   metrics=['accuracy', Precision, Recall, F1, IOU])
+
+    # 尝试输出TensorFlow Lite模型
+    if out_tensorflow_lite:
+        converter = tf.lite.TFLiteConverter.from_keras_model(model)
+        converter.optimizations = [tf.lite.Optimize.DEFAULT]
+        converter.target_spec.supported_types = [tf.float16]
+        tflite_model = converter.convert()
+
+        # Save the model
+        with open('model_float16.tflite', 'wb') as f:
+            f.write(tflite_model)
 
     # 输出模型预测结果
     if plot_predict:

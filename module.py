@@ -419,8 +419,8 @@ def StudentNet(input_shape=(512, 512, 3),
         attention_mask = tf.concat([attention_mask, attention_mask], axis=3)
         h = content_mask * attention_mask
         # content_mask.shape=(B,H,W,C[通道数是输入时的C，此例中为2])  attention_mask.shape=(B,H,W,1) *[可解释为expand] C)
-    h = tf.tanh(h)
-    soft_target = keras.layers.Softmax(axis=3)(h)
+    h = keras.layers.Activation('tanh', name='Output_Label')(h)
+    soft_target = keras.layers.Softmax(axis=3, name='Soft_Label')(h)
 
     return keras.Model(inputs=inputs, outputs=[h, soft_target])
 

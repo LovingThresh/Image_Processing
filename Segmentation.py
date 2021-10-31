@@ -38,7 +38,8 @@ parser.add_argument('--loss', default='my losses mse')
 parser.add_argument('--model', default='ReSNet')
 parser.add_argument("--mode", default='client')
 parser.add_argument("--port", default=52162)
-parser.add_argument('--Illustrate', default=' Define My Losses with Attention')
+parser.add_argument('--Illustrate', default=' Define My Losses with Attention'
+                                            ' Knowledge Distillation')
 args = parser.parse_args()
 
 # ----------------------------------------------------------------------
@@ -53,11 +54,20 @@ args = parser.parse_args()
 train_lines, num_train = get_data(path=r'train_HEYE.txt', training=False)
 validation_lines, num_val = get_data(path=r'validation_HEYE.txt', training=False)
 batch_size = 1
-train_dataset = get_dataset_label(train_lines, batch_size, A_img_paths=r'C:\Users\liuye\Desktop\data\train\img/',
-                                  B_img_paths=r'C:\Users\liuye\Desktop\data\train\mask/', size=(512, 512),
-                                  shuffle=False)
-validation_dataset = get_dataset_label(validation_lines, batch_size, A_img_paths=r'C:\Users\liuye\Desktop\data\val\img/'
-                                       , B_img_paths=r'C:\Users\liuye\Desktop\data\val\mask/', size=(512, 512))
+train_dataset = get_dataset_label(train_lines, batch_size,
+                                  A_img_paths=r'C:\Users\liuye\Desktop\data\train\img/',
+                                  B_img_paths=r'C:\Users\liuye\Desktop\data\train\mask/',
+                                  C_img_paths=r'C:\Users\liuye\Desktop\data\train\teacher_mask/',
+                                  size=(512, 512),
+                                  shuffle=True,
+                                  KD=False)
+validation_dataset = get_dataset_label(validation_lines, batch_size,
+                                       A_img_paths=r'C:\Users\liuye\Desktop\data\val\img/',
+                                       B_img_paths=r'C:\Users\liuye\Desktop\data\val\mask/',
+                                       C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
+                                       size=(512, 512),
+                                       shuffle=True,
+                                       KD=False)
 
 # ----------------------------------------------------------------------
 #                               model
@@ -71,7 +81,9 @@ optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.0005)
 #                               output
 # ----------------------------------------------------------------------
 training = False
-if training:
+KD = True
+
+if training or KD:
     a = str(datetime.datetime.now())
     b = list(a)
     b[10] = '-'
@@ -113,22 +125,36 @@ if training:
 # ---------------------------------------------------------------------
 #                       Knowledge Distillation
 # ----------------------------------------------------------------------
-KD = True
-if KD:
-    train_Teacher_lines, num_Teacher_train = get_data(path=r'train_HEYE_Teacher.txt', training=False)
-    validation_Teacher_lines, num_Teacher_val = get_data(path=r'validation_HEYE_Teacher.txt', training=False)
-    batch_size = 1
-    train_Teacher_dataset = get_dataset_label(train_Teacher_lines, batch_size,
-                                              A_img_paths=r'C:\Users\liuye\Desktop\data\train\img/',
-                                              B_img_paths=r'C:\Users\liuye\Desktop\data\train\teacher_mask/',
-                                              size=(512, 512),
-                                              shuffle=True)
-    validation_Teacher_dataset = get_dataset_label(validation_Teacher_lines, batch_size,
-                                                   A_img_paths=r'C:\Users\liuye\Desktop\data\val\img/',
-                                                   B_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
-                                                   size=(512, 512),
-                                                   shuffle=True)
 
+if KD:
+    train_dataset = get_dataset_label(train_lines, batch_size,
+                                      A_img_paths=r'C:\Users\liuye\Desktop\data\train\img/',
+                                      B_img_paths=r'C:\Users\liuye\Desktop\data\train\mask/',
+                                      C_img_paths=r'C:\Users\liuye\Desktop\data\train\teacher_mask/',
+                                      size=(512, 512),
+                                      shuffle=True,
+                                      KD=True)
+    validation_dataset = get_dataset_label(validation_lines, batch_size,
+                                           A_img_paths=r'C:\Users\liuye\Desktop\data\val\img/',
+                                           B_img_paths=r'C:\Users\liuye\Desktop\data\val\mask/',
+                                           C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
+                                           size=(512, 512),
+                                           shuffle=True,
+                                           KD=True)
+    model = module.StudentNet(attention=True)
+    optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.0005)
+
+    model.compile(optimizer=optimizer,
+                  loss=Metrics.KD_Loss,
+                  metrics=['accuracy'])
+
+    model.fit_generator(train_dataset,
+                        steps_per_epoch=max(1, num_train // batch_size),
+                        epochs=args.epoch,
+                        validation_data=validation_dataset,
+                        validation_steps=max(1, num_val // batch_size),
+                        initial_epoch=0,
+                        callbacks=[tensorboard, checkpoint, checkpoints])
 
 # ---------------------------------------------------------------------
 #                               test

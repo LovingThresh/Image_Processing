@@ -3,15 +3,15 @@ import numpy as np
 import module
 import math
 
-sequence = np.asarray([1, 2e-2, 3e-3, 4e-4, 5e-5])
-plt.figure()
-for T in range(1, 5):
-    sum_sequence = np.exp(sequence / T).sum()
-    softmax_sequence = [np.exp(sequence / T) / sum_sequence]
-    plt.scatter(sequence.reshape((1, 5)), softmax_sequence)
-    print(softmax_sequence)
-
-plt.show()
+# sequence = np.asarray([1, 2e-2, 3e-3, 4e-4, 5e-5])
+# plt.figure()
+# for T in range(1, 5):
+#     sum_sequence = np.exp(sequence / T).sum()
+#     softmax_sequence = [np.exp(sequence / T) / sum_sequence]
+#     plt.scatter(sequence.reshape((1, 5)), softmax_sequence)
+#     print(softmax_sequence)
+#
+# plt.show()
 
 # 大概了解了softmax是如何通过参数T来控制软化的程度了
 # 现在我需要构建就一个新的模型，前面的结构完全沿用AwA-SegNet,在最后一层添加一层

@@ -83,7 +83,8 @@ class ItemPool:
         return tf.stack(out_items, axis=0)
 
 
-def get_data(path=r'I:\Image Processing\train.txt', training=True):
+def get_data(path=r'I:\Image Processing\train.txt',
+             training=True, shuffle=True):
     """
     获取样本和标签对应的行：获取训练集和验证集的数量
     :return: lines： 样本和标签的对应行： [num_train, num_val] 训练集和验证集数量
@@ -98,9 +99,10 @@ def get_data(path=r'I:\Image Processing\train.txt', training=True):
     print(lines)
 
     # 打乱行， 打乱数据有利于训练
-    np.random.seed(10101)
-    np.random.shuffle(lines)
-    np.random.seed(None)
+    if shuffle:
+        np.random.seed(10101)
+        np.random.shuffle(lines)
+        np.random.seed(None)
 
     if training:
         # 切分训练样本， 90% 训练： 10% 验证
@@ -113,12 +115,16 @@ def get_data(path=r'I:\Image Processing\train.txt', training=True):
         return lines, num_test
 
 
+# 注意train_HEYE是一样的,这里的C_img_paths是随便写的
 def get_dataset_label(lines, batch_size,
                       A_img_paths=r'I:\Image Processing\Rebuild_Image_95/',
                       B_img_paths=r'I:\Image Processing\Mix_img\95\label/',
+                      C_img_paths=r'I:\Image Processing\Mix_img\95\label/',
                       size=(512, 512), shuffle=True, KD=False):
     """
         生成器， 读取图片， 并对图片进行处理， 生成（样本，标签）
+        :param C_img_paths:
+        :param KD:
         :param shuffle:
         :param size:
         :param B_img_paths:
@@ -134,6 +140,7 @@ def get_dataset_label(lines, batch_size,
 
         x_train = []
         y_train = []
+        y_teacher_train = []
 
         # 一次获取batch——size大小的数据
 
@@ -153,11 +160,15 @@ def get_dataset_label(lines, batch_size,
             img_array = img_array * 2 - 1
             x_train.append(img_array)
 
-            # 2. 获取训练样本标签的名字
+            # 2.1 获取训练样本标签的名字
             train_y_name = lines[read_line].split(',')[1].replace('\n', '')
+
+            # 2.2 获取Teacher训练样本标签的名字,此处将文件的后缀.png改成.jpg就能转移到相应的Teacher_Label了
+            train_teacher_y_name = lines[read_line].split(',')[0].replace('\n', '')[:-4] + '.jpg'
 
             # 根据图片名字读取图片
             img_array = cv2.imread(B_img_paths + train_y_name)
+            img_teacher_array = cv2.imread(C_img_paths + train_teacher_y_name, cv2.IMREAD_GRAYSCALE)
             # img.show()
             # print(train_y_name)
             # img = img.resize(size)  # 改变图片大小 -> (227, 227)
@@ -177,21 +188,37 @@ def get_dataset_label(lines, batch_size,
             labels[:, :, 1] = (img_array[:, :, 1] != 255).astype(int).reshape(size)
             # labels[:, :, 0] = (img_array[:, :, 1] == 1).astype(int).reshape(size)
             # labels[:, :, 1] = (img_array[:, :, 1] != 1).astype(int).reshape(size)
+
+            teacher_label = ((img_teacher_array - 127.5) / 127.5).astype(np.float32).reshape(512, 512, 1)
+            teacher_label_opposite = 1 - teacher_label
+            teacher_label = np.concatenate([teacher_label, teacher_label_opposite], axis=2)
+
             y_train.append(labels)
+            y_teacher_train.append(teacher_label)
 
             # 遍历所有数据，记录现在所处的行， 读取完所有数据后，read_line=0,打乱重新开始
             read_line = (read_line + 1) % numbers
 
-        yield np.array(x_train), np.array(y_train)
+        if not KD:
+            yield np.array(x_train), np.array(y_train)
+
+        if KD:
+
+            yield np.array(x_train), [np.array(y_train), np.array(y_teacher_train)]
 
 
-def get_test_dataset_label(lines, A_img_paths=r'I:\Image Processing\Rebuild_Image_95/',
-                           B_img_paths=r'I:\Image Processing\Mix_img\95\label/', size=(512, 512)):
+def get_test_dataset_label(lines,
+                           A_img_paths=r'I:\Image Processing\Rebuild_Image_95/',
+                           B_img_paths=r'I:\Image Processing\Mix_img\95\label/',
+                           C_img_paths=r'I:\Image Processing\Mix_img\95\label/',
+                           size=(512, 512),
+                           KD=False):
     numbers = len(lines)
     read_line = 0
 
     x_train = []
     y_train = []
+    y_teacher_train = []
 
     for read_line in range(numbers):
         train_x_name = lines[read_line].split(',')[0]
@@ -208,8 +235,12 @@ def get_test_dataset_label(lines, A_img_paths=r'I:\Image Processing\Rebuild_Imag
         # 2. 获取训练样本标签的名字
         train_y_name = lines[read_line].split(',')[1].replace('\n', '')
 
+        train_teacher_y_name = lines[read_line].split(',')[0].replace('\n', '')[:-4] + '.jpg'
+
         # 根据图片名字读取图片
         img_array = cv2.imread(B_img_paths + train_y_name)
+        img_teacher_array = cv2.imread(C_img_paths + train_teacher_y_name, cv2.IMREAD_GRAYSCALE)
+
         # img.show()
         # print(train_y_name)
         # img = img.resize(size)  # 改变图片大小 -> (227, 227)
@@ -227,9 +258,17 @@ def get_test_dataset_label(lines, A_img_paths=r'I:\Image Processing\Rebuild_Imag
         labels[:, :, 0] = (img_array[:, :, 0] == 255).astype(int).reshape(size)
         labels[:, :, 1] = (img_array[:, :, 0] != 255).astype(int).reshape(size)
 
-        y_train.append(labels)
+        teacher_label = ((img_teacher_array - 127.5) / 127.5).astype(np.float32).reshape(512, 512, 1)
+        teacher_label_opposite = 1 - teacher_label
+        teacher_label = np.concatenate([teacher_label, teacher_label_opposite], axis=2)
 
-    return np.array(x_train), np.array(y_train)
+        y_train.append(labels)
+        y_teacher_train.append(teacher_label)
+    if not KD:
+        return np.array(x_train), np.array(y_train)
+
+    if KD:
+        return np.array(x_train), {'Output_Label': np.array(y_train), 'Soft_Label': np.array(y_teacher_train)}
 
 
 # 开始构建自己的标准化的Data_Loader
@@ -255,9 +294,9 @@ def load_data_from_filelist(filelist, batch_size, buffer_size, map_func):
 
 # 设计常用的map函数
 def map_function(file_path: str or list,
-                   file_mode: str,
-                   label_mode: str or None or int,
-                   label_num: int or None):
+                 file_mode: str,
+                 label_mode: str or None or int,
+                 label_num: int or None):
     """
     无标签的图像Load_Map函数
     带数字标签的图像Load_Map函数
@@ -267,6 +306,7 @@ def map_function(file_path: str or list,
     :param file_path: 图像数据的绝对路径
     :return: 单张图像数据的Tensor
     """
+
     def data_load(img_data_file_path):
 
         data_byte = tf.io.read_file(img_data_file_path)
@@ -304,4 +344,3 @@ def map_function(file_path: str or list,
             # 这种情况是指两张对应图片的情况
             label = data_load(label_file_path)
             return data, label
-

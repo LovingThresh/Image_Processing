@@ -14,6 +14,16 @@ def Asymmetry_Binary_Loss(y_true, y_pred):
     return mse(y_true_0, y_pred_0) + mse(y_true_1, y_pred_1)
 
 
+# KD损失函数-alpha=0.9
+def KD_Loss(y_true, y_pred, alpha=0.9):
+
+    mse = tf.losses.mean_squared_error
+    output_label_loss = mse(y_true[0], y_pred[0])
+    soft_label_loss = mse(y_true[1], y_pred[1])
+
+    return alpha * soft_label_loss + (1 - alpha) * output_label_loss
+
+
 def Precision(y_true, y_pred):
     """精确率"""
     tp = K.sum(K.round(K.clip(y_true[:, :, :, 0], 0, 1)) * K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))  # true positives

@@ -113,10 +113,13 @@ def get_data(path=r'I:\Image Processing\train.txt', training=True):
         return lines, num_test
 
 
-def get_dataset_label(lines, batch_size, A_img_paths=r'I:\Image Processing\Rebuild_Image_95/',
-                      B_img_paths=r'I:\Image Processing\Mix_img\95\label/', size=(227, 227)):
+def get_dataset_label(lines, batch_size,
+                      A_img_paths=r'I:\Image Processing\Rebuild_Image_95/',
+                      B_img_paths=r'I:\Image Processing\Mix_img\95\label/',
+                      size=(512, 512), shuffle=True, KD=False):
     """
         生成器， 读取图片， 并对图片进行处理， 生成（样本，标签）
+        :param shuffle:
         :param size:
         :param B_img_paths:
         :param A_img_paths:
@@ -135,7 +138,8 @@ def get_dataset_label(lines, batch_size, A_img_paths=r'I:\Image Processing\Rebui
         # 一次获取batch——size大小的数据
 
         for t in range(batch_size):
-            np.random.shuffle(lines)
+            if shuffle:
+                np.random.shuffle(lines)
 
             # 1. 获取训练文件的名字
             train_x_name = lines[read_line].split(',')[0]

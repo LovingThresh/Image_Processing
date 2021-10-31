@@ -8,8 +8,7 @@ import argparse
 import datetime
 import time
 
-import tensorflow.keras as keras
-import keras.models
+import cv2
 
 import Metrics
 import pylib as py
@@ -55,7 +54,8 @@ train_lines, num_train = get_data(path=r'train_HEYE.txt', training=False)
 validation_lines, num_val = get_data(path=r'validation_HEYE.txt', training=False)
 batch_size = 1
 train_dataset = get_dataset_label(train_lines, batch_size, A_img_paths=r'C:\Users\liuye\Desktop\data\train\img/',
-                                  B_img_paths=r'C:\Users\liuye\Desktop\data\train\mask/', size=(512, 512))
+                                  B_img_paths=r'C:\Users\liuye\Desktop\data\train\mask/', size=(512, 512),
+                                  shuffle=False)
 validation_dataset = get_dataset_label(validation_lines, batch_size, A_img_paths=r'C:\Users\liuye\Desktop\data\val\img/'
                                        , B_img_paths=r'C:\Users\liuye\Desktop\data\val\mask/', size=(512, 512))
 
@@ -111,10 +111,30 @@ if training:
               callbacks=[tensorboard, checkpoint, checkpoints])
 
 # ---------------------------------------------------------------------
+#                       Knowledge Distillation
+# ----------------------------------------------------------------------
+KD = True
+if KD:
+    train_Teacher_lines, num_Teacher_train = get_data(path=r'train_HEYE_Teacher.txt', training=False)
+    validation_Teacher_lines, num_Teacher_val = get_data(path=r'validation_HEYE_Teacher.txt', training=False)
+    batch_size = 1
+    train_Teacher_dataset = get_dataset_label(train_Teacher_lines, batch_size,
+                                              A_img_paths=r'C:\Users\liuye\Desktop\data\train\img/',
+                                              B_img_paths=r'C:\Users\liuye\Desktop\data\train\teacher_mask/',
+                                              size=(512, 512),
+                                              shuffle=True)
+    validation_Teacher_dataset = get_dataset_label(validation_Teacher_lines, batch_size,
+                                                   A_img_paths=r'C:\Users\liuye\Desktop\data\val\img/',
+                                                   B_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
+                                                   size=(512, 512),
+                                                   shuffle=True)
+
+
+# ---------------------------------------------------------------------
 #                               test
 # ----------------------------------------------------------------------
-test = True
-out_tensorflow_lite = True
+test = False
+out_tensorflow_lite = False
 plot_predict = False
 plot_mask = False
 if test:
@@ -140,7 +160,7 @@ if test:
     if out_tensorflow_lite:
         converter = tf.lite.TFLiteConverter.from_keras_model(model)
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
-        converter.target_spec.supported_types = [tf.float16]
+        # converter.target_spec.supported_types = [tf.float16]
         tflite_model = converter.convert()
 
         # Save the model
@@ -149,11 +169,14 @@ if test:
 
     # 输出模型预测结果
     if plot_predict:
+        a = time.time()
         model.evaluate(test_dataset_label[0], test_dataset_label[1], batch_size=batch_size)
+        b = time.time()
+        print(b - a)
         a = test_dataset_label[0][0].reshape(1, 512, 512, 3)
         # start = datetime.datetime.now()
         # start = time.time()
-        predict = model.predict(a)
+        predict = model.predict(test_dataset_label[0])
         # end = time.time()
         # end = datetime.datetime.now()
         # t = end - start
@@ -162,7 +185,6 @@ if test:
 
     # 输出模型中的Mask
     if plot_mask:
-
         # 本次实验中使用到的mask是layer的[84]
         Mask_out = model.layers[84].output
         attention_mask_model = models.Model(inputs=model.input, outputs=model.layers[84].output)

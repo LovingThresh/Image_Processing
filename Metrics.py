@@ -6,7 +6,8 @@ import numpy as np
 # 自定义损失函数
 def Asymmetry_Binary_Loss(y_true, y_pred):
     # 想要损失函数更加关心裂缝的标签值1
-    y_true_0, y_pred_0 = y_true[:, :, :, 0] * 255, y_pred[:, :, :, 0] * 255
+    y_true_0, y_pred_0 = y_true[:, :, :, 0] * 5, y_pred[:, :, :, 0] * 5
+    # y_true_0, y_pred_0 = y_true[:, :, :, 0] * 255, y_pred[:, :, :, 0] * 255
     y_true_1, y_pred_1 = y_true[:, :, :, 1], y_pred[:, :, :, 1]
     mse = tf.losses.mean_squared_error
 

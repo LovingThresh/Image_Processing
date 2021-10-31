@@ -1,4 +1,5 @@
 import numpy as np
+from Metrics import *
 import tensorflow as tf
 import tensorflow_addons as tfa
 import tensorflow.keras as keras
@@ -252,6 +253,176 @@ def U_Net(Height=227, Width=227):
     model.summary()
 
     return model
+
+
+def TeacherNet():
+
+
+    conv_model = keras.models.load_model(r'I:\Image Processing\output\2021-09-17-13-40-41.901808\checkpoint\ep390-val_loss0.004-val_acc0.999.h5',
+                                    custom_objects={'Precision': Precision,
+                                                    'Recall': Recall,
+                                                    'F1': F1,
+                                                    'IOU': IOU,
+                                                    'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss
+                                                    })
+    conv_model.trainable = False
+    # 组建网络
+    model = tf.keras.models.Sequential()
+    model.add(conv_model)
+    model.add(tf.keras.layers.Softmax(axis=3))
+
+    return model
+# Teacher_Label已经构建好了，接下来进行StudentsNet的构建
+def StudentNet():
+    def ResnetGenerator(input_shape=(512, 512, 3),
+                        output_channels=2,
+                        dim=64,
+                        n_downsamplings=2,
+                        n_blocks=8,
+                        norm='instance_norm',
+                        attention=False):
+        Norm = _get_norm_layer(norm)
+        if attention:
+            output_channels = output_channels + 1
+
+        # 受保护的用法
+        def _residual_block(x):
+            dim = x.shape[-1]
+            h = x
+
+            # 为什么这里不用padding参数呢？使用到了‘REFLECT’
+            h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='REFLECT')
+
+            h = keras.layers.Conv2D(dim, 3, padding='valid', use_bias=False)(h)
+            h = Norm()(h)
+            h = tf.nn.relu(h)
+
+            h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='REFLECT')
+            h = keras.layers.Conv2D(dim, 3, padding='valid', use_bias=False)(h)
+            h = Norm()(h)
+
+            return keras.layers.add([x, h])
+
+        # 0
+        h = inputs = keras.Input(shape=input_shape)
+
+        # 1
+        h = tf.pad(h, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='REFLECT')
+        h = keras.layers.Conv2D(dim, 7, padding='valid', use_bias=False)(h)
+        h = Norm()(h)
+        h = tf.nn.relu(h)
+
+        # 2
+        for _ in range(n_downsamplings):
+            dim *= 2
+            h = keras.layers.Conv2D(dim, 3, strides=2, padding='same', use_bias=False)(h)
+            h = Norm()(h)
+            h = tf.nn.relu(h)
+
+        # 3
+        for _ in range(n_blocks):
+            h = _residual_block(h)
+
+        # 4
+        for _ in range(n_downsamplings):
+            dim //= 2
+            h = keras.layers.Conv2DTranspose(dim, 3, strides=2, padding='same', use_bias=False)(h)
+            h = Norm()(h)
+            h = tf.nn.relu(h)
+
+        # 5
+        h = tf.pad(h, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='REFLECT')
+        if input_shape == (227, 227, 3):
+            h = keras.layers.Conv2D(output_channels, 8, padding='valid')(h)
+        elif input_shape == (512, 512, 3):
+            h = keras.layers.Conv2D(output_channels, 7, padding='valid')(h)
+        if attention:
+            attention_mask = tf.sigmoid(h[:, :, :, 0])
+            # attention_mask = tf.sigmoid(h[:, :, :, :1])
+            content_mask = h[:, :, :, 1:]
+            attention_mask = tf.expand_dims(attention_mask, axis=3)
+            attention_mask = tf.concat([attention_mask, attention_mask], axis=3)
+            h = content_mask * attention_mask
+            # content_mask.shape=(B,H,W,C[通道数是输入时的C，此例中为2])  attention_mask.shape=(B,H,W,1) *[可解释为expand] C)
+        h = tf.tanh(h)
+
+        return keras.Model(inputs=inputs, outputs=h)
+
+# 首先按照原始模型缩小进行实验
+def StudentNet(input_shape=(512, 512, 3),
+                    output_channels=2,
+                    dim=32,
+                    n_downsamplings=2,
+                    n_blocks=3,
+                    norm='instance_norm',
+                    attention=False):
+    Norm = _get_norm_layer(norm)
+    if attention:
+        output_channels = output_channels + 1
+
+    # 受保护的用法
+    def _residual_block(x):
+        dim = x.shape[-1]
+        h = x
+
+        # 为什么这里不用padding参数呢？使用到了‘REFLECT’
+        h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='REFLECT')
+
+        h = keras.layers.Conv2D(dim, 3, padding='valid', use_bias=False)(h)
+        h = Norm()(h)
+        h = tf.nn.relu(h)
+
+        h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='REFLECT')
+        h = keras.layers.Conv2D(dim, 3, padding='valid', use_bias=False)(h)
+        h = Norm()(h)
+
+        return keras.layers.add([x, h])
+
+    # 0
+    h = inputs = keras.Input(shape=input_shape)
+
+    # 1
+    h = tf.pad(h, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='REFLECT')
+    h = keras.layers.Conv2D(dim, 7, padding='valid', use_bias=False)(h)
+    h = Norm()(h)
+    h = tf.nn.relu(h)
+
+    # 2
+    for _ in range(n_downsamplings):
+        dim *= 2
+        h = keras.layers.Conv2D(dim, 3, strides=2, padding='same', use_bias=False)(h)
+        h = Norm()(h)
+        h = tf.nn.relu(h)
+
+    # 3
+    for _ in range(n_blocks):
+        h = _residual_block(h)
+
+    # 4
+    for _ in range(n_downsamplings):
+        dim //= 2
+        h = keras.layers.Conv2DTranspose(dim, 3, strides=2, padding='same', use_bias=False)(h)
+        h = Norm()(h)
+        h = tf.nn.relu(h)
+
+    # 5
+    h = tf.pad(h, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='REFLECT')
+    if input_shape == (227, 227, 3):
+        h = keras.layers.Conv2D(output_channels, 8, padding='valid')(h)
+    elif input_shape == (512, 512, 3):
+        h = keras.layers.Conv2D(output_channels, 7, padding='valid')(h)
+    if attention:
+        attention_mask = tf.sigmoid(h[:, :, :, 0])
+        # attention_mask = tf.sigmoid(h[:, :, :, :1])
+        content_mask = h[:, :, :, 1:]
+        attention_mask = tf.expand_dims(attention_mask, axis=3)
+        attention_mask = tf.concat([attention_mask, attention_mask], axis=3)
+        h = content_mask * attention_mask
+        # content_mask.shape=(B,H,W,C[通道数是输入时的C，此例中为2])  attention_mask.shape=(B,H,W,1) *[可解释为expand] C)
+    h = tf.tanh(h)
+    soft_target = keras.layers.Softmax(axis=3)(h)
+
+    return keras.Model(inputs=inputs, outputs=[h, soft_target])
 
 
 # =============================Attention Cycle GAN==============================

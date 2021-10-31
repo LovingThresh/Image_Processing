@@ -57,7 +57,7 @@ def Image_rebuild(image_path):
 
 
 # rebuilt Image
-path = './Mix_img/95/image/'
-file_list = get_file_path(path)
-for i in file_list:
-    Image_rebuild(i)
+# path = './Mix_img/95/image/'
+# file_list = get_file_path(path)
+# for i in file_list:
+#     Image_rebuild(i)

@@ -41,9 +41,9 @@ def pad_img(img, pad_size=(512, 512), values=255):
     return new_image
 
 
-path = r'C:\Users\liuye\Desktop\Slender Cracks Positive/'
-for i in os.listdir(path):
-    file_path = path + i
-    img = cv2.imread(file_path)
-    new_img = pad_img(img)
-    plt.imsave(r'C:\Users\liuye\Desktop\Machine_Background\Pad Crack Image\{}.jpg'.format(i[:5]), new_img)
+# path = r'C:\Users\liuye\Desktop\Slender Cracks Positive/'
+# for i in os.listdir(path):
+#     file_path = path + i
+#     img = cv2.imread(file_path)
+#     new_img = pad_img(img)
+#     plt.imsave(r'C:\Users\liuye\Desktop\Machine_Background\Pad Crack Image\{}.jpg'.format(i[:5]), new_img)

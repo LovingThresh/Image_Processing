@@ -30,7 +30,7 @@ tf.config.experimental.set_memory_growth(gpus[0], True)
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', default='HEYE')
 parser.add_argument('--datasets_dir', default='HEYE_img')
-parser.add_argument('--epoch', type=int, default=50)
+parser.add_argument('--epoch', type=int, default=300)
 parser.add_argument('--load_size', type=int, default=512)
 parser.add_argument('--crop_size', type=int, default=512)
 parser.add_argument('--batch_size', type=int, default=1)
@@ -82,7 +82,7 @@ optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.0005)
 #                               output
 # ----------------------------------------------------------------------
 training = False
-KD = True
+KD = False
 
 if training or KD:
     a = str(datetime.datetime.now())
@@ -160,9 +160,9 @@ if KD:
 # ---------------------------------------------------------------------
 #                               test
 # ----------------------------------------------------------------------
-test = False
+test = True
 out_tensorflow_lite = False
-plot_predict = False
+plot_predict = True
 plot_mask = False
 if test:
     test_path = r'I:\Image Processing\validation_HEYE.txt'
@@ -172,8 +172,8 @@ if test:
     B_test_img_paths = r'C:\Users\liuye\Desktop\data\val\mask/'
     C_test_img_paths = r'C:\Users\liuye\Desktop\data\val\teacher_mask/'
     test_dataset_label = get_test_dataset_label(test_lines, A_test_img_paths, B_test_img_paths, C_test_img_paths, KD=True)
-    model = keras.models.load_model(r'I:\Image Processing\output\2021-10-31-13-19-39.025594\checkpoint\ep027'
-                                    r'-val_loss0.018-val_acc0.970.h5',
+    model = keras.models.load_model(r'I:\Image Processing\output\2021-10-31-14-51-02.725162\checkpoint\ep299'
+                                    r'-val_loss0.226-val_acc0.947.h5',
                                     custom_objects={'Precision': Precision,
                                                     'Recall': Recall,
                                                     'F1': F1,
@@ -198,14 +198,16 @@ if test:
 
     # 输出模型预测结果
     if plot_predict:
+        aa = tf.convert_to_tensor(test_dataset_label[0])
         a = time.time()
-        model.evaluate(test_dataset_label[0], test_dataset_label[1], batch_size=batch_size)
+        # model.evaluate(test_dataset_label[0], test_dataset_label[1], batch_size=batch_size)
+        model.predict(aa, batch_size=1)
         b = time.time()
         print(b - a)
-        a = test_dataset_label[0][0].reshape(1, 512, 512, 3)
+        # a = test_dataset_label[0][0].reshape(1, 512, 512, 3)
         # start = datetime.datetime.now()
         # start = time.time()
-        predict = model.predict(test_dataset_label[0])
+        # predict = model.predict(test_dataset_label[0])
         # end = time.time()
         # end = datetime.datetime.now()
         # t = end - start

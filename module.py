@@ -349,6 +349,7 @@ def StudentNet():
         return keras.Model(inputs=inputs, outputs=h)
 
 # 首先按照原始模型缩小进行实验
+# 两种形态进行对比
 def StudentNet(input_shape=(512, 512, 3),
                     output_channels=2,
                     dim=32,
@@ -423,7 +424,7 @@ def StudentNet(input_shape=(512, 512, 3),
     soft_target = keras.layers.Softmax(axis=3, name='Soft_Label')(h)
 
     return keras.Model(inputs=inputs, outputs=[h, soft_target])
-
+    # return keras.Model(inputs=inputs, outputs=h)
 
 # =============================Attention Cycle GAN==============================
 def AttentionCycleGAN_v1_Generator(input_shape=(227, 227, 3), output_channel=3,

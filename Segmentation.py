@@ -30,7 +30,7 @@ tf.config.experimental.set_memory_growth(gpus[0], True)
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', default='HEYE')
 parser.add_argument('--datasets_dir', default='HEYE_img')
-parser.add_argument('--epoch', type=int, default=5)
+parser.add_argument('--epoch', type=int, default=50)
 parser.add_argument('--load_size', type=int, default=512)
 parser.add_argument('--crop_size', type=int, default=512)
 parser.add_argument('--batch_size', type=int, default=1)
@@ -74,6 +74,7 @@ validation_dataset = get_dataset_label(validation_lines, batch_size,
 # ----------------------------------------------------------------------
 
 model = module.ResnetGenerator(attention=True)
+# model = module.StudentNet(attention=True)
 # model = module.U_Net(227, 227)
 optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.0005)
 
@@ -94,8 +95,8 @@ if training or KD:
     tensorboard = tf.keras.callbacks.TensorBoard(log_dir='./output/{}/tensorboard/'.format(c))
     checkpoint = tf.keras.callbacks.ModelCheckpoint('./output/{}/checkpoint/'.format(c) +
                                                     'ep{epoch:03d}-val_loss{'
-                                                    'val_loss:.3f}-val_acc{'
-                                                    'val_accuracy:.3f}.h5',
+                                                    'Output_Label_loss:.3f}-val_acc{'
+                                                    'Output_Label_accuracy:.3f}.h5',
                                                     monitor='val_accuracy', verbose=0,
                                                     save_best_only=False, save_weights_only=False,
                                                     mode='auto', period=1)
@@ -145,8 +146,8 @@ if KD:
     optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.0005)
 
     model.compile(optimizer=optimizer,
-                  loss=Metrics.KD_Loss,
-                  metrics=['accuracy'])
+                  loss={'Output_Label': Metrics.H_KD_Loss, 'Soft_Label': Metrics.S_KD_Loss},
+                  metrics=['accuracy', Precision, Recall, F1, IOU])
 
     model.fit_generator(train_dataset,
                         steps_per_epoch=max(1, num_train // batch_size),
@@ -169,18 +170,20 @@ if test:
     batch_size = 1
     A_test_img_paths = r'C:\Users\liuye\Desktop\data\val\img/'
     B_test_img_paths = r'C:\Users\liuye\Desktop\data\val\mask/'
-    test_dataset_label = get_test_dataset_label(test_lines, A_test_img_paths, B_test_img_paths)
-    model = keras.models.load_model(r'I:\Image Processing\output\2021-09-17-13-40-41.901808\checkpoint\ep470'
-                                    r'-val_loss7.181-val_acc0.918.h5',
+    C_test_img_paths = r'C:\Users\liuye\Desktop\data\val\teacher_mask/'
+    test_dataset_label = get_test_dataset_label(test_lines, A_test_img_paths, B_test_img_paths, C_test_img_paths, KD=True)
+    model = keras.models.load_model(r'I:\Image Processing\output\2021-10-31-13-19-39.025594\checkpoint\ep027'
+                                    r'-val_loss0.018-val_acc0.970.h5',
                                     custom_objects={'Precision': Precision,
                                                     'Recall': Recall,
                                                     'F1': F1,
                                                     'IOU': IOU,
-                                                    'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss
+                                                    'H_KD_Loss': H_KD_Loss,
+                                                    'S_KD_Loss': S_KD_Loss
                                                     })
     model.compile(optimizer=optimizer,
                   loss=Metrics.Asymmetry_Binary_Loss,
-                  metrics=['accuracy', Precision, Recall, F1, IOU])
+                  metrics=['accuracy', Precision, Recall, F1, IOU, H_KD_Loss, S_KD_Loss])
 
     # 尝试输出TensorFlow Lite模型
     if out_tensorflow_lite:
@@ -190,7 +193,7 @@ if test:
         tflite_model = converter.convert()
 
         # Save the model
-        with open('model_float16.tflite', 'wb') as f:
+        with open('student_model_float16.tflite', 'wb') as f:
             f.write(tflite_model)
 
     # 输出模型预测结果

@@ -277,7 +277,7 @@ def TeacherNet():
 # 两种形态进行对比
 def StudentNet(input_shape=(512, 512, 3),
                     output_channels=2,
-                    dim=64,
+                    dim=32,
                     n_downsamplings=2,
                     n_blocks=2,
                     norm='instance_norm',
@@ -292,13 +292,13 @@ def StudentNet(input_shape=(512, 512, 3),
         h = x
 
         # 为什么这里不用padding参数呢？使用到了‘REFLECT’
-        h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='REFLECT')
+        h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]])
 
         h = keras.layers.Conv2D(dim, 3, padding='valid', use_bias=False)(h)
         h = Norm()(h)
         h = tf.nn.relu(h)
 
-        h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='REFLECT')
+        h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]])
         h = keras.layers.Conv2D(dim, 3, padding='valid', use_bias=False)(h)
         h = Norm()(h)
 
@@ -308,7 +308,7 @@ def StudentNet(input_shape=(512, 512, 3),
     h = inputs = keras.Input(shape=input_shape)
 
     # 1
-    h = tf.pad(h, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='REFLECT')
+    h = tf.pad(h, [[0, 0], [3, 3], [3, 3], [0, 0]])
     h = keras.layers.Conv2D(dim, 7, padding='valid', use_bias=False)(h)
     h = Norm()(h)
     h = tf.nn.relu(h)
@@ -332,7 +332,7 @@ def StudentNet(input_shape=(512, 512, 3),
         h = tf.nn.relu(h)
 
     # 5
-    h = tf.pad(h, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='REFLECT')
+    h = tf.pad(h, [[0, 0], [3, 3], [3, 3], [0, 0]])
     if input_shape == (227, 227, 3):
         h = keras.layers.Conv2D(output_channels, 8, padding='valid')(h)
     elif input_shape == (512, 512, 3):

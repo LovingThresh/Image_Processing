@@ -9,7 +9,6 @@ import datetime
 import time
 
 import cv2
-
 import Metrics
 import pylib as py
 from Metrics import *
@@ -19,6 +18,7 @@ import module
 from plot import plot_heatmap
 from tensorflow.keras import models
 import matplotlib.pyplot as plt
+
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(gpus[0], True)
@@ -30,7 +30,7 @@ tf.config.experimental.set_memory_growth(gpus[0], True)
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', default='HEYE')
 parser.add_argument('--datasets_dir', default='HEYE_img')
-parser.add_argument('--epoch', type=int, default=300)
+parser.add_argument('--epoch', type=int, default=600)
 parser.add_argument('--load_size', type=int, default=512)
 parser.add_argument('--crop_size', type=int, default=512)
 parser.add_argument('--batch_size', type=int, default=1)
@@ -39,7 +39,9 @@ parser.add_argument('--model', default='ReSNet')
 parser.add_argument("--mode", default='client')
 parser.add_argument("--port", default=52162)
 parser.add_argument('--Illustrate', default=' Define My Losses with Attention'
-                                            ' Knowledge Distillation')
+                                            ' Knowledge Distillation'
+                                            ' 32通道 2卷积层 SaveModel'
+                                            ' 在Pad函数做了适应性调整，以适应TensorRT')
 args = parser.parse_args()
 
 # ----------------------------------------------------------------------
@@ -82,7 +84,7 @@ optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.0005)
 #                               output
 # ----------------------------------------------------------------------
 training = False
-KD = False
+KD = True
 
 if training or KD:
     a = str(datetime.datetime.now())
@@ -96,7 +98,7 @@ if training or KD:
     checkpoint = tf.keras.callbacks.ModelCheckpoint('./output/{}/checkpoint/'.format(c) +
                                                     'ep{epoch:03d}-val_loss{'
                                                     'Output_Label_loss:.3f}-val_acc{'
-                                                    'Output_Label_accuracy:.3f}.h5',
+                                                    'Output_Label_accuracy:.3f}/',
                                                     monitor='val_accuracy', verbose=0,
                                                     save_best_only=False, save_weights_only=False,
                                                     mode='auto', period=1)
@@ -160,9 +162,10 @@ if KD:
 # ---------------------------------------------------------------------
 #                               test
 # ----------------------------------------------------------------------
-test = True
+test = False
 out_tensorflow_lite = False
-plot_predict = True
+out_tensorRT_model = False
+plot_predict = False
 plot_mask = False
 if test:
     test_path = r'I:\Image Processing\validation_HEYE.txt'
@@ -172,8 +175,8 @@ if test:
     B_test_img_paths = r'C:\Users\liuye\Desktop\data\val\mask/'
     C_test_img_paths = r'C:\Users\liuye\Desktop\data\val\teacher_mask/'
     test_dataset_label = get_test_dataset_label(test_lines, A_test_img_paths, B_test_img_paths, C_test_img_paths, KD=True)
-    model = keras.models.load_model(r'I:\Image Processing\output\2021-10-31-14-51-02.725162\checkpoint\ep299'
-                                    r'-val_loss0.226-val_acc0.947.h5',
+    model = keras.models.load_model(r'I:\Image Processing\output\2021-11-08-18-22-38.894406\checkpoint\ep599'
+                                    r'-val_loss0.200-val_acc0.949',
                                     custom_objects={'Precision': Precision,
                                                     'Recall': Recall,
                                                     'F1': F1,
@@ -188,20 +191,31 @@ if test:
     # 尝试输出TensorFlow Lite模型
     if out_tensorflow_lite:
         converter = tf.lite.TFLiteConverter.from_keras_model(model)
-        converter.optimizations = [tf.lite.Optimize.DEFAULT]
-        # converter.target_spec.supported_types = [tf.float16]
+        # converter.optimizations = [tf.lite.Optimize.DEFAULT]
+        converter.target_spec.supported_types = [tf.float32]
         tflite_model = converter.convert()
 
         # Save the model
-        with open('student_model_float16.tflite', 'wb') as f:
+        with open('student_epp599.tflite', 'wb') as f:
             f.write(tflite_model)
+
+    if out_tensorRT_model:
+
+        params = tf.experimental.tensorrt.ConversionParams(
+            precision_mode='FP32', maximum_cached_engines=16)
+
+        converter = tf.experimental.tensorrt.Converter(
+            input_saved_model_dir=r'output/2021-10-31-20-15-01.247650/checkpoint/ep529-val_loss0.213-val_acc0.946',
+            conversion_params=params)
+        converter.convert()
+        converter.save(r'checkpoint/ep529-val_loss0.213-val_acc0.946')
 
     # 输出模型预测结果
     if plot_predict:
         aa = tf.convert_to_tensor(test_dataset_label[0])
         a = time.time()
         # model.evaluate(test_dataset_label[0], test_dataset_label[1], batch_size=batch_size)
-        model.predict(aa, batch_size=1)
+        predict = model.predict(aa, batch_size=1)
         b = time.time()
         print(b - a)
         # a = test_dataset_label[0][0].reshape(1, 512, 512, 3)
@@ -212,7 +226,7 @@ if test:
         # end = datetime.datetime.now()
         # t = end - start
         # print(t)
-        # plot_heatmap(predict)
+        plot_heatmap(predict[0][0,:,:,:])
 
     # 输出模型中的Mask
     if plot_mask:

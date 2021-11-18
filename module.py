@@ -279,7 +279,7 @@ def StudentNet(input_shape=(512, 512, 3),
                     output_channels=2,
                     dim=32,
                     n_downsamplings=2,
-                    n_blocks=3,
+                    n_blocks=4,
                     norm='instance_norm',
                     attention=False):
     Norm = _get_norm_layer(norm)
@@ -294,12 +294,12 @@ def StudentNet(input_shape=(512, 512, 3),
         # 为什么这里不用padding参数呢？使用到了‘REFLECT’
         h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]])
 
-        h = keras.layers.Conv2D(dim, 3, padding='valid', use_bias=False)(h)
+        h = keras.layers.SeparableConv2D(dim, 3, padding='valid', use_bias=False)(h)
         h = Norm()(h)
         h = tf.nn.relu(h)
 
         h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]])
-        h = keras.layers.Conv2D(dim, 3, padding='valid', use_bias=False)(h)
+        h = keras.layers.SeparableConv2D(dim, 3, padding='valid', use_bias=False)(h)
         h = Norm()(h)
 
         return keras.layers.add([x, h])
@@ -309,14 +309,14 @@ def StudentNet(input_shape=(512, 512, 3),
 
     # 1
     h = tf.pad(h, [[0, 0], [3, 3], [3, 3], [0, 0]])
-    h = keras.layers.Conv2D(dim, 7, padding='valid', use_bias=False)(h)
+    h = keras.layers.SeparableConv2D(dim, 7, padding='valid', use_bias=False)(h)
     h = Norm()(h)
     h = tf.nn.relu(h)
 
     # 2
     for _ in range(n_downsamplings):
         dim *= 2
-        h = keras.layers.Conv2D(dim, 3, strides=2, padding='same', use_bias=False)(h)
+        h = keras.layers.SeparableConv2D(dim, 3, strides=2, padding='same', use_bias=False)(h)
         h = Norm()(h)
         h = tf.nn.relu(h)
 
@@ -334,9 +334,9 @@ def StudentNet(input_shape=(512, 512, 3),
     # 5
     h = tf.pad(h, [[0, 0], [3, 3], [3, 3], [0, 0]])
     if input_shape == (227, 227, 3):
-        h = keras.layers.Conv2D(output_channels, 8, padding='valid')(h)
+        h = keras.layers.SeparableConv2D(output_channels, 8, padding='valid')(h)
     elif input_shape == (512, 512, 3):
-        h = keras.layers.Conv2D(output_channels, 7, padding='valid')(h)
+        h = keras.layers.SeparableConv2D(output_channels, 7, padding='valid')(h)
     if attention:
         attention_mask = tf.sigmoid(h[:, :, :, 0])
         # attention_mask = tf.sigmoid(h[:, :, :, :1])

@@ -41,7 +41,8 @@ parser.add_argument("--port", default=52162)
 parser.add_argument('--Illustrate', default=' Define My Losses with Attention'
                                             ' Knowledge Distillation'
                                             ' 32通道 4卷积层 SaveModel'
-                                            ' 在Pad函数做了适应性调整，以适应TensorRT')
+                                            ' 在Pad函数做了适应性调整，以适应TensorRT'
+                                            ' SeparableConv2D + 15 * 10')
 args = parser.parse_args()
 
 # ----------------------------------------------------------------------

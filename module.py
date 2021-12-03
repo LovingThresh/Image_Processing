@@ -24,13 +24,14 @@ def _get_norm_layer(norm):
         return keras.layers.LayerNormalization
 
 
-def ResnetGenerator(input_shape=(512, 512, 3),
+def ResnetGenerator(input_shape=(None, None, 3),
                     output_channels=2,
                     dim=64,
                     n_downsamplings=2,
                     n_blocks=8,
                     norm='instance_norm',
-                    attention=False):
+                    attention=False,
+                    ShallowConnect=False):
     Norm = _get_norm_layer(norm)
     if attention:
         output_channels = output_channels + 1
@@ -61,6 +62,8 @@ def ResnetGenerator(input_shape=(512, 512, 3),
     h = keras.layers.Conv2D(dim, 7, padding='valid', use_bias=False)(h)
     h = Norm()(h)
     h = tf.nn.relu(h)
+    if ShallowConnect:
+        f1 = h
 
     # 2
     for _ in range(n_downsamplings):
@@ -68,24 +71,40 @@ def ResnetGenerator(input_shape=(512, 512, 3),
         h = keras.layers.Conv2D(dim, 3, strides=2, padding='same', use_bias=False)(h)
         h = Norm()(h)
         h = tf.nn.relu(h)
-
+        if (_ == 0) & ShallowConnect:
+            f2 = h
+    if ShallowConnect:
+        f3 = h
     # 3
     for _ in range(n_blocks):
         h = _residual_block(h)
 
+    if ShallowConnect:
+        h = keras.layers.concatenate([h, f3], axis=-1)
+
     # 4
     for _ in range(n_downsamplings):
+        if (_ == 1) & ShallowConnect:
+            h = keras.layers.concatenate([h, f2], axis=-1)
         dim //= 2
+        for _ in range(1):
+            h = _residual_block(h)
         h = keras.layers.Conv2DTranspose(dim, 3, strides=2, padding='same', use_bias=False)(h)
         h = Norm()(h)
         h = tf.nn.relu(h)
 
     # 5
+    if ShallowConnect:
+        h = keras.layers.concatenate([h, f1], axis=-1)
     h = tf.pad(h, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='REFLECT')
+    for _ in range(1):
+        h = _residual_block(h)
+
     if input_shape == (227, 227, 3):
         h = keras.layers.Conv2D(output_channels, 8, padding='valid')(h)
-    elif input_shape == (512, 512, 3):
-        h = keras.layers.Conv2D(output_channels, 7, padding='valid')(h)
+    else:
+        h = keras.layers.Conv2D(output_channels, 7, padding='valid', use_bias=False)(h)
+
     if attention:
         attention_mask = tf.sigmoid(h[:, :, :, 0])
         # attention_mask = tf.sigmoid(h[:, :, :, :1])
@@ -94,8 +113,8 @@ def ResnetGenerator(input_shape=(512, 512, 3),
         attention_mask = tf.concat([attention_mask, attention_mask], axis=3)
         h = content_mask * attention_mask
         # content_mask.shape=(B,H,W,C[通道数是输入时的C，此例中为2])  attention_mask.shape=(B,H,W,1) *[可解释为expand] C)
-    h = tf.tanh(h)
-
+    # h = tf.tanh(h)
+    h = keras.layers.Softmax()(h)
     return keras.Model(inputs=inputs, outputs=h)
 
 
@@ -226,7 +245,14 @@ def decoder(feature_map_list, class_number, input_height=227, input_width=227, e
     x = Conv2D(class_number, (3, 3), padding='same')(x)
     # reshape：(224, 224, 2) -> (224*224, 2)
 
-    x = Conv2DTranspose(class_number, (4, 4), (1, 1), 'valid')(x)
+    x = Conv2DTranspose(class_number, (5, 5), (1, 1), 'valid')(x)
+    x = BatchNormalization()(x)
+
+    x = Conv2DTranspose(class_number, (5, 5), (1, 1), 'valid')(x)
+    x = BatchNormalization()(x)
+
+    x = tf.tanh(x)
+
 
     return x
 
@@ -250,7 +276,7 @@ def U_Net(Height=227, Width=227):
     # 构建模型
     model = Model(img_input, output)
 
-    model.summary()
+    # model.summary()
 
     return model
 
@@ -281,11 +307,15 @@ def StudentNet(input_shape=(512, 512, 3),
                     n_downsamplings=2,
                     n_blocks=4,
                     norm='instance_norm',
-                    attention=False):
+                    attention=False,
+                    Separable_convolution=False):
     Norm = _get_norm_layer(norm)
     if attention:
         output_channels = output_channels + 1
-
+    if Separable_convolution:
+        layer_Conv2D = keras.layers.SeparableConv2D
+    else:
+        layer_Conv2D = keras.layers.Conv2D
     # 受保护的用法
     def _residual_block(x):
         dim = x.shape[-1]
@@ -294,12 +324,12 @@ def StudentNet(input_shape=(512, 512, 3),
         # 为什么这里不用padding参数呢？使用到了‘REFLECT’
         h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]])
 
-        h = keras.layers.SeparableConv2D(dim, 3, padding='valid', use_bias=False)(h)
+        h = layer_Conv2D(dim, 3, padding='valid', use_bias=False)(h)
         h = Norm()(h)
         h = tf.nn.relu(h)
 
         h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]])
-        h = keras.layers.SeparableConv2D(dim, 3, padding='valid', use_bias=False)(h)
+        h = layer_Conv2D(dim, 3, padding='valid', use_bias=False)(h)
         h = Norm()(h)
 
         return keras.layers.add([x, h])
@@ -309,14 +339,14 @@ def StudentNet(input_shape=(512, 512, 3),
 
     # 1
     h = tf.pad(h, [[0, 0], [3, 3], [3, 3], [0, 0]])
-    h = keras.layers.SeparableConv2D(dim, 7, padding='valid', use_bias=False)(h)
+    h = layer_Conv2D(dim, 7, padding='valid', use_bias=False)(h)
     h = Norm()(h)
     h = tf.nn.relu(h)
 
     # 2
     for _ in range(n_downsamplings):
         dim *= 2
-        h = keras.layers.SeparableConv2D(dim, 3, strides=2, padding='same', use_bias=False)(h)
+        h = layer_Conv2D(dim, 3, strides=2, padding='same', use_bias=False)(h)
         h = Norm()(h)
         h = tf.nn.relu(h)
 
@@ -334,9 +364,9 @@ def StudentNet(input_shape=(512, 512, 3),
     # 5
     h = tf.pad(h, [[0, 0], [3, 3], [3, 3], [0, 0]])
     if input_shape == (227, 227, 3):
-        h = keras.layers.SeparableConv2D(output_channels, 8, padding='valid')(h)
+        h = layer_Conv2D(output_channels, 8, padding='valid')(h)
     elif input_shape == (512, 512, 3):
-        h = keras.layers.SeparableConv2D(output_channels, 7, padding='valid')(h)
+        h = layer_Conv2D(output_channels, 7, padding='valid')(h)
     if attention:
         attention_mask = tf.sigmoid(h[:, :, :, 0])
         # attention_mask = tf.sigmoid(h[:, :, :, :1])

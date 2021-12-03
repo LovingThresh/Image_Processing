@@ -1,0 +1,10 @@
+
+_python:S2208"GImport only needed names or import the module and then use its members.(€‘Ñê
+_python:S2208"GImport only needed names or import the module and then use its members.(¸ØøÒ
+qpython:S117"URename this local variable "Norm" to match the regular expression ^[_a-z][a-z0-9_]*$.(›Ø¿Èûÿÿÿÿ
+mpython:S1542"URename function "ResnetGenerator" to match the regular expression ^[a-z_][a-z0-9_]*$.(–¤”û
+qpython:S117Y"URename this local variable "Norm" to match the regular expression ^[_a-z][a-z0-9_]*$.(›Ø¿Èûÿÿÿÿ
+tpython:S1542T"WRename function "ConvDiscriminator" to match the regular expression ^[a-z_][a-z0-9_]*$.(Ç¸—Êùÿÿÿÿ
+jpython:S117ï"RRename this parameter "Height" to match the regular expression ^[_a-z][a-z0-9_]*$.(ÈÁ…¡
+ipython:S117ï"QRename this parameter "Width" to match the regular expression ^[_a-z][a-z0-9_]*$.(ÈÁ…¡
+dpython:S1542ï"KRename function "U_Net" to match the regular expression ^[a-z_][a-z0-9_]*$.(ÈÁ…¡

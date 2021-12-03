@@ -8,6 +8,7 @@ import argparse
 import datetime
 import time
 
+import tensorflow as tf
 import cv2
 import Metrics
 import pylib as py
@@ -19,7 +20,6 @@ from plot import plot_heatmap
 from tensorflow.keras import models
 import matplotlib.pyplot as plt
 
-
 gpus = tf.config.experimental.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(gpus[0], True)
 
@@ -28,21 +28,30 @@ tf.config.experimental.set_memory_growth(gpus[0], True)
 # ----------------------------------------------------------------------
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', default='HEYE')
-parser.add_argument('--datasets_dir', default='HEYE_img')
-parser.add_argument('--epoch', type=int, default=600)
+parser.add_argument('--dataset', default='Stage_1')
+parser.add_argument('--datasets_dir', default=r'Stage_1')
+parser.add_argument('--epoch', type=int, default=150)
 parser.add_argument('--load_size', type=int, default=512)
 parser.add_argument('--crop_size', type=int, default=512)
 parser.add_argument('--batch_size', type=int, default=1)
+
 parser.add_argument('--loss', default='my losses mse')
-parser.add_argument('--model', default='ReSNet')
+parser.add_argument('--loss_parameter', default='150')
+
+parser.add_argument('--model', default='ResNet')
+parser.add_argument('--Student_model', default='False')
+parser.add_argument('--Student_model_Convolution', default='Standard Convolution')
+
 parser.add_argument("--mode", default='client')
 parser.add_argument("--port", default=52162)
 parser.add_argument('--Illustrate', default=' Define My Losses with Attention'
-                                            ' Knowledge Distillation'
-                                            ' 32通道 4卷积层 SaveModel'
+                                            ' No Knowledge Distillation'
+                                            ' ResNet SaveModel'
                                             ' 在Pad函数做了适应性调整，以适应TensorRT'
-                                            ' SeparableConv2D + 15 * 10')
+                                            ' StandardConv2D + 1'
+                                            ' 实验结果 - 9！！'
+                                            ' 不使用dice_loss增加了复杂度'
+                                            ' 使用数据增强函数')
 args = parser.parse_args()
 
 # ----------------------------------------------------------------------
@@ -54,21 +63,19 @@ args = parser.parse_args()
 # train_dataset = get_dataset_label(lines[:num_train], batch_size)
 # validation_dataset = get_dataset_label(lines[num_train:], batch_size)
 
-train_lines, num_train = get_data(path=r'train_HEYE.txt', training=False)
-validation_lines, num_val = get_data(path=r'validation_HEYE.txt', training=False)
+train_lines, num_train = get_data(path=r'L:\ALASegmentationNets\Data\Stage_2\train.txt', training=False)
+validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets\Data\Stage_2\val.txt', training=False)
 batch_size = 1
 train_dataset = get_dataset_label(train_lines, batch_size,
-                                  A_img_paths=r'C:\Users\liuye\Desktop\data\train\img/',
-                                  B_img_paths=r'C:\Users\liuye\Desktop\data\train\mask/',
-                                  C_img_paths=r'C:\Users\liuye\Desktop\data\train\teacher_mask/',
-                                  size=(512, 512),
+                                  A_img_paths=r'L:\ALASegmentationNets\Data\Stage_2\train\img/',
+                                  B_img_paths=r'L:\ALASegmentationNets\Data\Stage_2\train\mask/',
+                                  C_img_paths=r'C:\Users\liuye\Desktop\data\train_2\teacher_mask/',
                                   shuffle=True,
                                   KD=False)
 validation_dataset = get_dataset_label(validation_lines, batch_size,
-                                       A_img_paths=r'C:\Users\liuye\Desktop\data\val\img/',
-                                       B_img_paths=r'C:\Users\liuye\Desktop\data\val\mask/',
+                                       A_img_paths=r'L:\ALASegmentationNets\Data\Stage_2\val\img/',
+                                       B_img_paths=r'L:\ALASegmentationNets\Data\Stage_2\val\mask/',
                                        C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
-                                       size=(512, 512),
                                        shuffle=True,
                                        KD=False)
 
@@ -76,16 +83,16 @@ validation_dataset = get_dataset_label(validation_lines, batch_size,
 #                               model
 # ----------------------------------------------------------------------
 
-model = module.ResnetGenerator(attention=True)
+model = module.ResnetGenerator(attention=True, ShallowConnect=True)
 # model = module.StudentNet(attention=True)
-# model = module.U_Net(227, 227)
-optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.0005)
+# model = module.U_Net(512, 512)
+optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.00005)
 
 # ----------------------------------------------------------------------
 #                               output
 # ----------------------------------------------------------------------
-training = False
-KD = True
+training = True
+KD = False
 
 if training or KD:
     a = str(datetime.datetime.now())
@@ -94,28 +101,28 @@ if training or KD:
     b[13] = '-'
     b[16] = '-'
     c = ''.join(b)
-    os.makedirs(r'./output/{}'.format(c))
-    tensorboard = tf.keras.callbacks.TensorBoard(log_dir='./output/{}/tensorboard/'.format(c))
-    checkpoint = tf.keras.callbacks.ModelCheckpoint('./output/{}/checkpoint/'.format(c) +
-                                                    'ep{epoch:03d}-val_loss{'
-                                                    'Output_Label_loss:.3f}-val_acc{'
-                                                    'Output_Label_accuracy:.3f}/',
+    os.makedirs(r'E:/output/{}'.format(c))
+    tensorboard = tf.keras.callbacks.TensorBoard(log_dir='E:/output/{}/tensorboard/'.format(c))
+    checkpoint = tf.keras.callbacks.ModelCheckpoint('E:/output/{}/checkpoint/'.format(c) +
+                                                    'ep{epoch:03d}-val_loss{val_loss:.3f}/',
+                                                    #                                                 'Output_Label_loss:.3f}-val_acc{'
+                                                    #                                                 'Output_Label_accuracy:.3f}/',
                                                     monitor='val_accuracy', verbose=0,
                                                     save_best_only=False, save_weights_only=False,
                                                     mode='auto', period=1)
-    checkpoints_directory = r'./output/{}/checkpoints/'.format(c)
+    checkpoints_directory = r'E:/output/{}/checkpoints/'.format(c)
 
     checkpoints = tf.train.Checkpoint()
     manager = tf.train.CheckpointManager(checkpoints, directory=os.path.join(checkpoints_directory, "ckpt"),
                                          max_to_keep=3)
     checkpoints = CheckpointSaver(manager=manager)
-    py.args_to_yaml('./output/{}/settings.yml'.format(c), args)
+    py.args_to_yaml('E:/output/{}/settings.yml'.format(c), args)
 
 # ----------------------------------------------------------------------
 #                               train
 # ----------------------------------------------------------------------
 model.compile(optimizer=optimizer,
-              loss=Metrics.Asymmetry_Binary_Loss,
+              loss=Metrics.Asymmetry_Binary_Loss_2,
               metrics=['accuracy', Precision, Recall, F1, IOU])
 if training:
     model.fit(train_dataset,
@@ -145,7 +152,7 @@ if KD:
                                            size=(512, 512),
                                            shuffle=True,
                                            KD=True)
-    model = module.StudentNet(attention=True)
+    model = module.StudentNet(dim=32, n_blocks=4, attention=True, Separable_convolution=False)
     optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.0005)
 
     model.compile(optimizer=optimizer,
@@ -175,7 +182,8 @@ if test:
     A_test_img_paths = r'C:\Users\liuye\Desktop\data\val\img/'
     B_test_img_paths = r'C:\Users\liuye\Desktop\data\val\mask/'
     C_test_img_paths = r'C:\Users\liuye\Desktop\data\val\teacher_mask/'
-    test_dataset_label = get_test_dataset_label(test_lines, A_test_img_paths, B_test_img_paths, C_test_img_paths, KD=True)
+    test_dataset_label = get_test_dataset_label(test_lines, A_test_img_paths, B_test_img_paths, C_test_img_paths,
+                                                KD=True)
     model = keras.models.load_model(r'I:\Image Processing\output\2021-11-08-18-22-38.894406\checkpoint\ep599'
                                     r'-val_loss0.200-val_acc0.949',
                                     custom_objects={'Precision': Precision,
@@ -201,7 +209,6 @@ if test:
             f.write(tflite_model)
 
     if out_tensorRT_model:
-
         params = tf.experimental.tensorrt.ConversionParams(
             precision_mode='FP32', maximum_cached_engines=16)
 
@@ -227,7 +234,7 @@ if test:
         # end = datetime.datetime.now()
         # t = end - start
         # print(t)
-        plot_heatmap(predict[0][0,:,:,:])
+        plot_heatmap(predict[0][0, :, :, :])
 
     # 输出模型中的Mask
     if plot_mask:

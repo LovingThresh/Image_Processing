@@ -153,9 +153,9 @@ def get_dataset_label(lines, batch_size,
 
             # 根据图片名字读取图片
             img = Image.open(A_img_paths + train_x_name)
-            img = img.resize(size)
+            # img = img.resize(size)
             img_array = np.array(img)
-
+            size = (img_array.shape[0], img_array.shape[1])
             img_array = img_array / 255.0  # 标准化
             img_array = img_array * 2 - 1
             x_train.append(img_array)
@@ -164,11 +164,13 @@ def get_dataset_label(lines, batch_size,
             train_y_name = lines[read_line].split(',')[1].replace('\n', '')
 
             # 2.2 获取Teacher训练样本标签的名字,此处将文件的后缀.png改成.jpg就能转移到相应的Teacher_Label了
-            train_teacher_y_name = lines[read_line].split(',')[0].replace('\n', '')[:-4] + '.jpg'
+            if KD:
+                train_teacher_y_name = lines[read_line].split(',')[0].replace('\n', '')[:-4] + '.jpg'
 
             # 根据图片名字读取图片
             img_array = cv2.imread(B_img_paths + train_y_name)
-            img_teacher_array = cv2.imread(C_img_paths + train_teacher_y_name, cv2.IMREAD_GRAYSCALE)
+            if KD:
+                img_teacher_array = cv2.imread(C_img_paths + train_teacher_y_name, cv2.IMREAD_GRAYSCALE)
             # img.show()
             # print(train_y_name)
             # img = img.resize(size)  # 改变图片大小 -> (227, 227)
@@ -177,7 +179,7 @@ def get_dataset_label(lines, batch_size,
             # img_array, 三个通道数相同， 没法做交叉熵， 所以下面要进行”图像分层“
 
             # 生成标签， 标签的shape是（227， 227， class_numbers) = (227, 227, 2), 里面的值全是0
-            labels = np.zeros((size[0], size[1], 2), np.int)
+            labels = np.zeros((img_array.shape[0], img_array.shape[1], 2), np.int)
 
             # 下面将(224,224,3) => (224,224,2),不仅是通道数的变化，还有，
             # 原本背景和裂缝在一个通道里面，现在将斑马线和背景放在不同的通道里面。
@@ -186,15 +188,17 @@ def get_dataset_label(lines, batch_size,
             # 相当于合并的图层分层！！！！
             labels[:, :, 0] = (img_array[:, :, 1] == 255).astype(int).reshape(size)
             labels[:, :, 1] = (img_array[:, :, 1] != 255).astype(int).reshape(size)
+            labels = labels.astype(np.float32)
             # labels[:, :, 0] = (img_array[:, :, 1] == 1).astype(int).reshape(size)
             # labels[:, :, 1] = (img_array[:, :, 1] != 1).astype(int).reshape(size)
-
-            teacher_label = ((img_teacher_array - 127.5) / 127.5).astype(np.float32).reshape(512, 512, 1)
-            teacher_label_opposite = 1 - teacher_label
-            teacher_label = np.concatenate([teacher_label, teacher_label_opposite], axis=2)
+            if KD:
+                teacher_label = ((img_teacher_array - 127.5) / 127.5).astype(np.float32).reshape(512, 512, 1)
+                teacher_label_opposite = 1 - teacher_label
+                teacher_label = np.concatenate([teacher_label, teacher_label_opposite], axis=2)
 
             y_train.append(labels)
-            y_teacher_train.append(teacher_label)
+            if KD:
+                y_teacher_train.append(teacher_label)
 
             # 遍历所有数据，记录现在所处的行， 读取完所有数据后，read_line=0,打乱重新开始
             read_line = (read_line + 1) % numbers

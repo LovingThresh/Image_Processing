@@ -78,4 +78,4 @@ def args_to_json(path, namespace, **kwagrs):
 
 
 def args_to_yaml(path, namespace, **kwagrs):
-    serialization.save_yaml(path, vars(namespace), **kwagrs)
+    serialization.save_yaml(path, vars(namespace), **kwagrs, allow_unicode=True, encoding='GBK')

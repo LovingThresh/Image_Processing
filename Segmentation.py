@@ -10,6 +10,8 @@ import time
 
 import tensorflow as tf
 import cv2
+
+import I_data
 import Metrics
 import pylib as py
 from Metrics import *
@@ -28,8 +30,8 @@ tf.config.experimental.set_memory_growth(gpus[0], True)
 # ----------------------------------------------------------------------
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', default='Stage_1')
-parser.add_argument('--datasets_dir', default=r'Stage_1')
+parser.add_argument('--dataset', default='Stage_200')
+parser.add_argument('--datasets_dir', default=r'Stage_200')
 parser.add_argument('--epoch', type=int, default=150)
 parser.add_argument('--load_size', type=int, default=512)
 parser.add_argument('--crop_size', type=int, default=512)
@@ -49,9 +51,9 @@ parser.add_argument('--Illustrate', default=' Define My Losses with Attention'
                                             ' ResNet SaveModel'
                                             ' 在Pad函数做了适应性调整，以适应TensorRT'
                                             ' StandardConv2D + 1'
-                                            ' 实验结果 - 9！！'
+                                            ' 实验结果 - 12！！'
                                             ' 不使用dice_loss增加了复杂度'
-                                            ' 使用数据增强函数')
+                                            ' crack200数据集，我就不信了！使用数据增强函数, 然后用MSE')
 args = parser.parse_args()
 
 # ----------------------------------------------------------------------
@@ -63,27 +65,40 @@ args = parser.parse_args()
 # train_dataset = get_dataset_label(lines[:num_train], batch_size)
 # validation_dataset = get_dataset_label(lines[num_train:], batch_size)
 
-train_lines, num_train = get_data(path=r'L:\ALASegmentationNets\Data\Stage_2\train.txt', training=False)
-validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets\Data\Stage_2\val.txt', training=False)
+train_lines, num_train = get_data(path=r'L:\ALASegmentationNets\Data\Stage_200\train.txt', training=False)
+validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets\Data\Stage_200\val.txt', training=False)
 batch_size = 1
 train_dataset = get_dataset_label(train_lines, batch_size,
-                                  A_img_paths=r'L:\ALASegmentationNets\Data\Stage_2\train\img/',
-                                  B_img_paths=r'L:\ALASegmentationNets\Data\Stage_2\train\mask/',
+                                  A_img_paths=r'L:\ALASegmentationNets\Data\Stage_200\train\img/',
+                                  B_img_paths=r'L:\ALASegmentationNets\Data\Stage_200\train\mask/',
                                   C_img_paths=r'C:\Users\liuye\Desktop\data\train_2\teacher_mask/',
                                   shuffle=True,
                                   KD=False)
 validation_dataset = get_dataset_label(validation_lines, batch_size,
-                                       A_img_paths=r'L:\ALASegmentationNets\Data\Stage_2\val\img/',
-                                       B_img_paths=r'L:\ALASegmentationNets\Data\Stage_2\val\mask/',
+                                       A_img_paths=r'L:\ALASegmentationNets\Data\Stage_200\val\img/',
+                                       B_img_paths=r'L:\ALASegmentationNets\Data\Stage_200\val\mask/',
                                        C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
                                        shuffle=True,
                                        KD=False)
+
+
+train_data = lambda: (data for data in train_dataset)
+validation_data = lambda: (val_data for val_data in validation_dataset)
+
+
+# 将普通的生成器变成Dataset
+keras_train_dataset = tf.data.Dataset.from_generator(train_data, output_types=np.float32)
+keras_validation_dataset = tf.data.Dataset.from_generator(validation_data, output_types=np.float32)
+
+keras_train_dataset = keras_train_dataset.map(I_data.map_function_for_keras,
+                                              num_parallel_calls=tf.data.experimental.AUTOTUNE).batch(batch_size) \
+    .prefetch(tf.data.experimental.AUTOTUNE)
 
 # ----------------------------------------------------------------------
 #                               model
 # ----------------------------------------------------------------------
 
-model = module.ResnetGenerator(attention=True, ShallowConnect=True)
+model = module.ResnetGenerator(attention=False, ShallowConnect=False)
 # model = module.StudentNet(attention=True)
 # model = module.U_Net(512, 512)
 optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.00005)
@@ -122,7 +137,7 @@ if training or KD:
 #                               train
 # ----------------------------------------------------------------------
 model.compile(optimizer=optimizer,
-              loss=Metrics.Asymmetry_Binary_Loss_2,
+              loss=Metrics.Asymmetry_Binary_Loss,
               metrics=['accuracy', Precision, Recall, F1, IOU])
 if training:
     model.fit(train_dataset,

@@ -1,3 +1,5 @@
+import random
+
 import numpy as np
 import tensorflow as tf
 import tf2lib as tl
@@ -348,3 +350,26 @@ def map_function(file_path: str or list,
             # 这种情况是指两张对应图片的情况
             label = data_load(label_file_path)
             return data, label
+
+
+# 图像分割的map函数
+
+def map_function_for_keras(data):
+    image, label = data[0], data[1]
+    a = random.randint(1, 600)
+    image = image * 127.5 + 127.5
+
+    image = tf.image.random_flip_left_right(image, seed=a)
+    image = tf.image.random_flip_up_down(image, seed=a)
+
+    image = tf.image.random_saturation(image, 0.2, 0.8, seed=a)
+    image = tf.image.random_brightness(image, 0.5, seed=a)
+    image = tf.image.random_hue(image, 0.5, seed=a)
+    image = tf.image.random_contrast(image, 0.2, 0.8, seed=a)
+
+    image = (image - 127.5) / 127.5
+
+    label = tf.image.random_flip_left_right(label, seed=a)
+    label = tf.image.random_flip_up_down(label, seed=a)
+
+    return image, label

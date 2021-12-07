@@ -113,8 +113,8 @@ def ResnetGenerator(input_shape=(None, None, 3),
         attention_mask = tf.concat([attention_mask, attention_mask], axis=3)
         h = content_mask * attention_mask
         # content_mask.shape=(B,H,W,C[通道数是输入时的C，此例中为2])  attention_mask.shape=(B,H,W,1) *[可解释为expand] C)
-    # h = tf.tanh(h)
-    h = keras.layers.Softmax()(h)
+    h = tf.tanh(h)
+    # h = keras.layers.Softmax()(h)
     return keras.Model(inputs=inputs, outputs=h)
 
 

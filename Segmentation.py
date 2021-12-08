@@ -19,6 +19,7 @@ from I_data import *
 from Callback import *
 import module
 from plot import plot_heatmap
+from SegementationModels import *
 from tensorflow.keras import models
 import matplotlib.pyplot as plt
 
@@ -30,30 +31,30 @@ tf.config.experimental.set_memory_growth(gpus[0], True)
 # ----------------------------------------------------------------------
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', default='Stage_200')
-parser.add_argument('--datasets_dir', default=r'Stage_200')
-parser.add_argument('--epoch', type=int, default=150)
+parser.add_argument('--dataset', default='Stage_1')
+parser.add_argument('--datasets_dir', default=r'Stage_1')
+parser.add_argument('--epoch', type=int, default=300)
 parser.add_argument('--load_size', type=int, default=512)
 parser.add_argument('--crop_size', type=int, default=512)
 parser.add_argument('--batch_size', type=int, default=1)
 
-parser.add_argument('--loss', default='my losses mse')
-parser.add_argument('--loss_parameter', default='150')
+parser.add_argument('--loss', default='dice loss')
+parser.add_argument('--loss_parameter', default='1')
 
-parser.add_argument('--model', default='ResNet')
+parser.add_argument('--model', default='VGG16-U-net')
 parser.add_argument('--Student_model', default='False')
 parser.add_argument('--Student_model_Convolution', default='Standard Convolution')
 
 parser.add_argument("--mode", default='client')
 parser.add_argument("--port", default=52162)
-parser.add_argument('--Illustrate', default=' Define My Losses with Attention'
+parser.add_argument('--Illustrate', default=' with No Attention with No ShallowConnect with DataArgumentation'
                                             ' No Knowledge Distillation'
-                                            ' ResNet SaveModel'
+                                            ' U-Net SaveModel'
                                             ' 在Pad函数做了适应性调整，以适应TensorRT'
                                             ' StandardConv2D + 1'
-                                            ' 实验结果 - 12！！'
-                                            ' 不使用dice_loss增加了复杂度'
-                                            ' crack200数据集，我就不信了！使用数据增强函数, 然后用MSE')
+                                            ' 实验结果 - 16！！'
+                                            ' 使用dice_loss'
+                                            ' Stage_1数据集,使用数据增强函数, 然后用dice_loss')
 args = parser.parse_args()
 
 # ----------------------------------------------------------------------
@@ -65,25 +66,29 @@ args = parser.parse_args()
 # train_dataset = get_dataset_label(lines[:num_train], batch_size)
 # validation_dataset = get_dataset_label(lines[num_train:], batch_size)
 
-train_lines, num_train = get_data(path=r'L:\ALASegmentationNets\Data\Stage_200\train.txt', training=False)
-validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets\Data\Stage_200\val.txt', training=False)
+train_lines, num_train = get_data(path=r'L:\ALASegmentationNets\Data\Stage_1\train.txt', training=False)
+validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets\Data\Stage_1\val.txt', training=False)
 batch_size = 1
 train_dataset = get_dataset_label(train_lines, batch_size,
-                                  A_img_paths=r'L:\ALASegmentationNets\Data\Stage_200\train\img/',
-                                  B_img_paths=r'L:\ALASegmentationNets\Data\Stage_200\train\mask/',
+                                  A_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\train\img/',
+                                  B_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\train\mask/',
                                   C_img_paths=r'C:\Users\liuye\Desktop\data\train_2\teacher_mask/',
                                   shuffle=True,
                                   KD=False)
 validation_dataset = get_dataset_label(validation_lines, batch_size,
-                                       A_img_paths=r'L:\ALASegmentationNets\Data\Stage_200\val\img/',
-                                       B_img_paths=r'L:\ALASegmentationNets\Data\Stage_200\val\mask/',
+                                       A_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\val\img/',
+                                       B_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\val\mask/',
                                        C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
                                        shuffle=True,
                                        KD=False)
 
 
-train_data = lambda: (data for data in train_dataset)
-validation_data = lambda: (val_data for val_data in validation_dataset)
+def ChangeAsGeneratorFunction(x):
+    return lambda: (data for data in x)
+
+
+train_data = ChangeAsGeneratorFunction(train_dataset)
+validation_data = ChangeAsGeneratorFunction(validation_dataset)
 
 
 # 将普通的生成器变成Dataset
@@ -98,9 +103,11 @@ keras_train_dataset = keras_train_dataset.map(I_data.map_function_for_keras,
 #                               model
 # ----------------------------------------------------------------------
 
-model = module.ResnetGenerator(attention=False, ShallowConnect=False)
+# model = module.ResnetGenerator(attention=True, ShallowConnect=False)
 # model = module.StudentNet(attention=True)
 # model = module.U_Net(512, 512)
+Encoder, features = VGG_16_Encoder((512, 512, 3))
+model = FCN_32sEncoder(Encoder, features, 2)
 optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.00005)
 
 # ----------------------------------------------------------------------

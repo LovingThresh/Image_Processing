@@ -87,8 +87,9 @@ def ResnetGenerator(input_shape=(None, None, 3),
         if (_ == 1) & ShallowConnect:
             h = keras.layers.concatenate([h, f2], axis=-1)
         dim //= 2
-        for _ in range(1):
-            h = _residual_block(h)
+        # for _ in range(1):
+        #     h = _residual_block(h)
+        h = keras.layers.Dropout(0.5)(h)
         h = keras.layers.Conv2DTranspose(dim, 3, strides=2, padding='same', use_bias=False)(h)
         h = Norm()(h)
         h = tf.nn.relu(h)
@@ -97,8 +98,8 @@ def ResnetGenerator(input_shape=(None, None, 3),
     if ShallowConnect:
         h = keras.layers.concatenate([h, f1], axis=-1)
     h = tf.pad(h, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='REFLECT')
-    for _ in range(1):
-        h = _residual_block(h)
+    # for _ in range(1):
+    #     h = _residual_block(h)
 
     if input_shape == (227, 227, 3):
         h = keras.layers.Conv2D(output_channels, 8, padding='valid')(h)
@@ -113,8 +114,8 @@ def ResnetGenerator(input_shape=(None, None, 3),
         attention_mask = tf.concat([attention_mask, attention_mask], axis=3)
         h = content_mask * attention_mask
         # content_mask.shape=(B,H,W,C[通道数是输入时的C，此例中为2])  attention_mask.shape=(B,H,W,1) *[可解释为expand] C)
-    h = tf.tanh(h)
-    # h = keras.layers.Softmax()(h)
+    # h = tf.tanh(h)
+    h = keras.layers.Softmax()(h)
     return keras.Model(inputs=inputs, outputs=h)
 
 

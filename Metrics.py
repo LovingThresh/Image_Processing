@@ -37,7 +37,8 @@ def dice_loss(y_true, y_pred, ep=1e-8):
     alpha = tf.constant(2, tf.float32)
     # y_true_0, y_pred_0 = tf.cast(y_true[:, :, :, 0], tf.float32), tf.cast(y_pred[:, :, :, 0].as_dtype(tf.float32),
     # tf.float32)
-    y_true_0, y_pred_0 = y_true[:, :, :, 0], y_pred[:, :, :, 0]
+    # y_true_0, y_pred_0 = y_true[:, :, :, 0], y_pred[:, :, :, 0]
+    y_true_0, y_pred_0 = y_true, y_pred
     intersection = alpha * tf.cast(K.sum(y_pred_0 * y_true_0), tf.float32) + ep
     union = tf.cast(K.sum(y_pred_0), tf.float32) + tf.cast(K.sum(y_true_0), tf.float32) + ep
     loss = 1 - intersection / union

@@ -38,23 +38,23 @@ parser.add_argument('--load_size', type=int, default=512)
 parser.add_argument('--crop_size', type=int, default=512)
 parser.add_argument('--batch_size', type=int, default=1)
 
-parser.add_argument('--loss', default='dice loss')
+parser.add_argument('--loss', default='binary_crossentropy loss')
 parser.add_argument('--loss_parameter', default='1')
 
-parser.add_argument('--model', default='VGG16-U-net')
+parser.add_argument('--model', default='ResNet')
 parser.add_argument('--Student_model', default='False')
 parser.add_argument('--Student_model_Convolution', default='Standard Convolution')
 
 parser.add_argument("--mode", default='client')
 parser.add_argument("--port", default=52162)
-parser.add_argument('--Illustrate', default=' with No Attention with No ShallowConnect with DataArgumentation'
+parser.add_argument('--Illustrate', default=' with Attention with No ShallowConnect with DataArgumentation'
                                             ' No Knowledge Distillation'
-                                            ' U-Net SaveModel'
+                                            ' Res-Net SaveModel'
                                             ' 在Pad函数做了适应性调整，以适应TensorRT'
                                             ' StandardConv2D + 1'
-                                            ' 实验结果 - 16！！'
-                                            ' 使用dice_loss'
-                                            ' Stage_1数据集,使用数据增强函数, 然后用dice_loss')
+                                            ' 实验结果 - 18！！'
+                                            ' 使用binary_crossentropy_loss'
+                                            ' Stage_1数据集,使用数据增强函数, 然后用binary_crossentropy_loss')
 args = parser.parse_args()
 
 # ----------------------------------------------------------------------
@@ -106,10 +106,10 @@ keras_train_dataset = keras_train_dataset.map(I_data.map_function_for_keras,
 # model = module.ResnetGenerator(attention=True, ShallowConnect=False)
 # model = module.StudentNet(attention=True)
 # model = module.U_Net(512, 512)
-Encoder, features = VGG_16_Encoder((512, 512, 3))
-model = FCN_32sEncoder(Encoder, features, 2)
+Encoder = resnet34(512, 512, 2)
+model = ResNetDecoder(Encoder, 2)
 optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.00005)
-
+# optimizer = keras.optimizers.SGD(0.01, momentum=0.9, decay=0.0005)
 # ----------------------------------------------------------------------
 #                               output
 # ----------------------------------------------------------------------

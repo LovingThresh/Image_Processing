@@ -103,7 +103,7 @@ keras_train_dataset = keras_train_dataset.map(I_data.map_function_for_keras,
 #                               model
 # ----------------------------------------------------------------------
 
-model = module.ResnetGenerator((512, 512, 3), attention=True, ShallowConnect=True, n_blocks=2, dim=16)
+model = module.ResnetGenerator_with_ThreeChannel((512, 512, 3), attention=True, ShallowConnect=False)
 # model = module.StudentNet(attention=True)
 # model = module.U_Net(512, 512)
 # Encoder = resnet34(512, 512, 2)

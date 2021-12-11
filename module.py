@@ -70,26 +70,26 @@ def ResnetGenerator(input_shape=(None, None, 3),
     # 2
     for i in range(n_downsamplings):
         dim *= 2
-        x = h
-        x = keras.layers.Conv2D(dim, (7, 3), strides=1, padding='same', use_bias=False)(x)
-        x = keras.layers.Conv2D(dim, (3, 1), strides=1, padding='same', use_bias=False)(x)
-        # x = keras.layers.Conv2D(dim, (3, 7), strides=1, padding='same', use_bias=False)(x)
-        # x = keras.layers.Conv2D(dim, (1, 3), strides=1, padding='same', use_bias=False)(x)
-        x = keras.layers.MaxPooling2D((2, 2))(x)
-        x = Norm()(x)
-        x = tf.nn.relu(x)
-
-        y = h
-        y = keras.layers.Conv2D(dim, (7, 3), strides=1, padding='same', use_bias=False)(y)
-        y = keras.layers.Conv2D(dim, (3, 1), strides=1, padding='same', use_bias=False)(y)
-        # x = keras.layers.Conv2D(dim, (3, 7), strides=1, padding='same', use_bias=False)(x)
-        # x = keras.layers.Conv2D(dim, (1, 3), strides=1, padding='same', use_bias=False)(x)
-        y = keras.layers.MaxPooling2D((2, 2))(y)
-        y = Norm()(y)
-        y = tf.nn.relu(y)
-
-        h = keras.layers.concatenate([x, y], -1)
-        h = keras.layers.Conv2D(dim, (1, 1), strides=1, padding='same', use_bias=False)(h)
+        # x = h
+        # x = keras.layers.Conv2D(dim, (7, 3), strides=1, padding='same', use_bias=False)(x)
+        # x = keras.layers.Conv2D(dim, (3, 1), strides=1, padding='same', use_bias=False)(x)
+        # # x = keras.layers.Conv2D(dim, (3, 7), strides=1, padding='same', use_bias=False)(x)
+        # # x = keras.layers.Conv2D(dim, (1, 3), strides=1, padding='same', use_bias=False)(x)
+        # x = keras.layers.MaxPooling2D((2, 2))(x)
+        # x = Norm()(x)
+        # x = tf.nn.relu(x)
+        #
+        # y = h
+        # y = keras.layers.Conv2D(dim, (7, 3), strides=1, padding='same', use_bias=False)(y)
+        # y = keras.layers.Conv2D(dim, (3, 1), strides=1, padding='same', use_bias=False)(y)
+        # # x = keras.layers.Conv2D(dim, (3, 7), strides=1, padding='same', use_bias=False)(x)
+        # # x = keras.layers.Conv2D(dim, (1, 3), strides=1, padding='same', use_bias=False)(x)
+        # y = keras.layers.MaxPooling2D((2, 2))(y)
+        # y = Norm()(y)
+        # y = tf.nn.relu(y)
+        #
+        # h = keras.layers.concatenate([x, y], -1)
+        # h = keras.layers.Conv2D(dim, (1, 1), strides=1, padding='same', use_bias=False)(h)
 
         # y = h
         # y = DilatedConv2D(k_size=3, rate=3, out_channel=dim, padding='SAME', name='dilatedConv_y_0_{}'.format(i))(y)
@@ -99,10 +99,10 @@ def ResnetGenerator(input_shape=(None, None, 3),
         # y = tf.nn.relu(y)
         #
         #
-        # h = DilatedConv2D(k_size=3, rate=2, out_channel=dim, padding='SAME', name='dilatedConv{}'.format(i))(h)
-        # h = keras.layers.Conv2D(dim, 3, strides=2, padding='same', use_bias=False)(h)
-        # h = Norm()(h)
-        # h = tf.nn.relu(h)
+        h = DilatedConv2D(k_size=3, rate=2, out_channel=dim, padding='SAME', name='dilatedConv{}'.format(i))(h)
+        h = keras.layers.Conv2D(dim, 3, strides=2, padding='same', use_bias=False)(h)
+        h = Norm()(h)
+        h = tf.nn.relu(h)
         if (i == 0) & ShallowConnect:
             f2 = h
         #
@@ -670,3 +670,186 @@ class pixelshuffle(tf.keras.layers.Layer):
         width = W * r if W is not None else -1
 
         return input_shape[0], rrC // (r ** 2), height, width
+
+
+
+def ResnetGenerator_with_ThreeChannel(input_shape=(None, None, 3),
+                    output_channels=2,
+                    dim=64,
+                    n_downsamplings=2,
+                    n_blocks=8,
+                    norm='instance_norm',
+                    attention=False,
+                    ShallowConnect=False):
+    Norm = _get_norm_layer(norm)
+    if attention:
+        output_channels = output_channels + 1
+
+    # 受保护的用法
+    def _residual_block(x):
+        dim = x.shape[-1]
+        h = x
+
+        # 为什么这里不用padding参数呢？使用到了‘REFLECT’
+        h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='REFLECT')
+
+        h = keras.layers.Conv2D(dim, 3, padding='valid', use_bias=False)(h)
+        h = Norm()(h)
+        h = tf.nn.relu(h)
+
+        h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='REFLECT')
+        h = keras.layers.Conv2D(dim, 3, padding='valid', use_bias=False)(h)
+        h = Norm()(h)
+
+        return keras.layers.add([x, h])
+
+    # 0
+    h = inputs = keras.Input(shape=input_shape)
+    h = tf.pad(h, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='REFLECT')
+
+    # 针对x进行膨胀卷积
+    x = h
+    x = DilatedConv2D(k_size=3, rate=3, out_channel=dim, padding='VALID', name='dilatedConv0_1')(x)
+    x = DilatedConv2D(k_size=3, rate=2, out_channel=dim, padding='SAME', name='dilatedConv0_2')(x)
+    x = Norm()(x)
+    x = tf.nn.relu(x)
+
+    # 针对y进行长方卷积
+    y = h
+    y1 = keras.layers.Conv2D(dim, (7, 3), strides=1, padding='same', use_bias=False)(y)
+    y1 = keras.layers.Conv2D(dim, (3, 1), strides=1, padding='same', use_bias=False)(y1)
+    y2 = keras.layers.Conv2D(dim, (3, 7), strides=1, padding='same', use_bias=False)(y)
+    y2 = keras.layers.Conv2D(dim, (1, 3), strides=1, padding='same', use_bias=False)(y2)
+    y = keras.layers.Add()([y1, y2])
+    y = keras.layers.Conv2D(dim, 7, padding='valid', use_bias=False)(y)
+    # 1
+
+    h = DilatedConv2D(k_size=3, rate=2, out_channel=dim, padding='SAME', name='dilatedConv')(h)
+    h = keras.layers.Conv2D(dim, 7, padding='valid', use_bias=False)(h)
+    h = Norm()(h)
+    h = tf.nn.relu(h)
+    if ShallowConnect:
+        f1 = h
+
+    # 2
+    for i in range(n_downsamplings):
+        dim *= 2
+
+        x = DilatedConv2D(k_size=3, rate=3, out_channel=dim, padding='SAME', name='dilatedConv_y_0_{}'.format(i))(x)
+        x = DilatedConv2D(k_size=3, rate=2, out_channel=dim, padding='SAME', name='dilatedConv_y_1_{}'.format(i))(x)
+        x = keras.layers.MaxPooling2D((2, 2))(x)
+        x = Norm()(x)
+        x = tf.nn.relu(x)
+
+        y1 = keras.layers.Conv2D(dim, (3, 1), strides=1, padding='same', use_bias=False)(y)
+        y1 = keras.layers.Conv2D(dim, (3, 1), strides=1, padding='same', use_bias=False)(y1)
+        y2 = keras.layers.Conv2D(dim, (1, 3), strides=1, padding='same', use_bias=False)(y)
+        y2 = keras.layers.Conv2D(dim, (1, 3), strides=1, padding='same', use_bias=False)(y2)
+
+        y = keras.layers.Add()([y1, y2])
+        y = keras.layers.MaxPooling2D((2, 2))(y)
+        y = Norm()(y)
+        y = tf.nn.relu(y)
+
+        h = DilatedConv2D(k_size=3, rate=2, out_channel=dim, padding='SAME', name='dilatedConv_h_{}'.format(i))(h)
+        h = keras.layers.Conv2D(dim, 3, strides=2, padding='same', use_bias=False)(h)
+        h = Norm()(h)
+        h = tf.nn.relu(h)
+        if (i == 0) & ShallowConnect:
+            f2 = h
+
+        # h = keras.layers.Add()([x, y, h])
+
+    if ShallowConnect:
+        f3 = h
+    # 3
+    for _ in range(n_blocks):
+        h = _residual_block(h)
+        x = _residual_block(x)
+        y = _residual_block(y)
+
+    if ShallowConnect:
+        h = keras.layers.concatenate([h, f3], axis=-1)
+
+    # 4
+    for _ in range(n_downsamplings):
+        if (_ == 1) & ShallowConnect:
+            h = keras.layers.concatenate([h, f2], axis=-1)
+        dim //= 2
+        # for _ in range(1):
+        #     h = _residual_block(h)
+        h = keras.layers.Dropout(0.5)(h)
+        h = keras.layers.Conv2DTranspose(dim, 3, strides=2, padding='same', use_bias=False)(h)
+        h = Norm()(h)
+        h = tf.nn.relu(h)
+
+        x = keras.layers.Dropout(0.5)(x)
+        x = keras.layers.Conv2DTranspose(dim, 3, strides=2, padding='same', use_bias=False)(x)
+        x = Norm()(x)
+        x = tf.nn.relu(x)
+
+        y = keras.layers.Dropout(0.5)(y)
+        y = keras.layers.Conv2DTranspose(dim, 3, strides=2, padding='same', use_bias=False)(y)
+        y = Norm()(y)
+        y = tf.nn.relu(y)
+
+    # 5
+    if ShallowConnect:
+        h = keras.layers.concatenate([h, f1], axis=-1)
+    h = tf.pad(h, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='REFLECT')
+    # for _ in range(1):
+    #     h = _residual_block(h)
+    x = tf.pad(x, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='REFLECT')
+    y = tf.pad(y, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='REFLECT')
+
+    if input_shape == (227, 227, 3):
+        h = keras.layers.Conv2D(output_channels, 8, padding='valid')(h)
+    else:
+        h = keras.layers.Conv2D(output_channels, 7, padding='valid', use_bias=False)(h)
+
+        x = DilatedConv2D(k_size=3, rate=3, out_channel=output_channels, padding='VALID', name='dilatedConv5_1')(x)
+        x = DilatedConv2D(k_size=3, rate=2, out_channel=output_channels, padding='SAME', name='dilatedConv5_2')(x)
+
+        y1 = keras.layers.Conv2D(output_channels, (7, 3), strides=1, padding='same', use_bias=False)(y)
+        y1 = keras.layers.Conv2D(output_channels, (3, 1), strides=1, padding='same', use_bias=False)(y1)
+        y2 = keras.layers.Conv2D(output_channels, (3, 7), strides=1, padding='same', use_bias=False)(y)
+        y2 = keras.layers.Conv2D(output_channels, (1, 3), strides=1, padding='same', use_bias=False)(y2)
+        y = keras.layers.Add()([y1, y2])
+        y = keras.layers.Conv2D(output_channels, 7, padding='valid', use_bias=False)(y)
+
+        mix = keras.layers.Add()([h, y, x])
+    if attention:
+        attention_mask = tf.sigmoid(h[:, :, :, 0])
+        # attention_mask = tf.sigmoid(h[:, :, :, :1])
+        content_mask = h[:, :, :, 1:]
+        attention_mask = tf.expand_dims(attention_mask, axis=3)
+        attention_mask = tf.concat([attention_mask, attention_mask], axis=3)
+        h = content_mask * attention_mask
+
+        attention_mask = tf.sigmoid(x[:, :, :, 0])
+        # attention_mask = tf.sigmoid(h[:, :, :, :1])
+        content_mask = x[:, :, :, 1:]
+        attention_mask = tf.expand_dims(attention_mask, axis=3)
+        attention_mask = tf.concat([attention_mask, attention_mask], axis=3)
+        x = content_mask * attention_mask
+
+        attention_mask = tf.sigmoid(y[:, :, :, 0])
+        # attention_mask = tf.sigmoid(h[:, :, :, :1])
+        content_mask = y[:, :, :, 1:]
+        attention_mask = tf.expand_dims(attention_mask, axis=3)
+        attention_mask = tf.concat([attention_mask, attention_mask], axis=3)
+        y = content_mask * attention_mask
+        # content_mask.shape=(B,H,W,C[通道数是输入时的C，此例中为2])  attention_mask.shape=(B,H,W,1) *[可解释为expand] C)
+
+        attention_mask = tf.sigmoid(mix[:, :, :, 0])
+        # attention_mask = tf.sigmoid(h[:, :, :, :1])
+        content_mask = mix[:, :, :, 1:]
+        attention_mask = tf.expand_dims(attention_mask, axis=3)
+        attention_mask = tf.concat([attention_mask, attention_mask], axis=3)
+        mix = content_mask * attention_mask
+    # h = tf.tanh(h)
+    h = keras.layers.Softmax(name='Label_h')(h)
+    x = keras.layers.Softmax(name='Label_x')(x)
+    y = keras.layers.Softmax(name='Label_y')(y)
+    mix = keras.layers.Softmax(name='Label_mix')(mix)
+    return keras.Model(inputs=inputs, outputs=[h, x, y, mix])

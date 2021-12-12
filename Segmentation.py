@@ -103,11 +103,11 @@ keras_train_dataset = keras_train_dataset.map(I_data.map_function_for_keras,
 #                               model
 # ----------------------------------------------------------------------
 
-# model = module.ResnetGenerator(attention=True, ShallowConnect=False)
+model = module.ResnetGenerator((512, 512, 3), attention=True, ShallowConnect=True, n_blocks=2, dim=16)
 # model = module.StudentNet(attention=True)
 # model = module.U_Net(512, 512)
-Encoder = resnet34(512, 512, 2)
-model = ResNetDecoder(Encoder, 2)
+# Encoder = resnet34(512, 512, 2)
+# model = ResNetDecoder(Encoder, 2)
 optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.00005)
 # optimizer = keras.optimizers.SGD(0.01, momentum=0.9, decay=0.0005)
 # ----------------------------------------------------------------------
@@ -145,7 +145,7 @@ if training or KD:
 # ----------------------------------------------------------------------
 model.compile(optimizer=optimizer,
               loss=Metrics.Asymmetry_Binary_Loss,
-              metrics=['accuracy', Precision, Recall, F1, IOU])
+              metrics=['accuracy', Precision, Recall, IOU])
 if training:
     model.fit(train_dataset,
               steps_per_epoch=max(1, num_train // batch_size),

@@ -1,5 +1,6 @@
 import numpy as np
 from Metrics import *
+from Layer import *
 import tensorflow as tf
 import tensorflow_addons as tfa
 import tensorflow.keras as keras
@@ -59,6 +60,7 @@ def ResnetGenerator(input_shape=(None, None, 3),
 
     # 1
     h = tf.pad(h, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='REFLECT')
+    h = DilatedConv2D(k_size=3, rate=2, out_channel=dim, padding='SAME', name='dilatedConv')(h)
     h = keras.layers.Conv2D(dim, 7, padding='valid', use_bias=False)(h)
     h = Norm()(h)
     h = tf.nn.relu(h)
@@ -66,13 +68,46 @@ def ResnetGenerator(input_shape=(None, None, 3),
         f1 = h
 
     # 2
-    for _ in range(n_downsamplings):
+    for i in range(n_downsamplings):
         dim *= 2
-        h = keras.layers.Conv2D(dim, 3, strides=2, padding='same', use_bias=False)(h)
-        h = Norm()(h)
-        h = tf.nn.relu(h)
-        if (_ == 0) & ShallowConnect:
+        x = h
+        x = keras.layers.Conv2D(dim, (7, 3), strides=1, padding='same', use_bias=False)(x)
+        x = keras.layers.Conv2D(dim, (3, 1), strides=1, padding='same', use_bias=False)(x)
+        # x = keras.layers.Conv2D(dim, (3, 7), strides=1, padding='same', use_bias=False)(x)
+        # x = keras.layers.Conv2D(dim, (1, 3), strides=1, padding='same', use_bias=False)(x)
+        x = keras.layers.MaxPooling2D((2, 2))(x)
+        x = Norm()(x)
+        x = tf.nn.relu(x)
+
+        y = h
+        y = keras.layers.Conv2D(dim, (7, 3), strides=1, padding='same', use_bias=False)(y)
+        y = keras.layers.Conv2D(dim, (3, 1), strides=1, padding='same', use_bias=False)(y)
+        # x = keras.layers.Conv2D(dim, (3, 7), strides=1, padding='same', use_bias=False)(x)
+        # x = keras.layers.Conv2D(dim, (1, 3), strides=1, padding='same', use_bias=False)(x)
+        y = keras.layers.MaxPooling2D((2, 2))(y)
+        y = Norm()(y)
+        y = tf.nn.relu(y)
+
+        h = keras.layers.concatenate([x, y], -1)
+        h = keras.layers.Conv2D(dim, (1, 1), strides=1, padding='same', use_bias=False)(h)
+
+        # y = h
+        # y = DilatedConv2D(k_size=3, rate=3, out_channel=dim, padding='SAME', name='dilatedConv_y_0_{}'.format(i))(y)
+        # y = DilatedConv2D(k_size=3, rate=2, out_channel=dim, padding='SAME', name='dilatedConv_y_1_{}'.format(i))(y)
+        # y = keras.layers.MaxPooling2D((2, 2))(y)
+        # y = Norm()(y)
+        # y = tf.nn.relu(y)
+        #
+        #
+        # h = DilatedConv2D(k_size=3, rate=2, out_channel=dim, padding='SAME', name='dilatedConv{}'.format(i))(h)
+        # h = keras.layers.Conv2D(dim, 3, strides=2, padding='same', use_bias=False)(h)
+        # h = Norm()(h)
+        # h = tf.nn.relu(h)
+        if (i == 0) & ShallowConnect:
             f2 = h
+        #
+        # h = keras.layers.Add()([x, y, h])
+
     if ShallowConnect:
         f3 = h
     # 3

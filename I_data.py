@@ -264,12 +264,12 @@ def get_test_dataset_label(lines,
         labels[:, :, 0] = (img_array[:, :, 0] == 255).astype(int).reshape(size)
         labels[:, :, 1] = (img_array[:, :, 0] != 255).astype(int).reshape(size)
 
-        teacher_label = ((img_teacher_array - 127.5) / 127.5).astype(np.float32).reshape(512, 512, 1)
-        teacher_label_opposite = 1 - teacher_label
-        teacher_label = np.concatenate([teacher_label, teacher_label_opposite], axis=2)
+        # teacher_label = ((img_teacher_array - 127.5) / 127.5).astype(np.float32).reshape(512, 512, 1)
+        # teacher_label_opposite = 1 - teacher_label
+        # teacher_label = np.concatenate([teacher_label, teacher_label_opposite], axis=2)
 
         y_train.append(labels)
-        y_teacher_train.append(teacher_label)
+        # y_teacher_train.append(teacher_label)
     if not KD:
         return np.array(x_train), np.array(y_train)
 

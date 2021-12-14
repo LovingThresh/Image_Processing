@@ -103,7 +103,7 @@ keras_train_dataset = keras_train_dataset.map(I_data.map_function_for_keras,
 #                               model
 # ----------------------------------------------------------------------
 
-model = module.ResnetGenerator_with_ThreeChannel((512, 512, 3), attention=True, ShallowConnect=False)
+model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=32)
 # model = module.StudentNet(attention=True)
 # model = module.U_Net(512, 512)
 # Encoder = resnet34(512, 512, 2)
@@ -145,7 +145,7 @@ if training or KD:
 # ----------------------------------------------------------------------
 model.compile(optimizer=optimizer,
               loss=Metrics.Asymmetry_Binary_Loss,
-              metrics=['accuracy', Precision, Recall, IOU])
+              metrics=['accuracy', M_Precision, M_Recall, M_F1, M_IOU, mean_iou_keras])
 if training:
     model.fit(train_dataset,
               steps_per_epoch=max(1, num_train // batch_size),
@@ -179,7 +179,7 @@ if KD:
 
     model.compile(optimizer=optimizer,
                   loss={'Output_Label': Metrics.H_KD_Loss, 'Soft_Label': Metrics.S_KD_Loss},
-                  metrics=['accuracy', Precision, Recall, F1, IOU])
+                  metrics=['accuracy', A_Precision, A_Recall, A_F1, A_IOU])
 
     model.fit_generator(train_dataset,
                         steps_per_epoch=max(1, num_train // batch_size),
@@ -198,27 +198,27 @@ out_tensorRT_model = False
 plot_predict = False
 plot_mask = False
 if test:
-    test_path = r'I:\Image Processing\validation_HEYE.txt'
+    test_path = r'L:\ALASegmentationNets\Data\Stage_1\val.txt'
     test_lines, num_test = get_data(test_path, training=False)
     batch_size = 1
-    A_test_img_paths = r'C:\Users\liuye\Desktop\data\val\img/'
-    B_test_img_paths = r'C:\Users\liuye\Desktop\data\val\mask/'
+    A_test_img_paths = r'L:\ALASegmentationNets\Data\Stage_1\val\img/'
+    B_test_img_paths = r'L:\ALASegmentationNets\Data\Stage_1\val\mask/'
     C_test_img_paths = r'C:\Users\liuye\Desktop\data\val\teacher_mask/'
-    test_dataset_label = get_test_dataset_label(test_lines, A_test_img_paths, B_test_img_paths, C_test_img_paths,
-                                                KD=True)
-    model = keras.models.load_model(r'I:\Image Processing\output\2021-11-08-18-22-38.894406\checkpoint\ep599'
-                                    r'-val_loss0.200-val_acc0.949',
-                                    custom_objects={'Precision': Precision,
-                                                    'Recall': Recall,
-                                                    'F1': F1,
-                                                    'IOU': IOU,
-                                                    'H_KD_Loss': H_KD_Loss,
-                                                    'S_KD_Loss': S_KD_Loss
+    test_dataset_label = get_test_dataset_label(test_lines, A_test_img_paths, B_test_img_paths,
+                                                KD=False)
+    model = keras.models.load_model(r'C:\Users\liuye\Desktop\ep125-val_loss1040.307',
+                                    custom_objects={'Precision': A_Precision,
+                                                    'Recall': A_Recall,
+                                                    'F1': A_F1,
+                                                    'IOU': A_IOU,
+                                                    # 'H_KD_Loss': H_KD_Loss,
+                                                    # 'S_KD_Loss': S_KD_Loss,
+                                                    'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss
                                                     })
     model.compile(optimizer=optimizer,
                   loss=Metrics.Asymmetry_Binary_Loss,
-                  metrics=['accuracy', Precision, Recall, F1, IOU, H_KD_Loss, S_KD_Loss])
-
+                  metrics=['accuracy', A_Precision, A_Recall, A_F1, A_IOU, Asymmetry_Binary_Loss])
+    model.evaluate(test_dataset_label[0], test_dataset_label[1], batch_size=1)
     # 尝试输出TensorFlow Lite模型
     if out_tensorflow_lite:
         converter = tf.lite.TFLiteConverter.from_keras_model(model)

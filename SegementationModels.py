@@ -229,8 +229,8 @@ def ClassificationDecoder(Encoder, num_class: int):
     return model
 
 
-# SegmentationDecoder 对应的是U-Net的写法
-def SegmentationDecoder(Encoder, feature_list=None, out_num=None):
+# U-NetDecoder 对应的是U-Net的写法
+def U_NetDecoder(Encoder, feature_list=None, out_num=None):
     global model
     f1, f2, f3, f4 = feature_list
     Encoder_out_layer = Encoder.output

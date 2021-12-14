@@ -118,7 +118,7 @@ def M_IOU(y_true: tf.Tensor,
                                                               K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))) + \
     (K.sum(K.round(K.clip(y_pred[:, :, :, 0], 0, 1))) - K.sum(K.round(K.clip(y_true_max[:, :, :, 0], 0, 1)) *
                                                               K.round(K.clip(y_pred[:, :, :, 0], 0, 1))))
-    iou = Intersection / Union
+    iou = Intersection / (Union + 1e-8)
 
     return iou
 

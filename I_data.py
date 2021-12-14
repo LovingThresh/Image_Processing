@@ -98,8 +98,6 @@ def get_data(path=r'I:\Image Processing\train.txt',
     with open(path, 'r') as f:
         lines = f.readlines()
 
-    print(lines)
-
     # 打乱行， 打乱数据有利于训练
     if shuffle:
         np.random.seed(10101)

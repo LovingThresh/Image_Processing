@@ -75,8 +75,8 @@ class CheckpointPlot(keras.callbacks.Callback):
             raw_image = raw_tuples[0]
             raw_label = raw_tuples[1]
             predict_array = self.model.predict(raw_image)
-            save_predict_path = self.father_path + 'Predict_{}_'.format(i) + str(epoch) + '.png'
-            save_true_path = self.father_path + 'True_{}_'.format(i) + str(epoch) + '.png'
+            save_predict_path = self.father_path + '{}_Predict_'.format(i) + str(epoch) + '.png'
+            save_true_path = self.father_path + '{}_True_'.format(i) + str(epoch) + '.png'
             plt.figure()
             plot_heatmap(save_path=save_predict_path, predict_array=predict_array[-1])
             plt.figure()

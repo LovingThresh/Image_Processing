@@ -314,9 +314,9 @@ def map_function(file_path: str or list,
     def data_load(img_data_file_path):
 
         data_byte = tf.io.read_file(img_data_file_path)
-        if file_mode is 'png':
+        if file_mode == 'png':
             data_decode = tf.image.decode_png(data_byte)
-        elif file_mode is 'jpg':
+        elif file_mode == 'jpg':
             data_decode = tf.image.decode_jpeg(data_byte)
         # 设置Tensor数据的数据形式
         data_decode = tf.cast(data_decode, tf.float32)

@@ -17,7 +17,7 @@ from Callback import CheckpointSaver, EarlyStopping, CheckpointPlot
 from Metrics import *
 from I_data import *
 import module
-from plot import plot_heatmap
+
 from SegementationModels import *
 from tensorflow.keras import models
 import matplotlib.pyplot as plt
@@ -269,7 +269,7 @@ if test:
         # end = datetime.datetime.now()
         # t = end - start
         # print(t)
-        plot_heatmap(predict[0][0, :, :, :])
+        # plot_heatmap(predict[0][0, :, :, :])
 
     # 输出模型中的Mask
     if plot_mask:

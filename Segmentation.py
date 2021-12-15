@@ -110,7 +110,7 @@ model.summary()
 initial_learning_rate = 5e-5
 lr_schedule_E = keras.optimizers.schedules.ExponentialDecay(
     initial_learning_rate=initial_learning_rate,
-    decay_steps=100,
+    decay_steps=1000,
     decay_rate=0.96,
 )
 
@@ -141,7 +141,7 @@ if training or KD:
     os.makedirs(r'E:/output/{}/plot/'.format(c))
     plot_path = r'E:/output/{}/plot/'.format(c)
     checkpoints_directory = r'E:/output/{}/checkpoints/'.format(c)
-    checkpointplot = CheckpointPlot(generator=validation_data, path=plot_path)
+    checkpointplot = CheckpointPlot(generator=validation_dataset, path=plot_path)
     checkpoints = tf.train.Checkpoint()
     manager = tf.train.CheckpointManager(checkpoints, directory=os.path.join(checkpoints_directory, "ckpt"),
                                          max_to_keep=3)

@@ -4,6 +4,7 @@ import tensorflow.keras as keras
 # checkpoint
 # 目前存在的问题是只能输出最后一个checkpoints
 # 2021/9/20 问题已经解决，目前可以输出指定的checkpoint了
+# 测试一下git的合并功能
 class CheckpointSaver(keras.callbacks.Callback):
     def __init__(self, manager):
         super(CheckpointSaver, self).__init__()

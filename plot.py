@@ -7,12 +7,12 @@ import numpy as np
 from PIL import Image
 
 
-def plot_heatmap(predict_array, size=(512, 512)):
+def plot_heatmap(save_path, predict_array, size=(512, 512)):
     if predict_array.ndim == 4:
-        sns.heatmap(predict_array[:, :, :, 0].reshape(size), xticklabels=False, yticklabels=False)
+        h_map = sns.heatmap(predict_array[:, :, :, 0].reshape(size), xticklabels=False, yticklabels=False)
     else:
-        sns.heatmap(predict_array.reshape(size), xticklabels=False, yticklabels=False)
-    plt.show()
+        h_map = sns.heatmap(predict_array.reshape(size), xticklabels=False, yticklabels=False)
+    plt.savefig(save_path)
 
 
 # 此函数是为了裁剪师姐的数据而创建的，目前已经裁剪完成，但是由于裁剪中心的设置，有一些图片需要进一步调整

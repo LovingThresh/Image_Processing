@@ -1,4 +1,6 @@
 import tensorflow.keras as keras
+import matplotlib.pyplot as plt
+from plot import plot_heatmap
 
 
 # checkpoint
@@ -48,7 +50,7 @@ lr_schedule_I = keras.optimizers.schedules.InverseTimeDecay(
     decay_steps=decay_steps,
     decay_rate=decay_rate
 )
-
+#
 # 监视验证集损失函数动态调整
 
 DynamicLearningRate = keras.callbacks.ReduceLROnPlateau(
@@ -57,3 +59,25 @@ DynamicLearningRate = keras.callbacks.ReduceLROnPlateau(
 )
 
 EarlyStopping = keras.callbacks.EarlyStopping(monitor='val_loss', patience=20, verbose=0, mode='auto')
+
+
+# 2、在每个Epoch后输出X张预测图片
+class CheckpointPlot(keras.callbacks.Callback):
+    def __init__(self, generator, path, num_img=1):
+        super(CheckpointPlot, self).__init__()
+        self.generator = generator
+        self.father_path = path
+        self.num_img = num_img
+
+    def on_epoch_end(self, epoch, logs=None):
+        for i in range(self.num_img):
+            raw_tuples = self.generator.__next__()
+            raw_image = raw_tuples[0]
+            raw_label = raw_tuples[1]
+            predict_array = self.model.predict(raw_image)
+            save_predict_path = self.father_path + 'Predict_{}_'.format(i) + str(epoch) + '.png'
+            save_true_path = self.father_path + 'True_{}_'.format(i) + str(epoch) + '.png'
+            plt.figure()
+            plot_heatmap(save_path=save_predict_path, predict_array=predict_array[-1])
+            plt.figure()
+            plot_heatmap(save_path=save_true_path, predict_array=raw_label[-1])

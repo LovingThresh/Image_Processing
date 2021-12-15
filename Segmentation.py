@@ -37,7 +37,7 @@ parser.add_argument('--datasets_dir', default=r'Stage_1')
 parser.add_argument('--epoch', type=int, default=50)
 parser.add_argument('--load_size', type=int, default=512)
 parser.add_argument('--crop_size', type=int, default=512)
-parser.add_argument('--batch_size', type=int, default=1)
+parser.add_argument('--batch_size', type=int, default=10)
 
 parser.add_argument('--loss', default='binary_crossentropy loss')
 parser.add_argument('--loss_parameter', default='1')
@@ -154,7 +154,7 @@ if training or KD:
 # ----------------------------------------------------------------------
 model.compile(optimizer=optimizer,
               loss=Metrics.Asymmetry_Binary_Loss_2,
-              metrics=['accuracy', M_Precision, M_Recall, M_F1, M_IOU, mean_iou_keras])
+              metrics=['accuracy', M_Precision, M_Recall, M_F1, M_IOU, mean_iou_keras, A_IOU])
 
 
 if training:

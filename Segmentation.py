@@ -9,13 +9,11 @@ import datetime
 import time
 import os
 
-import tensorflow as tf
-import cv2
 
 import I_data
 import Metrics
 import pylib as py
-from Callback import CheckpointSaver, EarlyStopping
+from Callback import CheckpointSaver, EarlyStopping, CheckpointPlot
 from Metrics import *
 from I_data import *
 import module
@@ -26,7 +24,7 @@ import matplotlib.pyplot as plt
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(gpus[0], True)
-
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 # ----------------------------------------------------------------------
 #                               parameter
 # ----------------------------------------------------------------------
@@ -110,7 +108,11 @@ model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=
 # model = module.U_Net(512, 512)
 # Encoder = resnet34(512, 512, 2)
 # model = ResNetDecoder(Encoder, 2)
-initial_learning_rate = 5e-5
+
+
+model.summary()
+
+initial_learning_rate = 5e-4
 lr_schedule_E = keras.optimizers.schedules.ExponentialDecay(
     initial_learning_rate=initial_learning_rate,
     decay_steps=100,
@@ -142,63 +144,63 @@ if training or KD:
                                                     save_best_only=False, save_weights_only=False,
                                                     mode='auto', period=1)
     checkpoints_directory = r'E:/output/{}/checkpoints/'.format(c)
-
+    os.makedirs(r'E:/output/{}/plot'.format(c))
+    plot_path = r'E:/output/{}/plot/'.format(c)
     checkpoints = tf.train.Checkpoint()
     manager = tf.train.CheckpointManager(checkpoints, directory=os.path.join(checkpoints_directory, "ckpt"),
                                          max_to_keep=3)
     checkpoints = CheckpointSaver(manager=manager)
     py.args_to_yaml('E:/output/{}/settings.yml'.format(c), args)
-
+    checkpointplot = CheckpointPlot(validation_dataset, path=plot_path, num_img=1)
 # ----------------------------------------------------------------------
 #                               train
 # ----------------------------------------------------------------------
-model.compile(optimizer=optimizer,
-              loss=Metrics.Asymmetry_Binary_Loss_2,
-              metrics=['accuracy', M_Precision, M_Recall, M_F1, M_IOU, mean_iou_keras])
+    model.compile(optimizer=optimizer,
+                  loss=Metrics.Asymmetry_Binary_Loss,
+                  metrics=['accuracy', M_Precision, M_Recall, M_F1, M_IOU, mean_iou_keras, A_IOU])
 
-
-if training:
-    model.fit(train_dataset,
-              steps_per_epoch=max(1, num_train // batch_size),
-              epochs=args.epoch,
-              validation_data=validation_dataset,
-              validation_steps=max(1, num_val // batch_size),
-              initial_epoch=0,
-              callbacks=[tensorboard, checkpoint, checkpoints, EarlyStopping])
+    if training:
+        model.fit(train_dataset,
+                  steps_per_epoch=max(1, num_train // batch_size),
+                  epochs=args.epoch,
+                  validation_data=validation_dataset,
+                  validation_steps=max(1, num_val // batch_size),
+                  initial_epoch=0,
+                  callbacks=[tensorboard, checkpoint, checkpoints, EarlyStopping, checkpointplot])
 
 # ---------------------------------------------------------------------
 #                       Knowledge Distillation
 # ----------------------------------------------------------------------
 
-if KD:
-    train_dataset = get_dataset_label(train_lines, batch_size,
-                                      A_img_paths=r'C:\Users\liuye\Desktop\data\train\img/',
-                                      B_img_paths=r'C:\Users\liuye\Desktop\data\train\mask/',
-                                      C_img_paths=r'C:\Users\liuye\Desktop\data\train\teacher_mask/',
-                                      size=(512, 512),
-                                      shuffle=True,
-                                      KD=True)
-    validation_dataset = get_dataset_label(validation_lines, batch_size,
-                                           A_img_paths=r'C:\Users\liuye\Desktop\data\val\img/',
-                                           B_img_paths=r'C:\Users\liuye\Desktop\data\val\mask/',
-                                           C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
-                                           size=(512, 512),
-                                           shuffle=True,
-                                           KD=True)
-    model = module.StudentNet(dim=32, n_blocks=4, attention=True, Separable_convolution=False)
-    optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.0005)
+    if KD:
+        train_dataset = get_dataset_label(train_lines, batch_size,
+                                          A_img_paths=r'C:\Users\liuye\Desktop\data\train\img/',
+                                          B_img_paths=r'C:\Users\liuye\Desktop\data\train\mask/',
+                                          C_img_paths=r'C:\Users\liuye\Desktop\data\train\teacher_mask/',
+                                          size=(512, 512),
+                                          shuffle=True,
+                                          KD=True)
+        validation_dataset = get_dataset_label(validation_lines, batch_size,
+                                               A_img_paths=r'C:\Users\liuye\Desktop\data\val\img/',
+                                               B_img_paths=r'C:\Users\liuye\Desktop\data\val\mask/',
+                                               C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
+                                               size=(512, 512),
+                                               shuffle=True,
+                                               KD=True)
+        model = module.StudentNet(dim=32, n_blocks=4, attention=True, Separable_convolution=False)
+        optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.0005)
 
-    model.compile(optimizer=optimizer,
-                  loss={'Output_Label': Metrics.H_KD_Loss, 'Soft_Label': Metrics.S_KD_Loss},
-                  metrics=['accuracy', A_Precision, A_Recall, A_F1, A_IOU])
+        model.compile(optimizer=optimizer,
+                      loss={'Output_Label': Metrics.H_KD_Loss, 'Soft_Label': Metrics.S_KD_Loss},
+                      metrics=['accuracy', A_Precision, A_Recall, A_F1, A_IOU])
 
-    model.fit_generator(train_dataset,
-                        steps_per_epoch=max(1, num_train // batch_size),
-                        epochs=args.epoch,
-                        validation_data=validation_dataset,
-                        validation_steps=max(1, num_val // batch_size),
-                        initial_epoch=0,
-                        callbacks=[tensorboard, checkpoint, checkpoints])
+        model.fit_generator(train_dataset,
+                            steps_per_epoch=max(1, num_train // batch_size),
+                            epochs=args.epoch,
+                            validation_data=validation_dataset,
+                            validation_steps=max(1, num_val // batch_size),
+                            initial_epoch=0,
+                            callbacks=[tensorboard, checkpoint, checkpoints])
 
 # ---------------------------------------------------------------------
 #                               test

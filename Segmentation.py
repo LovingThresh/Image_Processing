@@ -7,6 +7,7 @@
 import argparse
 import datetime
 import time
+import os
 
 import tensorflow as tf
 import cv2
@@ -14,9 +15,9 @@ import cv2
 import I_data
 import Metrics
 import pylib as py
+from Callback import CheckpointSaver, EarlyStopping
 from Metrics import *
 from I_data import *
-from Callback import *
 import module
 from plot import plot_heatmap
 from SegementationModels import *
@@ -33,7 +34,7 @@ tf.config.experimental.set_memory_growth(gpus[0], True)
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', default='Stage_1')
 parser.add_argument('--datasets_dir', default=r'Stage_1')
-parser.add_argument('--epoch', type=int, default=100)
+parser.add_argument('--epoch', type=int, default=50)
 parser.add_argument('--load_size', type=int, default=512)
 parser.add_argument('--crop_size', type=int, default=512)
 parser.add_argument('--batch_size', type=int, default=1)
@@ -66,18 +67,18 @@ args = parser.parse_args()
 # train_dataset = get_dataset_label(lines[:num_train], batch_size)
 # validation_dataset = get_dataset_label(lines[num_train:], batch_size)
 
-train_lines, num_train = get_data(path=r'L:\crack_segmentation_dataset\crack_segmentation_dataset\train.txt', training=False)
-validation_lines, num_val = get_data(path=r'L:\crack_segmentation_dataset\crack_segmentation_dataset\val.txt', training=False)
+train_lines, num_train = get_data(path=r'L:\ALASegmentationNets\Data\Stage_1\train.txt', training=False)
+validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets\Data\Stage_1\val.txt', training=False)
 batch_size = 1
 train_dataset = get_dataset_label(train_lines, batch_size,
-                                  A_img_paths=r'L:\crack_segmentation_dataset\crack_segmentation_dataset\train\images/',
-                                  B_img_paths=r'L:\crack_segmentation_dataset\crack_segmentation_dataset\train\masks/',
+                                  A_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\train\img/',
+                                  B_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\train\mask/',
                                   C_img_paths=r'C:\Users\liuye\Desktop\data\train_2\teacher_mask/',
                                   shuffle=True,
                                   KD=False)
 validation_dataset = get_dataset_label(validation_lines, batch_size,
-                                       A_img_paths=r'L:\crack_segmentation_dataset\crack_segmentation_dataset\val\images/',
-                                       B_img_paths=r'L:\crack_segmentation_dataset\crack_segmentation_dataset\val\masks/',
+                                       A_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\val\img/',
+                                       B_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\val\mask/',
                                        C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
                                        shuffle=True,
                                        KD=False)
@@ -99,6 +100,7 @@ keras_train_dataset = keras_train_dataset.map(I_data.map_function_for_keras,
                                               num_parallel_calls=tf.data.experimental.AUTOTUNE).batch(batch_size) \
     .prefetch(tf.data.experimental.AUTOTUNE)
 
+
 # ----------------------------------------------------------------------
 #                               model
 # ----------------------------------------------------------------------
@@ -108,7 +110,14 @@ model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=
 # model = module.U_Net(512, 512)
 # Encoder = resnet34(512, 512, 2)
 # model = ResNetDecoder(Encoder, 2)
-optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.00005)
+initial_learning_rate = 5e-5
+lr_schedule_E = keras.optimizers.schedules.ExponentialDecay(
+    initial_learning_rate=initial_learning_rate,
+    decay_steps=100,
+    decay_rate=0.96,
+)
+
+optimizer = keras.optimizers.RMSprop(lr_schedule_E)
 # optimizer = keras.optimizers.SGD(0.01, momentum=0.9, decay=0.0005)
 # ----------------------------------------------------------------------
 #                               output
@@ -146,6 +155,8 @@ if training or KD:
 model.compile(optimizer=optimizer,
               loss=Metrics.Asymmetry_Binary_Loss_2,
               metrics=['accuracy', M_Precision, M_Recall, M_F1, M_IOU, mean_iou_keras])
+
+
 if training:
     model.fit(train_dataset,
               steps_per_epoch=max(1, num_train // batch_size),
@@ -153,7 +164,7 @@ if training:
               validation_data=validation_dataset,
               validation_steps=max(1, num_val // batch_size),
               initial_epoch=0,
-              callbacks=[tensorboard, checkpoint, checkpoints])
+              callbacks=[tensorboard, checkpoint, checkpoints, EarlyStopping])
 
 # ---------------------------------------------------------------------
 #                       Knowledge Distillation

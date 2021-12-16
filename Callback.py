@@ -19,7 +19,7 @@ class CheckpointSaver(keras.callbacks.Callback):
 lr_schedule_E = keras.optimizers.schedules.ExponentialDecay(
     initial_learning_rate=1e-2,
     decay_steps=10000,
-    decay_rate=0.96
+    decay_rate=0.96,
 )
 
 # 2、PiecewiseConstantDecay(分段常数衰减)
@@ -54,7 +54,7 @@ lr_schedule_I = keras.optimizers.schedules.InverseTimeDecay(
 # 监视验证集损失函数动态调整
 
 DynamicLearningRate = keras.callbacks.ReduceLROnPlateau(
-    monitor='val_loss', factor=0.5, patience=10, verbose=0, mode='auto',
+    monitor='val_loss', factor=0.5, patience=4, verbose=0, mode='auto',
     min_delta=0.0001, cooldown=0, min_lr=0
 )
 

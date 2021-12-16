@@ -65,18 +65,18 @@ args = parser.parse_args()
 # train_dataset = get_dataset_label(lines[:num_train], batch_size)
 # validation_dataset = get_dataset_label(lines[num_train:], batch_size)
 
-train_lines, num_train = get_data(path=r'L:\ALASegmentationNets\Data\Stage_1\train.txt', training=False)
-validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets\Data\Stage_1\val.txt', training=False)
+train_lines, num_train = get_data(path=r'L:\ALASegmentationNets\Data\Stage_2\train.txt', training=False)
+validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets\Data\Stage_2\val.txt', training=False)
 batch_size = 1
 train_dataset = get_dataset_label(train_lines, batch_size,
-                                  A_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\train\img/',
-                                  B_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\train\mask/',
+                                  A_img_paths=r'L:\ALASegmentationNets\Data\Stage_2\train\img/',
+                                  B_img_paths=r'L:\ALASegmentationNets\Data\Stage_2\train\mask/',
                                   C_img_paths=r'C:\Users\liuye\Desktop\data\train_2\teacher_mask/',
                                   shuffle=True,
                                   KD=False)
 validation_dataset = get_dataset_label(validation_lines, batch_size,
-                                       A_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\val\img/',
-                                       B_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\val\mask/',
+                                       A_img_paths=r'L:\ALASegmentationNets\Data\Stage_2\val\img/',
+                                       B_img_paths=r'L:\ALASegmentationNets\Data\Stage_2\val\mask/',
                                        C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
                                        shuffle=True,
                                        KD=False)

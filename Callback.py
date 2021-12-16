@@ -54,7 +54,7 @@ lr_schedule_I = keras.optimizers.schedules.InverseTimeDecay(
 # 监视验证集损失函数动态调整
 
 DynamicLearningRate = keras.callbacks.ReduceLROnPlateau(
-    monitor='val_loss', factor=0.2, patience=10, verbose=0, mode='auto',
+    monitor='val_loss', factor=0.5, patience=10, verbose=0, mode='auto',
     min_delta=0.0001, cooldown=0, min_lr=0
 )
 
@@ -75,8 +75,8 @@ class CheckpointPlot(keras.callbacks.Callback):
             raw_image = raw_tuples[0]
             raw_label = raw_tuples[1]
             predict_array = self.model.predict(raw_image)
-            save_predict_path = self.father_path + '{}_Predict_'.format(i) + str(epoch) + '.png'
-            save_true_path = self.father_path + '{}_True_'.format(i) + str(epoch) + '.png'
+            save_predict_path = self.father_path + '{}_{}_Predict_'.format(str(epoch), i) + '.png'
+            save_true_path = self.father_path + '{}_{}_True_'.format(str(epoch), i) + '.png'
             plt.figure()
             plot_heatmap(save_path=save_predict_path, predict_array=predict_array[-1])
             plt.figure()

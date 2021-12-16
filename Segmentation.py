@@ -13,7 +13,7 @@ import os
 import I_data
 import Metrics
 import pylib as py
-from Callback import CheckpointSaver, EarlyStopping, CheckpointPlot
+from Callback import CheckpointSaver, EarlyStopping, CheckpointPlot, DynamicLearningRate
 from Metrics import *
 from I_data import *
 import module
@@ -108,13 +108,9 @@ model.summary()
 # Encoder = resnet34(512, 512, 2)
 # model = ResNetDecoder(Encoder, 2)
 initial_learning_rate = 5e-5
-lr_schedule_E = keras.optimizers.schedules.ExponentialDecay(
-    initial_learning_rate=initial_learning_rate,
-    decay_steps=100,
-    decay_rate=0.96,
-)
 
-optimizer = keras.optimizers.RMSprop(lr_schedule_E)
+
+optimizer = keras.optimizers.RMSprop(initial_learning_rate)
 # optimizer = keras.optimizers.SGD(0.01, momentum=0.9, decay=0.0005)
 # ----------------------------------------------------------------------
 #                               output
@@ -138,10 +134,11 @@ if training or KD:
                                                     monitor='val_accuracy', verbose=0,
                                                     save_best_only=False, save_weights_only=False,
                                                     mode='auto', period=1)
+
     os.makedirs(r'E:/output/{}/plot/'.format(c))
     plot_path = r'E:/output/{}/plot/'.format(c)
     checkpoints_directory = r'E:/output/{}/checkpoints/'.format(c)
-    checkpointplot = CheckpointPlot(generator=validation_data, path=plot_path)
+    checkpointplot = CheckpointPlot(generator=validation_dataset, path=plot_path)
     checkpoints = tf.train.Checkpoint()
     manager = tf.train.CheckpointManager(checkpoints, directory=os.path.join(checkpoints_directory, "ckpt"),
                                          max_to_keep=3)
@@ -162,7 +159,7 @@ if training or KD:
                   validation_data=validation_dataset,
                   validation_steps=max(1, num_val // batch_size),
                   initial_epoch=0,
-                  callbacks=[tensorboard, checkpoint, checkpoints, EarlyStopping, checkpointplot])
+                  callbacks=[tensorboard, checkpoint, checkpoints, EarlyStopping, checkpointplot, DynamicLearningRate])
 
 # ---------------------------------------------------------------------
 #                       Knowledge Distillation

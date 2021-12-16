@@ -5,17 +5,6 @@ import tensorflow.keras as keras
 import numpy as np
 
 
-# 自定义损失函数
-def Asymmetry_Binary_Loss(y_true, y_pred):
-    # 想要损失函数更加关心裂缝的标签值1
-    y_true_0, y_pred_0 = y_true[:, :, :, 0] * 200, y_pred[:, :, :, 0] * 200
-    # y_true_0, y_pred_0 = y_true[:, :, :, 0] * 255, y_pred[:, :, :, 0] * 255
-    y_true_1, y_pred_1 = y_true[:, :, :, 1], y_pred[:, :, :, 1]
-    mse = tf.losses.mean_squared_error
-    return mse(y_true_0, y_pred_0) + mse(y_true_1, y_pred_1) \
-        + mse(y_pred[:, :, :, 0] + y_pred[:, :, :, 1], tf.ones_like(y_true[:, :, :, 0]))
-
-
 def Asymmetry_Binary_Loss_2(y_true, y_pred):
     # 想要损失函数更加关心裂缝的标签值1
     # y_true_0, y_pred_0 = y_true[:, :, :, 0], y_pred[:, :, :, 0]
@@ -115,10 +104,10 @@ def M_IOU(y_true: tf.Tensor,
     Intersection = K.sum(
         K.round(K.clip(y_true_max[:, :, :, 0], 0, 1)) * predict)
     Union = K.sum(K.round(K.clip(y_true_max[:, :, :, 0], 0, 1)) * predict) + \
-    (K.sum(K.round(K.clip(y_true[:, :, :, 0], 0, 1))) - K.sum(K.round(K.clip(y_true[:, :, :, 0], 0, 1)) *
-                                                              K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))) + \
-    (K.sum(K.round(K.clip(y_pred[:, :, :, 0], 0, 1))) - K.sum(K.round(K.clip(y_true_max[:, :, :, 0], 0, 1)) *
-                                                              K.round(K.clip(y_pred[:, :, :, 0], 0, 1))))
+            (K.sum(K.round(K.clip(y_true[:, :, :, 0], 0, 1))) - K.sum(K.round(K.clip(y_true[:, :, :, 0], 0, 1)) *
+                                                                      K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))) + \
+            (K.sum(K.round(K.clip(y_pred[:, :, :, 0], 0, 1))) - K.sum(K.round(K.clip(y_true_max[:, :, :, 0], 0, 1)) *
+                                                                      K.round(K.clip(y_pred[:, :, :, 0], 0, 1))))
     iou = Intersection / (Union + 1e-8)
 
     return iou
@@ -215,3 +204,34 @@ def mean_iou_keras(y_true, y_pred):
         mean_iou = mean_iou + iou
 
     return mean_iou / len(thre_list)
+
+
+def Binary_Focal_loss(gamma=2, alpha=0.25):
+    alpha = tf.constant(alpha, dtype=tf.float32)
+    gamma = tf.constant(gamma, dtype=tf.float32)
+
+    def binary_focal_loss(y_true, y_pred):
+        y_true = y_true[:, :, :, 0]
+        y_pred = y_pred[:, :, :, 0]
+
+        y_true = tf.cast(y_true, tf.float32)
+        alpha_t = y_true * alpha + (K.ones_like(y_true) - y_true) * (1 - alpha)
+
+        p_t = y_true * y_pred + (K.ones_like(y_true) - y_true) * (K.ones_like(y_true) - y_pred) + K.epsilon()
+        focal_loss = -alpha_t * K.pow((K.ones_like(y_true) - p_t), gamma) * K.log(p_t)
+
+        return K.sum(focal_loss, axis=-1)
+
+    return binary_focal_loss
+
+
+# 自定义损失函数
+def Asymmetry_Binary_Loss(y_true, y_pred):
+    # 想要损失函数更加关心裂缝的标签值1
+    y_true_0, y_pred_0 = y_true[:, :, :, 0] * 200, y_pred[:, :, :, 0] * 200
+    # y_true_0, y_pred_0 = y_true[:, :, :, 0] * 255, y_pred[:, :, :, 0] * 255
+    y_true_1, y_pred_1 = y_true[:, :, :, 1], y_pred[:, :, :, 1]
+    mse = tf.losses.mean_squared_error
+    return mse(y_true_0, y_pred_0) + mse(y_true_1, y_pred_1) \
+        + mse(y_pred[:, :, :, 0] + y_pred[:, :, :, 1], tf.ones_like(y_true[:, :, :, 0])) \
+        + Binary_Focal_loss()(y_true, y_pred)

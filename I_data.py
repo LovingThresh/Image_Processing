@@ -1,5 +1,6 @@
 import random
 
+
 import numpy as np
 import tensorflow as tf
 import tf2lib as tl
@@ -7,6 +8,17 @@ from PIL import Image
 import cv2
 
 train_teacher_y_name = ''
+
+
+def to_clahe(image):
+    lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
+    lab_planes = cv2.split(lab)
+    clahe = cv2.createCLAHE(clipLimit=8.0, tileGridSize=(8, 8))
+    lab_planes[0] = clahe.apply(lab_planes[0])
+    lab = cv2.merge(lab_planes)
+    image = cv2.cvtColor(lab, cv2.COLOR_LAB2BGR)
+
+    return image
 
 
 def make_dataset(img_paths, batch_size, load_size, crop_size, training, drop_remainder=True, shuffle=True, repeat=1):
@@ -139,6 +151,7 @@ def get_dataset_label(lines, batch_size,
     global train_teacher_y_name
     numbers = len(lines)
     read_line = 0
+
     while True:
 
         x_train = []
@@ -155,9 +168,10 @@ def get_dataset_label(lines, batch_size,
             train_x_name = lines[read_line].split(',')[0]
 
             # 根据图片名字读取图片
-            img = Image.open(A_img_paths + train_x_name)
+            img = cv2.imread(A_img_paths + train_x_name)
             # img = img.resize(size)
             img_array = np.array(img)
+            img_array = to_clahe(img_array)
             size = (img_array.shape[0], img_array.shape[1])
             img_teacher_array = cv2.imread(C_img_paths + train_teacher_y_name, cv2.IMREAD_GRAYSCALE)
             img_array = img_array / 255.0  # 标准化

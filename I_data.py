@@ -243,6 +243,8 @@ def get_test_dataset_label(lines,
 
         # 根据图片名字读取图片
         img_array = cv2.imread(B_img_paths + train_y_name)
+        if img_array.shape == (600, 800, 3):
+            img_array = cv2.dilate(img, kernel=(5, 5), iterations=5)
         img_teacher_array = cv2.imread(C_img_paths + train_teacher_y_name, cv2.IMREAD_GRAYSCALE)
 
         # img.show()

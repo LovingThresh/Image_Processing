@@ -58,7 +58,7 @@ DynamicLearningRate = keras.callbacks.ReduceLROnPlateau(
     min_delta=0.0001, cooldown=0, min_lr=0
 )
 
-EarlyStopping = keras.callbacks.EarlyStopping(monitor='val_loss', patience=20, verbose=0, mode='auto')
+EarlyStopping = keras.callbacks.EarlyStopping(monitor='val_loss', patience=30, verbose=0, mode='auto')
 
 
 # 2、在每个Epoch后输出X张预测图片

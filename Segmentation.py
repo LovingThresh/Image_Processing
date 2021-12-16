@@ -107,10 +107,10 @@ model.summary()
 # model = module.U_Net(512, 512)
 # Encoder = resnet34(512, 512, 2)
 # model = ResNetDecoder(Encoder, 2)
-initial_learning_rate = 5e-5
+initial_learning_rate = 1e-4
 lr_schedule_E = keras.optimizers.schedules.ExponentialDecay(
     initial_learning_rate=initial_learning_rate,
-    decay_steps=1000,
+    decay_steps=400,
     decay_rate=0.96,
 )
 

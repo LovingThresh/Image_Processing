@@ -78,7 +78,7 @@ def H_KD_Loss(y_true, y_pred, alpha=0.9):
 
 def M_Precision(y_true, y_pred):
     """精确率"""
-    max_pool_2d = tf.keras.layers.MaxPooling2D(pool_size=(3, 3), strides=(1, 1), padding='same')
+    max_pool_2d = tf.keras.layers.MaxPooling2D(pool_size=(5, 5), strides=(1, 1), padding='same')
     y_true_max = max_pool_2d(y_true)
     # true positives
     tp = K.sum(K.round(K.round(K.clip(y_pred[:, :, :, 0], 0, 1)) * K.round(K.clip(y_true_max[:, :, :, 0], 0, 1))))
@@ -108,7 +108,7 @@ def M_F1(y_true, y_pred):
 
 def M_IOU(y_true: tf.Tensor,
           y_pred: tf.Tensor):
-    max_pool_2d = tf.keras.layers.MaxPooling2D(pool_size=(3, 3), strides=(1, 1), padding='same')
+    max_pool_2d = tf.keras.layers.MaxPooling2D(pool_size=(5, 5), strides=(1, 1), padding='same')
     y_true_max = max_pool_2d(y_true)
     predict = K.round(K.clip(y_pred[:, :, :, 0], 0, 1))
     Intersection = K.sum(

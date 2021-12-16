@@ -6,6 +6,8 @@ import tf2lib as tl
 from PIL import Image
 import cv2
 
+train_teacher_y_name = ''
+
 
 def make_dataset(img_paths, batch_size, load_size, crop_size, training, drop_remainder=True, shuffle=True, repeat=1):
     if training:
@@ -134,6 +136,7 @@ def get_dataset_label(lines, batch_size,
         :return:  返回（样本， 标签）
         """
 
+    global train_teacher_y_name
     numbers = len(lines)
     read_line = 0
     while True:
@@ -156,6 +159,7 @@ def get_dataset_label(lines, batch_size,
             # img = img.resize(size)
             img_array = np.array(img)
             size = (img_array.shape[0], img_array.shape[1])
+            img_teacher_array = cv2.imread(C_img_paths + train_teacher_y_name, cv2.IMREAD_GRAYSCALE)
             img_array = img_array / 255.0  # 标准化
             img_array = img_array * 2 - 1
             x_train.append(img_array)
@@ -169,6 +173,9 @@ def get_dataset_label(lines, batch_size,
 
             # 根据图片名字读取图片
             img_array = cv2.imread(B_img_paths + train_y_name)
+            if img_array.shape == (600, 800, 3):
+                img_array = cv2.dilate(img_array, kernel=(5, 5), iterations=3)
+            img_array = cv2.dilate(img_array, kernel=(3, 3), iterations=3)
             if KD:
                 img_teacher_array = cv2.imread(C_img_paths + train_teacher_y_name, cv2.IMREAD_GRAYSCALE)
             # img.show()
@@ -244,7 +251,8 @@ def get_test_dataset_label(lines,
         # 根据图片名字读取图片
         img_array = cv2.imread(B_img_paths + train_y_name)
         if img_array.shape == (600, 800, 3):
-            img_array = cv2.dilate(img, kernel=(5, 5), iterations=5)
+            img_array = cv2.dilate(img_array, kernel=(5, 5), iterations=5)
+        img_array = cv2.dilate(img_array, kernel=(3, 3), iterations=3)
         img_teacher_array = cv2.imread(C_img_paths + train_teacher_y_name, cv2.IMREAD_GRAYSCALE)
 
         # img.show()

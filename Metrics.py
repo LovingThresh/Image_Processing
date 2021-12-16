@@ -13,7 +13,7 @@ def Asymmetry_Binary_Loss(y_true, y_pred):
     y_true_1, y_pred_1 = y_true[:, :, :, 1], y_pred[:, :, :, 1]
     mse = tf.losses.mean_squared_error
     return mse(y_true_0, y_pred_0) + mse(y_true_1, y_pred_1) \
-        + mse(y_pred[:, :, :, 0] + y_pred[:, :, :, 1], tf.ones_like(y_true))
+        + mse(y_pred[:, :, :, 0] + y_pred[:, :, :, 1], tf.ones_like(y_true[:, :, :, 1]))
 
 
 def Asymmetry_Binary_Loss_2(y_true, y_pred):

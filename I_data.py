@@ -171,7 +171,7 @@ def get_dataset_label(lines, batch_size,
             img = cv2.imread(A_img_paths + train_x_name)
             # img = img.resize(size)
             img_array = np.array(img)
-            img_array = to_clahe(img_array)
+            # img_array = to_clahe(img_array)
             size = (img_array.shape[0], img_array.shape[1])
             img_teacher_array = cv2.imread(C_img_paths + train_teacher_y_name, cv2.IMREAD_GRAYSCALE)
             img_array = img_array / 255.0  # 标准化

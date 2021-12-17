@@ -12,7 +12,7 @@ def plot_heatmap(save_path, predict_array, size=(512, 512)):
         h_map = sns.heatmap(predict_array[:, :, :, 0].reshape((predict_array.shape[1], predict_array.shape[2])),
                             xticklabels=False, yticklabels=False)
     else:
-        h_map = sns.heatmap(predict_array.reshape(size), xticklabels=False, yticklabels=False)
+        h_map = sns.heatmap(predict_array[:, :, 0].reshape(size), xticklabels=False, yticklabels=False)
     plt.savefig(save_path)
 
 

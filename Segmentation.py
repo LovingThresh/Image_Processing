@@ -101,13 +101,26 @@ keras_train_dataset = keras_train_dataset.map(I_data.map_function_for_keras,
 #                               model
 # ----------------------------------------------------------------------
 
-model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=32)
-model.summary()
+# model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=32)
+
 # model = module.StudentNet(attention=True)
 # model = module.U_Net(512, 512)
 # Encoder = resnet34(512, 512, 2)
 # model = ResNetDecoder(Encoder, 2)
-initial_learning_rate = 2e-5
+model = keras.models.load_model(r'C:\Users\liuye\Desktop\ep026-val_loss2101.036',
+                                custom_objects={'M_Precision': M_Precision,
+                                                'M_Recall': M_Recall,
+                                                'M_F1': M_F1,
+                                                'M_IOU': M_IOU,
+                                                'mean_iou_keras': mean_iou_keras,
+                                                'A_IOU': A_IOU,
+                                                # 'H_KD_Loss': H_KD_Loss,
+                                                # 'S_KD_Loss': S_KD_Loss,
+                                                'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss
+                                                }
+                                )
+model.summary()
+initial_learning_rate = 2e-6
 
 
 optimizer = keras.optimizers.RMSprop(initial_learning_rate)

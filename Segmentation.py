@@ -107,7 +107,7 @@ model.summary()
 # model = module.U_Net(512, 512)
 # Encoder = resnet34(512, 512, 2)
 # model = ResNetDecoder(Encoder, 2)
-initial_learning_rate = 1e-5
+initial_learning_rate = 2e-5
 
 
 optimizer = keras.optimizers.RMSprop(initial_learning_rate)

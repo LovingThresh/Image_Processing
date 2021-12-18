@@ -107,7 +107,7 @@ keras_train_dataset = keras_train_dataset.map(I_data.map_function_for_keras,
 # model = module.U_Net(512, 512)
 # Encoder = resnet34(512, 512, 2)
 # model = ResNetDecoder(Encoder, 2)
-model = keras.models.load_model(r'C:\Users\liuye\Desktop\ep026-val_loss2101.036',
+model = keras.models.load_model(r'E:\output\2021-12-17-10-32-41.135047_SOTA_2\checkpoint\ep026-val_loss2101.036',
                                 custom_objects={'M_Precision': M_Precision,
                                                 'M_Recall': M_Recall,
                                                 'M_F1': M_F1,

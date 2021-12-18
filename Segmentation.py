@@ -9,7 +9,7 @@ import datetime
 import time
 import os
 
-
+# from keras_flops import get_flops
 import I_data
 import Metrics
 import pylib as py
@@ -22,6 +22,7 @@ from SegementationModels import *
 from tensorflow.keras import models
 import matplotlib.pyplot as plt
 
+from Compare.SegNet import segnet
 gpus = tf.config.experimental.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(gpus[0], True)
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -65,18 +66,18 @@ args = parser.parse_args()
 # train_dataset = get_dataset_label(lines[:num_train], batch_size)
 # validation_dataset = get_dataset_label(lines[num_train:], batch_size)
 
-train_lines, num_train = get_data(path=r'L:\ALASegmentationNets\Data\Stage_4\train.txt', training=False)
-validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets\Data\Stage_4\val.txt', training=False)
+train_lines, num_train = get_data(path=r'L:\ALASegmentationNets\Data\Stage_1\train.txt', training=False)
+validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets\Data\Stage_1\val.txt', training=False)
 batch_size = 1
 train_dataset = get_dataset_label(train_lines, batch_size,
-                                  A_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\img/',
-                                  B_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\mask/',
+                                  A_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\train\img/',
+                                  B_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\train\mask/',
                                   C_img_paths=r'C:\Users\liuye\Desktop\data\train_2\teacher_mask/',
                                   shuffle=True,
                                   KD=False)
 validation_dataset = get_dataset_label(validation_lines, batch_size,
-                                       A_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\val\img/',
-                                       B_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\val\mask/',
+                                       A_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\val\img/',
+                                       B_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\val\mask/',
                                        C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
                                        shuffle=True,
                                        KD=False)
@@ -101,27 +102,29 @@ keras_train_dataset = keras_train_dataset.map(I_data.map_function_for_keras,
 #                               model
 # ----------------------------------------------------------------------
 
-# model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=32)
-
+# model = module.ResnetGenerator_with_ThreeChannel((512, 512, 3), attention=True, ShallowConnect=False, dim=32)
 # model = module.StudentNet(attention=True)
-# model = module.U_Net(512, 512)
+model = module.U_Net(512, 512)
 # Encoder = resnet34(512, 512, 2)
 # model = ResNetDecoder(Encoder, 2)
-model = keras.models.load_model(r'C:\Users\liuye\Desktop\ep026-val_loss2101.036',
-                                custom_objects={'M_Precision': M_Precision,
-                                                'M_Recall': M_Recall,
-                                                'M_F1': M_F1,
-                                                'M_IOU': M_IOU,
-                                                'mean_iou_keras': mean_iou_keras,
-                                                'A_IOU': A_IOU,
-                                                # 'H_KD_Loss': H_KD_Loss,
-                                                # 'S_KD_Loss': S_KD_Loss,
-                                                'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss
-                                                }
-                                )
+# model = keras.models.load_model(r'C:\Users\liuye\Desktop\ep026-val_loss2101.036',
+#                                 custom_objects={'M_Precision': M_Precision,
+#                                                 'M_Recall': M_Recall,
+#                                                 'M_F1': M_F1,
+#                                                 'M_IOU': M_IOU,
+#                                                 'mean_iou_keras': mean_iou_keras,
+#                                                 'A_IOU': A_IOU,
+#                                                 # 'H_KD_Loss': H_KD_Loss,
+#                                                 # 'S_KD_Loss': S_KD_Loss,
+#                                                 'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss
+#                                                 }
+#                                 )
+# model = segnet((512, 512), 2)
 model.summary()
-initial_learning_rate = 2e-6
-
+# flops = get_flops(model)
+# print(f"FLOPS: {flops / 10 ** 9:.03} G")
+# initial_learning_rate = 2e-6
+initial_learning_rate = 5e-5
 
 optimizer = keras.optimizers.RMSprop(initial_learning_rate)
 # optimizer = keras.optimizers.SGD(0.01, momentum=0.9, decay=0.0005)

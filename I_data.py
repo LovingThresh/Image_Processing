@@ -225,8 +225,8 @@ def get_dataset_label(lines, batch_size,
             read_line = (read_line + 1) % numbers
 
         if not KD:
-            yield np.array(x_train), [np.array(y_train), np.array(y_train), np.array(y_train), np.array(y_train)]
-
+            # yield np.array(x_train), [np.array(y_train), np.array(y_train), np.array(y_train), np.array(y_train)]
+            yield np.array(x_train), np.array(y_train)
         if KD:
 
             yield np.array(x_train), [np.array(y_train), np.array(y_teacher_train)]

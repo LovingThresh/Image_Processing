@@ -320,11 +320,12 @@ def U_Net(Height=227, Width=227):
 def TeacherNet():
 
 
-    conv_model = keras.models.load_model(r'I:\Image Processing\output\2021-09-17-13-40-41.901808\checkpoint\ep390-val_loss0.004-val_acc0.999.h5',
-                                    custom_objects={'Precision': Precision,
-                                                    'Recall': Recall,
-                                                    'F1': F1,
-                                                    'IOU': IOU,
+    conv_model = keras.models.load_model(r'I:\Image Processing\output\2021-09-17-13-40-41.901808\checkpoint\ep390'
+                                         r'-val_loss0.004-val_acc0.999.h5',
+                                    custom_objects={'Precision': A_Precision,
+                                                    'Recall': A_Recall,
+                                                    'F1': A_F1,
+                                                    'IOU': A_IOU,
                                                     'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss
                                                     })
     conv_model.trainable = False

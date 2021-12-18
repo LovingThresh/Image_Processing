@@ -9,10 +9,11 @@ from PIL import Image
 
 def plot_heatmap(save_path, predict_array, size=(512, 512)):
     if predict_array.ndim == 4:
-        h_map = sns.heatmap(predict_array[:, :, :, 0].reshape((predict_array.shape[1], predict_array.shape[2])),
-                            xticklabels=False, yticklabels=False)
+        sns.heatmap(predict_array[:, :, :, 0].reshape((predict_array.shape[1], predict_array.shape[2])),
+                    xticklabels=False, yticklabels=False)
     else:
-        h_map = sns.heatmap(predict_array[:, :, 0].reshape(size), xticklabels=False, yticklabels=False)
+        sns.heatmap(predict_array[:, :, 0].reshape((predict_array.shape[0], predict_array.shape[1])),
+                    xticklabels=False, yticklabels=False)
     plt.savefig(save_path)
 
 
@@ -35,12 +36,10 @@ def crop_image(image_path, size=227):
 
 # 此函数是为了将原始的细长裂缝的裂缝图像227×227填充至512×512，然后调用分割效果极好的模型进行分割
 def pad_img(img, pad_size=(512, 512), values=255):
-
     new_image = np.pad(img, ((512 - img.shape[0], 0), (512 - img.shape[1], 0), (0, 0)), 'constant',
                        constant_values=values)
 
     return new_image
-
 
 # path = r'C:\Users\liuye\Desktop\Slender Cracks Positive/'
 # for i in os.listdir(path):

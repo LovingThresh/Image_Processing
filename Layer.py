@@ -8,13 +8,13 @@ class DilatedConv2D(keras.layers.Layer):
     w_init: RandomNormal
     weight: Variable
 
-    def __init__(self, k_size=3, rate=1, out_channel=32, padding='SAME', name='dilatedConv2D'):
-        super(DilatedConv2D, self).__init__()
+    def __init__(self, k_size=3, rate=1, out_channel=32, padding='SAME', name='dilatedConv2D', **kwargs):
         self.k_size = k_size
         self.rate = rate
         self.uints = out_channel
         self.padding = padding
         self._name = name
+        super(DilatedConv2D, self).__init__(**kwargs)
 
     def build(self, input_shape):
         self.w_init = tf.random_normal_initializer()
@@ -273,4 +273,3 @@ class DeformableConvLayer(keras.layers.Conv2D):
         b = tf.tile(batch_idx, (1, h, w, n))
         pixel_idx = tf.stack([b, y, x], axis=-1)
         return tf.gather_nd(inputs, pixel_idx)
-

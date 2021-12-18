@@ -9,7 +9,7 @@ import datetime
 import time
 import os
 
-# from keras_flops import get_flops
+from keras_flops import get_flops
 import I_data
 import Metrics
 import pylib as py
@@ -17,7 +17,7 @@ from Callback import CheckpointSaver, EarlyStopping, CheckpointPlot, DynamicLear
 from Metrics import *
 from I_data import *
 import module
-
+from Layer import *
 from SegementationModels import *
 from tensorflow.keras import models
 import matplotlib.pyplot as plt
@@ -33,7 +33,7 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', default='Stage_1')
 parser.add_argument('--datasets_dir', default=r'Stage_1')
-parser.add_argument('--epoch', type=int, default=100)
+parser.add_argument('--epoch', type=int, default=1)
 parser.add_argument('--load_size', type=int, default=512)
 parser.add_argument('--crop_size', type=int, default=512)
 parser.add_argument('--batch_size', type=int, default=10)
@@ -102,12 +102,17 @@ keras_train_dataset = keras_train_dataset.map(I_data.map_function_for_keras,
 #                               model
 # ----------------------------------------------------------------------
 
-# model = module.ResnetGenerator_with_ThreeChannel((512, 512, 3), attention=True, ShallowConnect=False, dim=32)
+model = module.ResnetGenerator_with_ThreeChannel((512, 512, 3), attention=True, ShallowConnect=False, dim=32)
+flops = get_flops(model)
+print(f"FLOPS: {flops / 10 ** 9:.03} G")
 # model = module.StudentNet(attention=True)
-model = module.U_Net(512, 512)
+# model = module.U_Net(512, 512)
 # Encoder = resnet34(512, 512, 2)
 # model = ResNetDecoder(Encoder, 2)
-# model = keras.models.load_model(r'C:\Users\liuye\Desktop\ep026-val_loss2101.036',
+model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=32)
+model.load_weights(r'C:\Users\liuye\Desktop\weighst/')
+
+# model = keras.models.load_model(r'C:\Users\liuye\Desktop\weighst/',
 #                                 custom_objects={'M_Precision': M_Precision,
 #                                                 'M_Recall': M_Recall,
 #                                                 'M_F1': M_F1,
@@ -116,15 +121,14 @@ model = module.U_Net(512, 512)
 #                                                 'A_IOU': A_IOU,
 #                                                 # 'H_KD_Loss': H_KD_Loss,
 #                                                 # 'S_KD_Loss': S_KD_Loss,
-#                                                 'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss
+#                                                 'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss,
+#                                                 # 'DilatedConv2D': DilatedConv2D,
 #                                                 }
 #                                 )
 # model = segnet((512, 512), 2)
 model.summary()
-# flops = get_flops(model)
-# print(f"FLOPS: {flops / 10 ** 9:.03} G")
-# initial_learning_rate = 2e-6
-initial_learning_rate = 5e-5
+initial_learning_rate = 2e-6
+# initial_learning_rate = 5e-5
 
 optimizer = keras.optimizers.RMSprop(initial_learning_rate)
 # optimizer = keras.optimizers.SGD(0.01, momentum=0.9, decay=0.0005)

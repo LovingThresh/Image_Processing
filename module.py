@@ -680,7 +680,9 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(None, None, 3),
                     n_blocks=8,
                     norm='instance_norm',
                     attention=False,
-                    ShallowConnect=False):
+                    ShallowConnect=False,
+                    Temperature=0,
+                    StudentNet=False):
     Norm = _get_norm_layer(norm)
     if attention:
         output_channels = output_channels + 1
@@ -848,6 +850,12 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(None, None, 3),
         attention_mask = tf.concat([attention_mask, attention_mask], axis=3)
         mix = content_mask * attention_mask
     # h = tf.tanh(h)
+    if (Temperature != 0) & (StudentNet):
+        h = h / Temperature
+        x = x / Temperature
+        y = y / Temperature
+        mix = mix / Temperature
+
     h = keras.layers.Softmax(name='Label_h')(h)
     x = keras.layers.Softmax(name='Label_x')(x)
     y = keras.layers.Softmax(name='Label_y')(y)

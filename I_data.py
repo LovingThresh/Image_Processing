@@ -1,6 +1,5 @@
 import random
 
-
 import numpy as np
 import tensorflow as tf
 import tf2lib as tl
@@ -171,7 +170,7 @@ def get_dataset_label(lines, batch_size,
             img = cv2.imread(A_img_paths + train_x_name)
             # img = img.resize(size)
             img_array = np.array(img)
-            img_array = to_clahe(img_array)
+            # img_array = to_clahe(img_array)
             size = (img_array.shape[0], img_array.shape[1])
             img_teacher_array = cv2.imread(C_img_paths + train_teacher_y_name, cv2.IMREAD_GRAYSCALE)
             img_array = img_array / 255.0  # 标准化
@@ -225,10 +224,9 @@ def get_dataset_label(lines, batch_size,
             read_line = (read_line + 1) % numbers
 
         if not KD:
-            # yield np.array(x_train), [np.array(y_train), np.array(y_train), np.array(y_train), np.array(y_train)]
-            yield np.array(x_train), np.array(y_train)
+            yield np.array(x_train), [np.array(y_train), np.array(y_train), np.array(y_train), np.array(y_train)]
+            # yield np.array(x_train), np.array(y_train)
         if KD:
-
             yield np.array(x_train), [np.array(y_train), np.array(y_teacher_train)]
 
 
@@ -395,3 +393,63 @@ def map_function_for_keras(data):
     label = tf.image.random_flip_up_down(label, seed=a)
 
     return image, label
+
+
+def get_teacher_dataset_label \
+                (
+                lines,
+                A_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\img/',
+                h_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\teacher_mask\teacher_label_h\label/',
+                x_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\teacher_mask\teacher_label_x\label/',
+                y_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\teacher_mask\teacher_label_y\label/',
+                mix_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\teacher_mask\teacher_label_mix\label/',
+                batch_size=1,
+                shuffle=True,
+        ):
+    numbers = len(lines)
+    read_line = 0
+
+    while True:
+        x_train = []
+        y_train = []
+
+        for t in range(batch_size):
+            if shuffle:
+                np.random.shuffle(lines)
+
+            train_x_name = lines[read_line].split(',')[0]
+
+            # 根据图片名字读取图片
+            img = cv2.imread(A_img_paths + train_x_name)
+            size = (img.shape[0], img.shape[1])
+
+            img_array = img / 255.0  # 标准化
+            img_array = img_array * 2 - 1
+            x_train.append(img_array)
+
+            # 根据相应标签载入相应的老师标签
+            def get_label(img_paths):
+
+                label = cv2.imread(img_paths + train_x_name[:-4] + '.png')
+                label = label[:, :, 0:1]
+                label = label / 255.0
+
+                label_T = 1 - label
+                label = np.concatenate([label, label_T], axis=-1)
+
+                label = np.array(label)
+                return label
+
+            h_label = get_label(h_img_paths)
+            x_label = get_label(x_img_paths)
+            y_label = get_label(y_img_paths)
+            mix_label = get_label(mix_img_paths)
+
+            y_train.append(h_label)
+            y_train.append(x_label)
+            y_train.append(y_label)
+            y_train.append(mix_label)
+
+            read_line = (read_line + 1) % numbers
+
+        yield np.array(x_train), np.array(y_train)

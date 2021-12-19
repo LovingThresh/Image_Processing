@@ -57,13 +57,13 @@ def Total_loss(y_true, y_pred):
 def S_KD_Loss(y_true, y_pred, alpha=0.9):
     soft_label_loss = Asymmetry_Binary_Loss(y_true, y_pred)
 
-    return alpha * soft_label_loss * 10
+    return alpha * soft_label_loss
 
 
 def H_KD_Loss(y_true, y_pred, alpha=0.9):
     hard_label_loss = Asymmetry_Binary_Loss(y_true, y_pred)
 
-    return (1 - alpha) * hard_label_loss * 10
+    return (1 - alpha) * hard_label_loss
 
 
 def M_Precision(y_true, y_pred):

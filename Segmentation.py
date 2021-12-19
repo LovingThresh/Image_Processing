@@ -249,7 +249,13 @@ if training or KD:
     #                               train
     # ----------------------------------------------------------------------
     model.compile(optimizer=optimizer,
-                  loss=Metrics.Asymmetry_Binary_Loss,
+                  loss={
+                        'Label_h': Metrics.S_KD_Loss,
+                        'Label_x': Metrics.S_KD_Loss,
+                        'Label_y': Metrics.S_KD_Loss,
+                        'Label_mix': Metrics.S_KD_Loss,
+                        'Label_Label_mix_for_real': Metrics.H_KD_Loss,
+                        },
                   metrics=['accuracy', M_Precision, M_Recall, M_F1, M_IOU, mean_iou_keras, A_IOU])
 
     if training:

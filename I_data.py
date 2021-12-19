@@ -399,6 +399,7 @@ def get_teacher_dataset_label \
                 (
                 lines,
                 A_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\img/',
+                B_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\mask/',
                 h_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\teacher_mask\teacher_label_h\label/',
                 x_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\teacher_mask\teacher_label_x\label/',
                 y_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\teacher_mask\teacher_label_y\label/',
@@ -427,6 +428,19 @@ def get_teacher_dataset_label \
             img_array = img_array * 2 - 1
             x_train.append(img_array)
 
+            # 根据相应标签载入真实标签
+            train_y_name = lines[read_line].split(',')[1].replace('\n', '')
+            img_array = cv2.imread(B_img_paths + train_y_name)
+            if img_array.shape == (600, 800, 3):
+                img_array = cv2.dilate(img_array, kernel=(5, 5), iterations=5)
+            img_array = cv2.dilate(img_array, kernel=(3, 3), iterations=3)
+
+            labels = np.zeros((img_array.shape[0], img_array.shape[1], 2), np.int)
+
+            labels[:, :, 0] = (img_array[:, :, 1] == 255).astype(int).reshape(size)
+            labels[:, :, 1] = (img_array[:, :, 1] != 255).astype(int).reshape(size)
+            real_label = labels.astype(np.float32)
+
             # 根据相应标签载入相应的老师标签
             def get_label(img_paths):
 
@@ -449,6 +463,8 @@ def get_teacher_dataset_label \
             y_train.append(x_label)
             y_train.append(y_label)
             y_train.append(mix_label)
+
+            y_train.append(real_label)
 
             read_line = (read_line + 1) % numbers
 

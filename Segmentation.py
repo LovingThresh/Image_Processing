@@ -84,6 +84,7 @@ batch_size = 1
 
 train_dataset = get_teacher_dataset_label(train_lines,
                                           A_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\img/',
+                                          B_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\mask/',
                                           h_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\teacher_mask\teacher_label_h\label/',
                                           x_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\teacher_mask\teacher_label_x\label/',
                                           y_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\teacher_mask\teacher_label_y\label/',
@@ -94,6 +95,7 @@ train_dataset = get_teacher_dataset_label(train_lines,
 
 validation_dataset = get_teacher_dataset_label(validation_lines,
                                                A_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\val\img/',
+                                               B_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\val\mask/',
                                                h_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\val\teacher_mask\teacher_label_h\label/',
                                                x_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\val\teacher_mask\teacher_label_x\label/',
                                                y_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\val\teacher_mask\teacher_label_y\label/',
@@ -254,7 +256,7 @@ if training or KD:
                         'Label_x': Metrics.S_KD_Loss,
                         'Label_y': Metrics.S_KD_Loss,
                         'Label_mix': Metrics.S_KD_Loss,
-                        'Label_Label_mix_for_real': Metrics.H_KD_Loss,
+                        'Label_mix_for_real': Metrics.H_KD_Loss,
                         },
                   metrics=['accuracy', M_Precision, M_Recall, M_F1, M_IOU, mean_iou_keras, A_IOU])
 

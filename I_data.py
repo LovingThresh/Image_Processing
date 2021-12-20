@@ -9,6 +9,31 @@ import cv2
 train_teacher_y_name = ''
 
 
+# 图像分割的map函数
+
+
+def map_function_for_keras(data):
+    image, label = data[0], data[1]
+    a = random.randint(1, 600)
+    image = image * 127.5 + 127.5
+
+    image = tf.image.random_flip_left_right(image, seed=a)
+    image = tf.image.random_flip_up_down(image, seed=a)
+
+    image = tf.image.random_saturation(image, 0.2, 0.8, seed=a)
+    image = tf.image.random_brightness(image, 0.5, seed=a)
+    image = tf.image.random_hue(image, 0.5, seed=a)
+    image = tf.image.random_contrast(image, 0.2, 0.8, seed=a)
+
+    image = (image - 127.5) / 127.5
+
+    label = tf.image.random_flip_left_right(label, seed=a)
+    label = tf.image.random_flip_up_down(label, seed=a)
+    label = np.array(label)
+
+    return image, np.repeat(label, repeats=4, axis=0)
+
+
 def to_clahe(image):
     lab = cv2.cvtColor(image, cv2.COLOR_BGR2LAB)
     lab_planes = cv2.split(lab)
@@ -133,9 +158,10 @@ def get_dataset_label(lines, batch_size,
                       A_img_paths=r'I:\Image Processing\Rebuild_Image_95/',
                       B_img_paths=r'I:\Image Processing\Mix_img\95\label/',
                       C_img_paths=r'I:\Image Processing\Mix_img\95\label/',
-                      size=(512, 512), shuffle=True, KD=False):
+                      size=(512, 512), shuffle=True, KD=False, training=False):
     """
         生成器， 读取图片， 并对图片进行处理， 生成（样本，标签）
+        :param training:
         :param C_img_paths:
         :param KD:
         :param shuffle:
@@ -224,7 +250,15 @@ def get_dataset_label(lines, batch_size,
             read_line = (read_line + 1) % numbers
 
         if not KD:
-            yield np.array(x_train), [np.array(y_train), np.array(y_train), np.array(y_train), np.array(y_train)]
+            data = (np.array(x_train), np.array(y_train))
+            if training:
+
+                data = map_function_for_keras(data)
+
+                yield data
+            else:
+                yield data
+
             # yield np.array(x_train), np.array(y_train)
         if KD:
             yield np.array(x_train), [np.array(y_train), np.array(y_teacher_train)]
@@ -370,29 +404,6 @@ def map_function(file_path: str or list,
             # 这种情况是指两张对应图片的情况
             label = data_load(label_file_path)
             return data, label
-
-
-# 图像分割的map函数
-
-def map_function_for_keras(data):
-    image, label = data[0], data[1]
-    a = random.randint(1, 600)
-    image = image * 127.5 + 127.5
-
-    image = tf.image.random_flip_left_right(image, seed=a)
-    image = tf.image.random_flip_up_down(image, seed=a)
-
-    image = tf.image.random_saturation(image, 0.2, 0.8, seed=a)
-    image = tf.image.random_brightness(image, 0.5, seed=a)
-    image = tf.image.random_hue(image, 0.5, seed=a)
-    image = tf.image.random_contrast(image, 0.2, 0.8, seed=a)
-
-    image = (image - 127.5) / 127.5
-
-    label = tf.image.random_flip_left_right(label, seed=a)
-    label = tf.image.random_flip_up_down(label, seed=a)
-
-    return image, label
 
 
 def get_teacher_dataset_label \

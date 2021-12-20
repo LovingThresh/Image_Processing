@@ -54,7 +54,7 @@ lr_schedule_I = keras.optimizers.schedules.InverseTimeDecay(
 # 监视验证集损失函数动态调整
 
 DynamicLearningRate = keras.callbacks.ReduceLROnPlateau(
-    monitor='val_loss', factor=0.5, patience=3, verbose=0, mode='auto',
+    monitor='val_loss', factor=0.2, patience=3, verbose=0, mode='auto',
     min_delta=0.0001, cooldown=0, min_lr=0
 )
 

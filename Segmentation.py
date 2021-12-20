@@ -66,29 +66,29 @@ args = parser.parse_args()
 # train_dataset = get_dataset_label(lines[:num_train], batch_size)
 # validation_dataset = get_dataset_label(lines[num_train:], batch_size)
 
-train_lines, num_train = get_data(path=r'L:\ALASegmentationNets\Data\Stage_1\train.txt', training=False)
-validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets\Data\Stage_1\val.txt', training=False)
+train_lines, num_train = get_data(path=r'L:\ALASegmentationNets\Data\Stage_4\train.txt', training=False)
+validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets\Data\Stage_4\val.txt', training=False)
 test_lines, num_val = get_data(path=r'L:\ALASegmentationNets\Data\Stage_1\test.txt', training=False)
 batch_size = 1
 train_dataset = get_dataset_label(train_lines, batch_size,
-                                  A_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\train\img/',
-                                  B_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\train\mask/',
+                                  A_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\img/',
+                                  B_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\mask/',
                                   C_img_paths=r'C:\Users\liuye\Desktop\data\train_2\teacher_mask/',
                                   shuffle=True,
                                   KD=False)
 validation_dataset = get_dataset_label(validation_lines, batch_size,
-                                       A_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\val\img/',
-                                       B_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\val\mask/',
+                                       A_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\val\img/',
+                                       B_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\val\mask/',
                                        C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
                                        shuffle=False,
                                        KD=False)
 
-# test_dataset = get_dataset_label(test_lines, batch_size,
-#                                  A_img_paths=r'L:\ALASegmentationNets\Data\Stage_2\test\img/',
-#                                  B_img_paths=r'L:\ALASegmentationNets\Data\Stage_2\test\mask/',
-#                                  C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
-#                                  shuffle=False,
-#                                  KD=False)
+test_dataset = get_dataset_label(test_lines, batch_size,
+                                 A_img_paths=r'L:\ALASegmentationNets\Data\Stage_2\test\img/',
+                                 B_img_paths=r'L:\ALASegmentationNets\Data\Stage_2\test\mask/',
+                                 C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
+                                 shuffle=False,
+                                 KD=False)
 #
 # train_dataset = get_teacher_dataset_label(train_lines,
 #                                           A_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\img/',
@@ -143,7 +143,7 @@ keras_train_dataset = keras_train_dataset.map(I_data.map_function_for_keras,
 #                               model
 # ----------------------------------------------------------------------
 # temperature = 10
-model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=32, n_blocks=4)
+model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=32)
 # flops = get_flops(model)
 # print(f"FLOPS: {flops / 10 ** 9:.03} G")
 # model = module.StudentNet(attention=True)
@@ -151,9 +151,9 @@ model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=
 # Encoder = resnet34(512, 512, 2)
 # model = ResNetDecoder(Encoder, 2)
 # model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=32)
-# model.load_weights(r'C:\Users\liuye\Desktop\weighst/')
+model.load_weights(r'C:\Users\liuye\Desktop\weighst/')
 
-# model = keras.models.load_model(r'C:\Users\liuye\Desktop\ep026-val_loss2101.036',
+# model = keras.models.load_model(r'E:\output\2021-12-20-11-18-42.515070\checkpoint\ep027-val_loss1821.964',
 #                                 custom_objects={'M_Precision': M_Precision,
 #                                                 'M_Recall': M_Recall,
 #                                                 'M_F1': M_F1,
@@ -170,7 +170,7 @@ model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=
 # model = segnet((512, 512), 2)
 model.summary()
 # initial_learning_rate = 3e-6
-initial_learning_rate = 5e-5
+initial_learning_rate = 2e-6
 
 # ---------------------------------------------------------------------------
 #                              KD
@@ -270,13 +270,14 @@ if training or KD:
     #                               train
     # ----------------------------------------------------------------------
     model.compile(optimizer=optimizer,
-                  loss={
-                      'Label_h': Metrics.S_KD_Loss,
-                      'Label_x': Metrics.S_KD_Loss,
-                      'Label_y': Metrics.S_KD_Loss,
-                      'Label_mix': Metrics.S_KD_Loss,
-                      'Label_mix_for_real': Metrics.H_KD_Loss,
-                  },
+                  loss=Metrics.Asymmetry_Binary_Loss,
+                  # {
+                  #     'Label_h': Metrics.S_KD_Loss,
+                  #     'Label_x': Metrics.S_KD_Loss,
+                  #     'Label_y': Metrics.S_KD_Loss,
+                  #     'Label_mix': Metrics.S_KD_Loss,
+                  #     'Label_mix_for_real': Metrics.H_KD_Loss,
+                  # },
                   metrics=['accuracy', M_Precision, M_Recall, M_F1, M_IOU, mean_iou_keras, A_IOU])
 
     if training:

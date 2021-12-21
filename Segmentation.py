@@ -65,30 +65,30 @@ args = parser.parse_args()
 # train_dataset = get_dataset_label(lines[:num_train], batch_size)
 # validation_dataset = get_dataset_label(lines[num_train:], batch_size)
 
-train_lines, num_train = get_data(path=r'L:\ALASegmentationNets\Data\Stage_1\train.txt', training=False)
-validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets\Data\Stage_1\val.txt', training=False)
-test_lines, num_test = get_data(path=r'L:\ALASegmentationNets\Data\Stage_1\test.txt', training=False)
+train_lines, num_train = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_1\train.txt', training=False)
+validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_1\val.txt', training=False)
+test_lines, num_test = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_1\test.txt', training=False)
 batch_size = 1
 train_dataset = get_dataset_label(train_lines, batch_size,
-                                  A_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\train\img/',
-                                  B_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\train\mask/',
-                                  C_img_paths=r'C:\Users\liuye\Desktop\data\train_2\teacher_mask/',
+                                  A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_1\train\img/',
+                                  B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_1\train\mask/',
+                                  C_img_paths=r'C:\Users\liuye\Desktop\data\train_1\teacher_mask/',
                                   shuffle=True,
                                   KD=False,
                                   training=True,
-                                  Augmentation=False)
+                                  Augmentation=True)
 validation_dataset = get_dataset_label(validation_lines, batch_size,
-                                       A_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\val\img/',
-                                       B_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\val\mask/',
+                                       A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_1\val\img/',
+                                       B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_1\val\mask/',
                                        C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
                                        shuffle=False,
                                        KD=False,
-                                       training=True,
-                                       Augmentation=True)
+                                       training=False,
+                                       Augmentation=False)
 
 test_dataset = get_dataset_label(test_lines, batch_size,
-                                 A_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\test\img/',
-                                 B_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\test\mask/',
+                                 A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_1\test\img/',
+                                 B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_1\test\mask/',
                                  C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
                                  shuffle=False,
                                  KD=False,
@@ -155,7 +155,7 @@ test_dataset = get_dataset_label(test_lines, batch_size,
 # model = module.U_Net(512, 512)
 # Encoder = resnet34(512, 512, 2)
 # model = ResNetDecoder(Encoder, 2)
-model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=32)
+model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=48)
 # model.load_weights(r'C:\Users\liuye\Desktop\weighst/')
 #
 # model = keras.models.load_model(r'E:\output\2021-12-20-15-17-14.722998\checkpoint\ep013-val_loss2911.338',

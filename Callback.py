@@ -54,11 +54,11 @@ lr_schedule_I = keras.optimizers.schedules.InverseTimeDecay(
 # 监视验证集损失函数动态调整
 
 DynamicLearningRate = keras.callbacks.ReduceLROnPlateau(
-    monitor='val_loss', factor=0.2, patience=3, verbose=0, mode='auto',
-    min_delta=0.0001, cooldown=0, min_lr=0
+    monitor='val_Label_mix_M_IOU', factor=0.5, patience=5, verbose=1, mode='auto',
+    min_delta=0.0001, cooldown=0, min_lr=1e-8
 )
 
-EarlyStopping = keras.callbacks.EarlyStopping(monitor='val_loss', patience=30, verbose=0, mode='auto')
+EarlyStopping = keras.callbacks.EarlyStopping(monitor='val_Label_mix_M_IOU', patience=30, verbose=0, mode='auto')
 
 
 # 2、在每个Epoch后输出X张预测图片

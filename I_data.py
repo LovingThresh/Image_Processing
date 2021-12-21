@@ -11,6 +11,7 @@ Aug_image = object
 Aug_label = object
 seed = int
 
+
 # 图像分割的map函数
 
 
@@ -216,7 +217,7 @@ def get_dataset_label(lines, batch_size,
             img_array = cv2.imread(B_img_paths + train_y_name)
             if img_array.shape == (600, 800, 3):
                 img_array = cv2.dilate(img_array, kernel=(5, 5), iterations=5)
-            img_array = cv2.dilate(img_array, kernel=(3, 3), iterations=3)
+            img_array = cv2.dilate(img_array, kernel=(3, 3), iterations=5)
             if KD:
                 img_teacher_array = cv2.imread(C_img_paths + train_teacher_y_name, cv2.IMREAD_GRAYSCALE)
             # img.show()
@@ -252,7 +253,7 @@ def get_dataset_label(lines, batch_size,
             read_line = (read_line + 1) % numbers
 
         if not KD:
-            image, label = np.array(x_train), np.array(y_train)
+            image, label = np.array(x_train, dtype=np.float32), np.array(y_train, dtype=np.float32)
 
             if training:
 
@@ -271,33 +272,28 @@ def get_dataset_label(lines, batch_size,
                         Aug_label = row_label
 
                     if D_seed == 1:
-
                         Aug_image = tf.image.random_flip_left_right(row_image, seed=in_seed)
                         Aug_label = tf.image.random_flip_left_right(row_label, seed=in_seed)
                         Aug_image = np.array(np.reshape(Aug_image, row_image.shape))
                         Aug_label = np.array(np.reshape(Aug_label, row_label.shape))
 
                     if D_seed == 2:
-
                         Aug_image = tf.image.random_flip_up_down(row_image, seed=in_seed)
                         Aug_label = tf.image.random_flip_up_down(row_label, seed=in_seed)
                         Aug_image = np.array(np.reshape(Aug_image, row_image.shape))
                         Aug_label = np.array(np.reshape(Aug_label, row_label.shape))
 
                     if D_seed == 3:
-
                         Aug_image = tf.image.random_saturation(row_image, 0.2, 0.8)
                         Aug_image = np.array(np.reshape(Aug_image, row_image.shape))
                         Aug_label = row_label
 
                     if D_seed == 4:
-
                         Aug_image = tf.image.random_contrast(row_image, 0.2, 0.8)
                         Aug_image = np.array(np.reshape(Aug_image, row_image.shape))
                         Aug_label = row_label
 
                     if D_seed == 5:
-
                         Aug_image = tf.image.random_brightness(row_image, 0.5)
                         Aug_image = np.array(np.reshape(Aug_image, row_image.shape))
                         Aug_label = row_label
@@ -384,7 +380,6 @@ def get_test_dataset_label(lines,
 
         y_train.append(labels)
         # y_teacher_train.append(teacher_label)
-
 
     if not KD:
         return np.array(x_train), np.array(y_train)

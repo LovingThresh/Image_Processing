@@ -71,8 +71,8 @@ def M_Precision(y_true, y_pred):
     max_pool_2d = tf.keras.layers.MaxPooling2D(pool_size=(5, 5), strides=(1, 1), padding='same')
     y_true_max = max_pool_2d(y_true)
     # true positives
-    tp = K.sum(K.round(K.round(K.clip(y_pred[-1:, :, :, 0], 0, 1)) * K.round(K.clip(y_true_max[-1:, :, :, 0], 0, 1))))
-    pp = K.sum(K.round(K.clip(y_pred[-1:, :, :, 0], 0, 1)))  # predicted positives
+    tp = K.sum(K.round(K.round(K.clip(y_pred[:, :, :, 0], 0, 1)) * K.round(K.clip(y_true_max[:, :, :, 0], 0, 1))))
+    pp = K.sum(K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))  # predicted positives
     precision = tp / (pp + 1e-8)
     return precision
 
@@ -100,14 +100,14 @@ def M_IOU(y_true: tf.Tensor,
           y_pred: tf.Tensor):
     max_pool_2d = tf.keras.layers.MaxPooling2D(pool_size=(5, 5), strides=(1, 1), padding='same')
     y_true_max = max_pool_2d(y_true)
-    predict = K.round(K.clip(y_pred[-1:, :, :, 0], 0, 1))
+    predict = K.round(K.clip(y_pred[:, :, :, 0], 0, 1))
     Intersection = K.sum(
-        K.round(K.clip(y_true_max[-1:, :, :, 0], 0, 1)) * predict)
-    Union = K.sum(K.round(K.clip(y_true_max[-1:, :, :, 0], 0, 1)) * predict) + \
-            (K.sum(K.round(K.clip(y_true[-1:, :, :, 0], 0, 1))) - K.sum(K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)) *
-                                                                      K.round(K.clip(y_pred[-1:, :, :, 0], 0, 1)))) + \
-            (K.sum(K.round(K.clip(y_pred[:, :, :, 0], 0, 1))) - K.sum(K.round(K.clip(y_true_max[-1:, :, :, 0], 0, 1)) *
-                                                                      K.round(K.clip(y_pred[-1:, :, :, 0], 0, 1))))
+        K.round(K.clip(y_true_max[:, :, :, 0], 0, 1)) * predict)
+    Union = K.sum(K.round(K.clip(y_true_max[:, :, :, 0], 0, 1)) * predict) + \
+            (K.sum(K.round(K.clip(y_true[:, :, :, 0], 0, 1))) - K.sum(K.round(K.clip(y_true[:, :, :, 0], 0, 1)) *
+                                                                      K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))) + \
+            (K.sum(K.round(K.clip(y_pred[:, :, :, 0], 0, 1))) - K.sum(K.round(K.clip(y_true_max[:, :, :, 0], 0, 1)) *
+                                                                      K.round(K.clip(y_pred[:, :, :, 0], 0, 1))))
     iou = Intersection / (Union + 1e-8)
 
     return iou

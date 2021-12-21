@@ -7,7 +7,9 @@ from PIL import Image
 import cv2
 
 train_teacher_y_name = ''
-
+Aug_image = object
+Aug_label = object
+seed = int
 
 # 图像分割的map函数
 
@@ -17,13 +19,13 @@ def map_function_for_keras(data):
     a = random.randint(1, 600)
     image = image * 127.5 + 127.5
 
-    image = tf.image.random_flip_left_right(image, seed=a)
-    image = tf.image.random_flip_up_down(image, seed=a)
+    image = tf.image.random_flip_left_right(image)
+    image = tf.image.random_flip_up_down(image)
 
-    image = tf.image.random_saturation(image, 0.2, 0.8, seed=a)
-    image = tf.image.random_brightness(image, 0.5, seed=a)
-    image = tf.image.random_hue(image, 0.5, seed=a)
-    image = tf.image.random_contrast(image, 0.2, 0.8, seed=a)
+    image = tf.image.random_saturation(image, 0.2, 0.8)
+    image = tf.image.random_brightness(image, 0.5)
+    image = tf.image.random_hue(image, 0.5)
+    image = tf.image.random_contrast(image, 0.2, 0.8)
 
     image = (image - 127.5) / 127.5
 
@@ -31,7 +33,7 @@ def map_function_for_keras(data):
     label = tf.image.random_flip_up_down(label, seed=a)
     label = np.array(label)
 
-    return image, np.repeat(label, repeats=4, axis=0)
+    return np.array(image), [label, label, label, label]
 
 
 def to_clahe(image):
@@ -158,14 +160,14 @@ def get_dataset_label(lines, batch_size,
                       A_img_paths=r'I:\Image Processing\Rebuild_Image_95/',
                       B_img_paths=r'I:\Image Processing\Mix_img\95\label/',
                       C_img_paths=r'I:\Image Processing\Mix_img\95\label/',
-                      size=(512, 512), shuffle=True, KD=False, training=False):
+                      shuffle=True, KD=False, training=False, Augmentation=False):
     """
         生成器， 读取图片， 并对图片进行处理， 生成（样本，标签）
+        :param Augmentation:
         :param training:
         :param C_img_paths:
         :param KD:
         :param shuffle:
-        :param size:
         :param B_img_paths:
         :param A_img_paths:
         :param lines: 样本和标签的对应行
@@ -173,7 +175,7 @@ def get_dataset_label(lines, batch_size,
         :return:  返回（样本， 标签）
         """
 
-    global train_teacher_y_name
+    global train_teacher_y_name, seed
     numbers = len(lines)
     read_line = 0
 
@@ -250,13 +252,72 @@ def get_dataset_label(lines, batch_size,
             read_line = (read_line + 1) % numbers
 
         if not KD:
-            data = (np.array(x_train), np.array(y_train))
+            image, label = np.array(x_train), np.array(y_train)
+
             if training:
 
-                data = map_function_for_keras(data)
+                if Augmentation:
+                    seed = random.choice([0, 0, 0, 1, 2, 3, 4, 5, 6])
+                if not Augmentation:
+                    seed = random.choice([0, 0, 0])
+
+                def DataAugmentation(row_image, row_label, D_seed=0):
+
+                    global Aug_image, Aug_label
+                    in_seed = np.random.randint(0, 6)
+
+                    if D_seed == 0:
+                        Aug_image = row_image
+                        Aug_label = row_label
+
+                    if D_seed == 1:
+
+                        Aug_image = tf.image.random_flip_left_right(row_image, seed=in_seed)
+                        Aug_label = tf.image.random_flip_left_right(row_label, seed=in_seed)
+                        Aug_image = np.array(np.reshape(Aug_image, row_image.shape))
+                        Aug_label = np.array(np.reshape(Aug_label, row_label.shape))
+
+                    if D_seed == 2:
+
+                        Aug_image = tf.image.random_flip_up_down(row_image, seed=in_seed)
+                        Aug_label = tf.image.random_flip_up_down(row_label, seed=in_seed)
+                        Aug_image = np.array(np.reshape(Aug_image, row_image.shape))
+                        Aug_label = np.array(np.reshape(Aug_label, row_label.shape))
+
+                    if D_seed == 3:
+
+                        Aug_image = tf.image.random_saturation(row_image, 0.2, 0.8)
+                        Aug_image = np.array(np.reshape(Aug_image, row_image.shape))
+                        Aug_label = row_label
+
+                    if D_seed == 4:
+
+                        Aug_image = tf.image.random_contrast(row_image, 0.2, 0.8)
+                        Aug_image = np.array(np.reshape(Aug_image, row_image.shape))
+                        Aug_label = row_label
+
+                    if D_seed == 5:
+
+                        Aug_image = tf.image.random_brightness(row_image, 0.5)
+                        Aug_image = np.array(np.reshape(Aug_image, row_image.shape))
+                        Aug_label = row_label
+
+                    if D_seed == 6:
+                        Aug_image = tf.image.random_hue(row_image, 0.5)
+                        Aug_image = np.array(np.reshape(Aug_image, row_image.shape))
+                        Aug_label = row_label
+
+                    return Aug_image, Aug_label
+
+                image, label = DataAugmentation(image, label, D_seed=seed)
+
+                data = image, [label, label, label, label]
 
                 yield data
+
             else:
+                data = image, [label, label, label, label]
+
                 yield data
 
             # yield np.array(x_train), np.array(y_train)
@@ -271,7 +332,6 @@ def get_test_dataset_label(lines,
                            size=(512, 512),
                            KD=False):
     numbers = len(lines)
-    read_line = 0
 
     x_train = []
     y_train = []
@@ -324,6 +384,8 @@ def get_test_dataset_label(lines,
 
         y_train.append(labels)
         # y_teacher_train.append(teacher_label)
+
+
     if not KD:
         return np.array(x_train), np.array(y_train)
 

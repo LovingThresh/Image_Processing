@@ -32,7 +32,7 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset', default='Stage_1')
 parser.add_argument('--datasets_dir', default=r'Stage_1')
-parser.add_argument('--epoch', type=int, default=1)
+parser.add_argument('--epoch', type=int, default=100)
 parser.add_argument('--load_size', type=int, default=512)
 parser.add_argument('--crop_size', type=int, default=512)
 parser.add_argument('--batch_size', type=int, default=10)
@@ -65,32 +65,35 @@ args = parser.parse_args()
 # train_dataset = get_dataset_label(lines[:num_train], batch_size)
 # validation_dataset = get_dataset_label(lines[num_train:], batch_size)
 
-train_lines, num_train = get_data(path=r'L:\ALASegmentationNets\Data\Stage_2\train.txt', training=False)
-validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets\Data\Stage_2\val.txt', training=False)
-test_lines, num_test = get_data(path=r'L:\ALASegmentationNets\Data\Stage_2\test.txt', training=False)
+train_lines, num_train = get_data(path=r'L:\ALASegmentationNets\Data\Stage_1\train.txt', training=False)
+validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets\Data\Stage_1\val.txt', training=False)
+test_lines, num_test = get_data(path=r'L:\ALASegmentationNets\Data\Stage_1\test.txt', training=False)
 batch_size = 1
 train_dataset = get_dataset_label(train_lines, batch_size,
-                                  A_img_paths=r'L:\ALASegmentationNets\Data\Stage_2\train\img/',
-                                  B_img_paths=r'L:\ALASegmentationNets\Data\Stage_2\train\mask/',
+                                  A_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\train\img/',
+                                  B_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\train\mask/',
                                   C_img_paths=r'C:\Users\liuye\Desktop\data\train_2\teacher_mask/',
                                   shuffle=True,
                                   KD=False,
-                                  training=True)
+                                  training=True,
+                                  Augmentation=False)
 validation_dataset = get_dataset_label(validation_lines, batch_size,
-                                       A_img_paths=r'L:\ALASegmentationNets\Data\Stage_2\val\img/',
-                                       B_img_paths=r'L:\ALASegmentationNets\Data\Stage_2\val\mask/',
+                                       A_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\val\img/',
+                                       B_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\val\mask/',
                                        C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
                                        shuffle=False,
                                        KD=False,
-                                       training=False)
+                                       training=True,
+                                       Augmentation=True)
 
 test_dataset = get_dataset_label(test_lines, batch_size,
-                                 A_img_paths=r'L:\ALASegmentationNets\Data\Stage_2\test\img/',
-                                 B_img_paths=r'L:\ALASegmentationNets\Data\Stage_2\test\mask/',
+                                 A_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\test\img/',
+                                 B_img_paths=r'L:\ALASegmentationNets\Data\Stage_1\test\mask/',
                                  C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
                                  shuffle=False,
                                  KD=False,
-                                 training=False)
+                                 training=False,
+                                 Augmentation=False)
 #
 # train_dataset = get_teacher_dataset_label(train_lines,
 #                                           A_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\img/',
@@ -145,17 +148,17 @@ test_dataset = get_dataset_label(test_lines, batch_size,
 #                               model
 # ----------------------------------------------------------------------
 # temperature = 10
-model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=32)
+# model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=32)
 # flops = get_flops(model)
 # print(f"FLOPS: {flops / 10 ** 9:.03} G")
 # model = module.StudentNet(attention=True)
 # model = module.U_Net(512, 512)
 # Encoder = resnet34(512, 512, 2)
 # model = ResNetDecoder(Encoder, 2)
-# model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=32)
+model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=32)
 # model.load_weights(r'C:\Users\liuye\Desktop\weighst/')
 #
-# model = keras.models.load_model(r'E:\output\2021-12-20-22-52-34.845419\checkpoint\ep001-val_loss18411.678',
+# model = keras.models.load_model(r'E:\output\2021-12-20-15-17-14.722998\checkpoint\ep013-val_loss2911.338',
 #                                 custom_objects={'M_Precision': M_Precision,
 #                                                 'M_Recall': M_Recall,
 #                                                 'M_F1': M_F1,
@@ -172,159 +175,159 @@ model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=
 # model = segnet((512, 512), 2)
 # model.summary()
 # initial_learning_rate = 3e-6
-# initial_learning_rate = 2e-6
-initial_learning_rate_list = [1e-5, 5e-6, 2e-6, 1e-6]
-for initial_learning_rate in initial_learning_rate_list:
-    # ---------------------------------------------------------------------------
-    #                              KD
-    # ---------------------------------------------------------------------------
-    # def teacher_model(Encoder, Temperature):
-    #     input_layer = Encoder.input
-    #     h = Encoder.layers[303].input
-    #     print(h.name)
-    #
-    #     x = Encoder.layers[304].input
-    #     print(x.name)
-    #
-    #     y = Encoder.layers[305].input
-    #     print(y.name)
-    #
-    #     mix = Encoder.layers[306].input
-    #     print(mix.name)
-    #
-    #     h = h / Temperature
-    #     x = x / Temperature
-    #     y = y / Temperature
-    #     mix = mix / Temperature
-    #
-    #     h = keras.layers.Softmax(name='Label_h_with_Temperature')(h)
-    #     x = keras.layers.Softmax(name='Label_x_with_Temperature')(x)
-    #     y = keras.layers.Softmax(name='Label_y_with_Temperature')(y)
-    #     mix = keras.layers.Softmax(name='Label_mix_with_Temperature')(mix)
-    #
-    #     Teacher_model = keras.models.Model(inputs=input_layer, outputs=[h, x, y, mix])
-    #     Teacher_model.trainable = False
-    #
-    #     return Teacher_model
-    #
-    #
-    # model = teacher_model(model, temperature)
-    # print(model.trainable)
-    # if model.trainable:
-    #     model.trainable = False
-    #
-    # img_path: str = r'L:\ALASegmentationNets\Data\Stage_4\test\img/'
-    #
-    # img_name_list = os.listdir(img_path)
-    # for img in img_name_list:
-    #     path = img_path + img
-    #
-    #     tensor = cv2.imread(path)
-    #     tensor = tensor / 255.0
-    #     tensor = tensor * 2 - 1
-    #     tensor = np.reshape(tensor, (1, tensor.shape[0], tensor.shape[1], tensor.shape[2]))
-    #     predict = model.predict(tensor)
-    #     plt.imsave(r'L:\ALASegmentationNets\Data\Stage_4\test\teacher_mask\teacher_label_h\label/'
-    #                + img[:-4] + '.png', np.repeat(predict[0][0, :, :, 0:1], 3, axis=-1))
-    #     plt.imsave(r'L:\ALASegmentationNets\Data\Stage_4\test\teacher_mask\teacher_label_x\label/'
-    #                + img[:-4] + '.png', np.repeat(predict[1][0, :, :, 0:1], 3, axis=-1))
-    #     plt.imsave(r'L:\ALASegmentationNets\Data\Stage_4\test\teacher_mask\teacher_label_y\label/'
-    #                + img[:-4] + '.png', np.repeat(predict[2][0, :, :, 0:1], 3, axis=-1))
-    #     plt.imsave(r'L:\ALASegmentationNets\Data\Stage_4\test\teacher_mask\teacher_label_mix\label/'
-    #                + img[:-4] + '.png', np.repeat(predict[3][0, :, :, 0:1], 3, axis=-1))
+initial_learning_rate = 5e-5
+# initial_learning_rate_list = [1e-5, 5e-6, 2e-6, 1e-6]
 
-    optimizer = keras.optimizers.RMSprop(initial_learning_rate)
-    # optimizer = keras.optimizers.SGD(0.01, momentum=0.9, decay=0.0005)
+# ---------------------------------------------------------------------------
+#                              KD
+# ---------------------------------------------------------------------------
+# def teacher_model(Encoder, Temperature):
+#     input_layer = Encoder.input
+#     h = Encoder.layers[303].input
+#     print(h.name)
+#
+#     x = Encoder.layers[304].input
+#     print(x.name)
+#
+#     y = Encoder.layers[305].input
+#     print(y.name)
+#
+#     mix = Encoder.layers[306].input
+#     print(mix.name)
+#
+#     h = h / Temperature
+#     x = x / Temperature
+#     y = y / Temperature
+#     mix = mix / Temperature
+#
+#     h = keras.layers.Softmax(name='Label_h_with_Temperature')(h)
+#     x = keras.layers.Softmax(name='Label_x_with_Temperature')(x)
+#     y = keras.layers.Softmax(name='Label_y_with_Temperature')(y)
+#     mix = keras.layers.Softmax(name='Label_mix_with_Temperature')(mix)
+#
+#     Teacher_model = keras.models.Model(inputs=input_layer, outputs=[h, x, y, mix])
+#     Teacher_model.trainable = False
+#
+#     return Teacher_model
+#
+#
+# model = teacher_model(model, temperature)
+# print(model.trainable)
+# if model.trainable:
+#     model.trainable = False
+#
+# img_path: str = r'L:\ALASegmentationNets\Data\Stage_4\test\img/'
+#
+# img_name_list = os.listdir(img_path)
+# for img in img_name_list:
+#     path = img_path + img
+#
+#     tensor = cv2.imread(path)
+#     tensor = tensor / 255.0
+#     tensor = tensor * 2 - 1
+#     tensor = np.reshape(tensor, (1, tensor.shape[0], tensor.shape[1], tensor.shape[2]))
+#     predict = model.predict(tensor)
+#     plt.imsave(r'L:\ALASegmentationNets\Data\Stage_4\test\teacher_mask\teacher_label_h\label/'
+#                + img[:-4] + '.png', np.repeat(predict[0][0, :, :, 0:1], 3, axis=-1))
+#     plt.imsave(r'L:\ALASegmentationNets\Data\Stage_4\test\teacher_mask\teacher_label_x\label/'
+#                + img[:-4] + '.png', np.repeat(predict[1][0, :, :, 0:1], 3, axis=-1))
+#     plt.imsave(r'L:\ALASegmentationNets\Data\Stage_4\test\teacher_mask\teacher_label_y\label/'
+#                + img[:-4] + '.png', np.repeat(predict[2][0, :, :, 0:1], 3, axis=-1))
+#     plt.imsave(r'L:\ALASegmentationNets\Data\Stage_4\test\teacher_mask\teacher_label_mix\label/'
+#                + img[:-4] + '.png', np.repeat(predict[3][0, :, :, 0:1], 3, axis=-1))
+
+optimizer = keras.optimizers.RMSprop(initial_learning_rate)
+# optimizer = keras.optimizers.SGD(0.01, momentum=0.9, decay=0.0005)
+# ----------------------------------------------------------------------
+#                               output
+# ----------------------------------------------------------------------
+training = True
+KD = False
+
+if training or KD:
+    a = str(datetime.datetime.now())
+    b = list(a)
+    b[10] = '-'
+    b[13] = '-'
+    b[16] = '-'
+    c = ''.join(b)
+    os.makedirs(r'E:/output/{}'.format(c))
+    tensorboard = tf.keras.callbacks.TensorBoard(log_dir='E:/output/{}/tensorboard/'.format(c))
+    checkpoint = tf.keras.callbacks.ModelCheckpoint('E:/output/{}/checkpoint/'.format(c) +
+                                                    'ep{epoch:03d}-val_loss{val_loss:.3f}/',
+                                                    # 'Output_Label_loss:.3f}-val_acc{'
+                                                    # 'Output_Label_accuracy:.3f}/',
+                                                    monitor='val_accuracy', verbose=0,
+                                                    save_best_only=False, save_weights_only=False,
+                                                    mode='auto', period=1)
+
+    os.makedirs(r'E:/output/{}/plot/'.format(c))
+    plot_path = r'E:/output/{}/plot/'.format(c)
+    checkpoints_directory = r'E:/output/{}/checkpoints/'.format(c)
+    checkpointplot = CheckpointPlot(generator=validation_dataset, path=plot_path)
+    checkpoints = tf.train.Checkpoint()
+    manager = tf.train.CheckpointManager(checkpoints, directory=os.path.join(checkpoints_directory, "ckpt"),
+                                         max_to_keep=3)
+    checkpoints = CheckpointSaver(manager=manager)
+    py.args_to_yaml('E:/output/{}/settings.yml'.format(c), args)
+
     # ----------------------------------------------------------------------
-    #                               output
+    #                               train
     # ----------------------------------------------------------------------
-    training = True
-    KD = False
+    model.compile(optimizer=optimizer,
+                  loss=Metrics.Asymmetry_Binary_Loss,
+                  # {
+                  #     'Label_h': Metrics.S_KD_Loss,
+                  #     'Label_x': Metrics.S_KD_Loss,
+                  #     'Label_y': Metrics.S_KD_Loss,
+                  #     'Label_mix': Metrics.S_KD_Loss,
+                  #     'Label_mix_for_real': Metrics.H_KD_Loss,
+                  # },
+                  metrics=['accuracy', M_Precision, M_Recall, M_F1, M_IOU, mean_iou_keras, A_IOU])
 
-    if training or KD:
-        a = str(datetime.datetime.now())
-        b = list(a)
-        b[10] = '-'
-        b[13] = '-'
-        b[16] = '-'
-        c = ''.join(b)
-        os.makedirs(r'E:/output/{}'.format(c))
-        tensorboard = tf.keras.callbacks.TensorBoard(log_dir='E:/output/{}/tensorboard/'.format(c))
-        checkpoint = tf.keras.callbacks.ModelCheckpoint('E:/output/{}/checkpoint/'.format(c) +
-                                                        'ep{epoch:03d}-val_loss{val_loss:.3f}/',
-                                                        # 'Output_Label_loss:.3f}-val_acc{'
-                                                        # 'Output_Label_accuracy:.3f}/',
-                                                        monitor='val_accuracy', verbose=0,
-                                                        save_best_only=False, save_weights_only=False,
-                                                        mode='auto', period=1)
+    if training:
+        model.fit(train_dataset,
+                  steps_per_epoch=max(1, num_train // batch_size),
+                  epochs=args.epoch,
+                  validation_data=validation_dataset,
+                  validation_steps=max(1, num_val // batch_size),
+                  initial_epoch=0,
+                  callbacks=[tensorboard, checkpoint, checkpoints, EarlyStopping, checkpointplot,
+                             DynamicLearningRate])
 
-        os.makedirs(r'E:/output/{}/plot/'.format(c))
-        plot_path = r'E:/output/{}/plot/'.format(c)
-        checkpoints_directory = r'E:/output/{}/checkpoints/'.format(c)
-        checkpointplot = CheckpointPlot(generator=validation_dataset, path=plot_path)
-        checkpoints = tf.train.Checkpoint()
-        manager = tf.train.CheckpointManager(checkpoints, directory=os.path.join(checkpoints_directory, "ckpt"),
-                                             max_to_keep=3)
-        checkpoints = CheckpointSaver(manager=manager)
-        py.args_to_yaml('E:/output/{}/settings.yml'.format(c), args)
+    # ---------------------------------------------------------------------
+    #                       Knowledge Distillation
+    # ----------------------------------------------------------------------
 
-        # ----------------------------------------------------------------------
-        #                               train
-        # ----------------------------------------------------------------------
+    if KD:
+        train_dataset = get_dataset_label(train_lines, batch_size,
+                                          A_img_paths=r'C:\Users\liuye\Desktop\data\train\img/',
+                                          B_img_paths=r'C:\Users\liuye\Desktop\data\train\mask/',
+                                          C_img_paths=r'C:\Users\liuye\Desktop\data\train\teacher_mask/',
+                                          size=(512, 512),
+                                          shuffle=True,
+                                          KD=True)
+        validation_dataset = get_dataset_label(validation_lines, batch_size,
+                                               A_img_paths=r'C:\Users\liuye\Desktop\data\val\img/',
+                                               B_img_paths=r'C:\Users\liuye\Desktop\data\val\mask/',
+                                               C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
+                                               size=(512, 512),
+                                               shuffle=True,
+                                               KD=True)
+        model = module.StudentNet(dim=32, n_blocks=4, attention=True, Separable_convolution=False)
+        optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.0005)
+
         model.compile(optimizer=optimizer,
-                      loss=Metrics.Asymmetry_Binary_Loss,
-                      # {
-                      #     'Label_h': Metrics.S_KD_Loss,
-                      #     'Label_x': Metrics.S_KD_Loss,
-                      #     'Label_y': Metrics.S_KD_Loss,
-                      #     'Label_mix': Metrics.S_KD_Loss,
-                      #     'Label_mix_for_real': Metrics.H_KD_Loss,
-                      # },
-                      metrics=['accuracy', M_Precision, M_Recall, M_F1, M_IOU, mean_iou_keras, A_IOU])
+                      loss={'Output_Label': Metrics.H_KD_Loss, 'Soft_Label': Metrics.S_KD_Loss},
+                      metrics=['accuracy', A_Precision, A_Recall, A_F1, A_IOU])
 
-        if training:
-            model.fit(train_dataset,
-                      steps_per_epoch=max(1, num_train // batch_size),
-                      epochs=args.epoch,
-                      validation_data=validation_dataset,
-                      validation_steps=max(1, num_val // batch_size),
-                      initial_epoch=0,
-                      callbacks=[tensorboard, checkpoint, checkpoints, EarlyStopping, checkpointplot,
-                                 DynamicLearningRate])
-
-        # ---------------------------------------------------------------------
-        #                       Knowledge Distillation
-        # ----------------------------------------------------------------------
-
-        if KD:
-            train_dataset = get_dataset_label(train_lines, batch_size,
-                                              A_img_paths=r'C:\Users\liuye\Desktop\data\train\img/',
-                                              B_img_paths=r'C:\Users\liuye\Desktop\data\train\mask/',
-                                              C_img_paths=r'C:\Users\liuye\Desktop\data\train\teacher_mask/',
-                                              size=(512, 512),
-                                              shuffle=True,
-                                              KD=True)
-            validation_dataset = get_dataset_label(validation_lines, batch_size,
-                                                   A_img_paths=r'C:\Users\liuye\Desktop\data\val\img/',
-                                                   B_img_paths=r'C:\Users\liuye\Desktop\data\val\mask/',
-                                                   C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
-                                                   size=(512, 512),
-                                                   shuffle=True,
-                                                   KD=True)
-            model = module.StudentNet(dim=32, n_blocks=4, attention=True, Separable_convolution=False)
-            optimizer = tf.keras.optimizers.RMSprop(learning_rate=0.0005)
-
-            model.compile(optimizer=optimizer,
-                          loss={'Output_Label': Metrics.H_KD_Loss, 'Soft_Label': Metrics.S_KD_Loss},
-                          metrics=['accuracy', A_Precision, A_Recall, A_F1, A_IOU])
-
-            model.fit_generator(train_dataset,
-                                steps_per_epoch=max(1, num_train // batch_size),
-                                epochs=args.epoch,
-                                validation_data=validation_dataset,
-                                validation_steps=max(1, num_val // batch_size),
-                                initial_epoch=0,
-                                callbacks=[tensorboard, checkpoint, checkpoints])
+        model.fit_generator(train_dataset,
+                            steps_per_epoch=max(1, num_train // batch_size),
+                            epochs=args.epoch,
+                            validation_data=validation_dataset,
+                            validation_steps=max(1, num_val // batch_size),
+                            initial_epoch=0,
+                            callbacks=[tensorboard, checkpoint, checkpoints])
 
 # ---------------------------------------------------------------------
 #                               test

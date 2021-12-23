@@ -725,6 +725,8 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(None, None, 3),
     y2 = keras.layers.Conv2D(dim, (1, 3), strides=1, padding='same', use_bias=False)(y2)
     y = keras.layers.Add()([y1, y2])
     y = keras.layers.Conv2D(dim, 7, padding='valid', use_bias=False)(y)
+    # y = Norm()(y)
+    # y = tf.nn.relu(y)
     # 1
 
     h = DilatedConv2D(k_size=3, rate=2, out_channel=dim, padding='SAME', name='dilatedConv')(h)
@@ -781,17 +783,17 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(None, None, 3),
         dim //= 2
         # for _ in range(1):
         #     h = _residual_block(h)
-        h = keras.layers.Dropout(0.5)(h)
+        # h = keras.layers.Dropout(0.5)(h)
         h = keras.layers.Conv2DTranspose(dim, 3, strides=2, padding='same', use_bias=False)(h)
         h = Norm()(h)
         h = tf.nn.relu(h)
 
-        x = keras.layers.Dropout(0.5)(x)
+        # x = keras.layers.Dropout(0.5)(x)
         x = keras.layers.Conv2DTranspose(dim, 3, strides=2, padding='same', use_bias=False)(x)
         x = Norm()(x)
         x = tf.nn.relu(x)
 
-        y = keras.layers.Dropout(0.5)(y)
+        # y = keras.layers.Dropout(0.5)(y)
         y = keras.layers.Conv2DTranspose(dim, 3, strides=2, padding='same', use_bias=False)(y)
         y = Norm()(y)
         y = tf.nn.relu(y)
@@ -858,11 +860,11 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(None, None, 3),
         y = y / Temperature
         mix_for_real = mix
         mix = mix / Temperature
-        mix_for_real = keras.layers.Softmax(name='Label_mix_for_real')(mix_for_real)
+        mix_for_real = keras.layers.Softmax(name='Label_mix_for_real')(mix_for_real / Temperature)
 
     h = keras.layers.Softmax(name='Label_h')(h)
     x = keras.layers.Softmax(name='Label_x')(x)
     y = keras.layers.Softmax(name='Label_y')(y)
     mix = keras.layers.Softmax(name='Label_mix')(mix)
 
-    return keras.Model(inputs=inputs, outputs=[h, x, y, mix])
+    return keras.Model(inputs=inputs, outputs=[h, x, y, mix, mix_for_real])

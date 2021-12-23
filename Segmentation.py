@@ -9,7 +9,7 @@ import datetime
 import time
 import os
 
-# from keras_flops import get_flops
+from keras_flops import get_flops
 
 
 import Metrics
@@ -65,68 +65,68 @@ args = parser.parse_args()
 # train_dataset = get_dataset_label(lines[:num_train], batch_size)
 # validation_dataset = get_dataset_label(lines[num_train:], batch_size)
 
-train_lines, num_train = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_1\train.txt', training=False)
-validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_1\val.txt', training=False)
-test_lines, num_test = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_1\test.txt', training=False)
+train_lines, num_train = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\train.txt', training=False)
+validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\val.txt', training=False)
+test_lines, num_test = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\test.txt', training=False)
 batch_size = 1
-train_dataset = get_dataset_label(train_lines, batch_size,
-                                  A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_1\train\img/',
-                                  B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_1\train\mask/',
-                                  C_img_paths=r'C:\Users\liuye\Desktop\data\train_1\teacher_mask/',
-                                  shuffle=True,
-                                  KD=False,
-                                  training=True,
-                                  Augmentation=True)
-validation_dataset = get_dataset_label(validation_lines, batch_size,
-                                       A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_1\val\img/',
-                                       B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_1\val\mask/',
-                                       C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
-                                       shuffle=False,
-                                       KD=False,
-                                       training=False,
-                                       Augmentation=False)
+# train_dataset = get_dataset_label(train_lines, batch_size,
+#                                   A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\img/',
+#                                   B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\mask/',
+#                                   C_img_paths=r'C:\Users\liuye\Desktop\data\train_1\teacher_mask/',
+#                                   shuffle=True,
+#                                   KD=False,
+#                                   training=True,
+#                                   Augmentation=True)
+# validation_dataset = get_dataset_label(validation_lines, batch_size,
+#                                        A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\img/',
+#                                        B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\mask/',
+#                                        C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
+#                                        shuffle=False,
+#                                        KD=False,
+#                                        training=False,
+#                                        Augmentation=False)
+#
+# test_dataset = get_dataset_label(test_lines, batch_size,
+#                                  A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\img/',
+#                                  B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\mask/',
+#                                  C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
+#                                  shuffle=False,
+#                                  KD=False,
+#                                  training=False,
+#                                  Augmentation=False)
 
-test_dataset = get_dataset_label(test_lines, batch_size,
-                                 A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_1\test\img/',
-                                 B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_1\test\mask/',
-                                 C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
-                                 shuffle=False,
-                                 KD=False,
-                                 training=False,
-                                 Augmentation=False)
-#
-# train_dataset = get_teacher_dataset_label(train_lines,
-#                                           A_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\img/',
-#                                           B_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\mask/',
-#                                           h_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\teacher_mask\teacher_label_h\label/',
-#                                           x_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\teacher_mask\teacher_label_x\label/',
-#                                           y_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\teacher_mask\teacher_label_y\label/',
-#                                           mix_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\teacher_mask\teacher_label_mix\label/',
-#                                           batch_size=1,
-#                                           shuffle=True,
-#                                           )
-#
-# validation_dataset = get_teacher_dataset_label(validation_lines,
-#                                                A_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\val\img/',
-#                                                B_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\val\mask/',
-#                                                h_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\val\teacher_mask\teacher_label_h\label/',
-#                                                x_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\val\teacher_mask\teacher_label_x\label/',
-#                                                y_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\val\teacher_mask\teacher_label_y\label/',
-#                                                mix_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\val\teacher_mask\teacher_label_mix\label/',
-#                                                batch_size=1,
-#                                                shuffle=True,
-#                                                )
-#
-# test_dataset = get_teacher_dataset_label(test_lines,
-#                                          A_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\test\img/',
-#                                          B_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\test\mask/',
-#                                          h_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\test\teacher_mask\teacher_label_h\label/',
-#                                          x_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\test\teacher_mask\teacher_label_x\label/',
-#                                          y_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\test\teacher_mask\teacher_label_y\label/',
-#                                          mix_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\test\teacher_mask\teacher_label_mix\label/',
-#                                          batch_size=1,
-#                                          shuffle=False,
-#                                          )
+train_dataset = get_teacher_dataset_label(train_lines,
+                                          A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\img/',
+                                          B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\mask/',
+                                          h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_h\label/',
+                                          x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_x\label/',
+                                          y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_y\label/',
+                                          mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_mix\label/',
+                                          batch_size=batch_size,
+                                          shuffle=True,
+                                          )
+
+validation_dataset = get_teacher_dataset_label(validation_lines,
+                                               A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\img/',
+                                               B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\mask/',
+                                               h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_h\label/',
+                                               x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_x\label/',
+                                               y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_y\label/',
+                                               mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_mix\label/',
+                                               batch_size=batch_size,
+                                               shuffle=True,
+                                               )
+
+test_dataset = get_teacher_dataset_label(test_lines,
+                                         A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\img/',
+                                         B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\mask/',
+                                         h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_h\label/',
+                                         x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_x\label/',
+                                         y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_y\label/',
+                                         mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_mix\label/',
+                                         batch_size=batch_size,
+                                         shuffle=False,
+                                         )
 
 
 # def ChangeAsGeneratorFunction(x):
@@ -147,22 +147,27 @@ test_dataset = get_dataset_label(test_lines, batch_size,
 # ----------------------------------------------------------------------
 #                               model
 # ----------------------------------------------------------------------
-# temperature = 10
-# model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=32)
+temperature = 10
+
+model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, ShallowConnect=False, dim=16, n_blocks=4,
+                                                 StudentNet=True, Temperature=temperature)
 # flops = get_flops(model)
 # print(f"FLOPS: {flops / 10 ** 9:.03} G")
 # model = module.StudentNet(attention=True)
 # model = module.U_Net(512, 512)
-# Encoder = resnet34(512, 512, 2)
+# Encoder = resnet101(448, 448, 2)
 # model = ResNetDecoder(Encoder, 2)
-model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=48)
+# model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=64)
 # model.load_weights(r'C:\Users\liuye\Desktop\weighst/')
 #
-# model = keras.models.load_model(r'E:\output\2021-12-20-15-17-14.722998\checkpoint\ep013-val_loss2911.338',
+# model = keras.models.load_model(r'E:\output\2021-12-22-12-23-43.273222_SOTA_4\checkpoint\ep049-val_loss2279.250',
 #                                 custom_objects={'M_Precision': M_Precision,
 #                                                 'M_Recall': M_Recall,
 #                                                 'M_F1': M_F1,
 #                                                 'M_IOU': M_IOU,
+#                                                 # 'A_Precision': A_Precision,
+#                                                 # 'A_Recall': A_Recall,
+#                                                 # 'A_F1': A_F1,
 #                                                 'mean_iou_keras': mean_iou_keras,
 #                                                 'A_IOU': A_IOU,
 #                                                 # 'H_KD_Loss': H_KD_Loss,
@@ -171,7 +176,7 @@ model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=
 #                                                 # 'DilatedConv2D': DilatedConv2D,
 #                                                 }
 #                                 )
-
+# model.evaluate(validation_dataset, steps=250)
 # model = segnet((512, 512), 2)
 # model.summary()
 # initial_learning_rate = 3e-6
@@ -209,14 +214,14 @@ initial_learning_rate = 5e-5
 #     Teacher_model.trainable = False
 #
 #     return Teacher_model
-#
-#
+# #
+# #
 # model = teacher_model(model, temperature)
 # print(model.trainable)
 # if model.trainable:
 #     model.trainable = False
 #
-# img_path: str = r'L:\ALASegmentationNets\Data\Stage_4\test\img/'
+# img_path: str = r'L:\ALASegmentationNets_v2\Data\Stage_4\train\img/'
 #
 # img_name_list = os.listdir(img_path)
 # for img in img_name_list:
@@ -227,15 +232,15 @@ initial_learning_rate = 5e-5
 #     tensor = tensor * 2 - 1
 #     tensor = np.reshape(tensor, (1, tensor.shape[0], tensor.shape[1], tensor.shape[2]))
 #     predict = model.predict(tensor)
-#     plt.imsave(r'L:\ALASegmentationNets\Data\Stage_4\test\teacher_mask\teacher_label_h\label/'
+#     plt.imsave(r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_h\label/'
 #                + img[:-4] + '.png', np.repeat(predict[0][0, :, :, 0:1], 3, axis=-1))
-#     plt.imsave(r'L:\ALASegmentationNets\Data\Stage_4\test\teacher_mask\teacher_label_x\label/'
+#     plt.imsave(r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_x\label/'
 #                + img[:-4] + '.png', np.repeat(predict[1][0, :, :, 0:1], 3, axis=-1))
-#     plt.imsave(r'L:\ALASegmentationNets\Data\Stage_4\test\teacher_mask\teacher_label_y\label/'
+#     plt.imsave(r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_y\label/'
 #                + img[:-4] + '.png', np.repeat(predict[2][0, :, :, 0:1], 3, axis=-1))
-#     plt.imsave(r'L:\ALASegmentationNets\Data\Stage_4\test\teacher_mask\teacher_label_mix\label/'
+#     plt.imsave(r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_mix\label/'
 #                + img[:-4] + '.png', np.repeat(predict[3][0, :, :, 0:1], 3, axis=-1))
-
+#
 optimizer = keras.optimizers.RMSprop(initial_learning_rate)
 # optimizer = keras.optimizers.SGD(0.01, momentum=0.9, decay=0.0005)
 # ----------------------------------------------------------------------
@@ -275,15 +280,17 @@ if training or KD:
     #                               train
     # ----------------------------------------------------------------------
     model.compile(optimizer=optimizer,
-                  loss=Metrics.Asymmetry_Binary_Loss,
-                  # {
-                  #     'Label_h': Metrics.S_KD_Loss,
-                  #     'Label_x': Metrics.S_KD_Loss,
-                  #     'Label_y': Metrics.S_KD_Loss,
-                  #     'Label_mix': Metrics.S_KD_Loss,
-                  #     'Label_mix_for_real': Metrics.H_KD_Loss,
-                  # },
-                  metrics=['accuracy', M_Precision, M_Recall, M_F1, M_IOU, mean_iou_keras, A_IOU])
+                  loss=
+                  # Metrics.Asymmetry_Binary_Loss,
+                  {
+                      'Label_h': Metrics.S_KD_Loss,
+                      'Label_x': Metrics.S_KD_Loss,
+                      'Label_y': Metrics.S_KD_Loss,
+                      'Label_mix': Metrics.S_KD_Loss,
+                      'Label_mix_for_real': Metrics.H_KD_Loss,
+                  },
+                  metrics=['accuracy', A_Precision, A_Recall, A_F1, A_IOU,
+                           M_Precision, M_Recall, M_F1, M_IOU, mean_iou_keras])
 
     if training:
         model.fit(train_dataset,

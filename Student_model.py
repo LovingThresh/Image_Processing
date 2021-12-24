@@ -45,13 +45,13 @@ def student_model(input_shape=(448, 448, 3),
     y2 = keras.layers.Conv2D(dim, (3, 7), strides=1, padding='same', use_bias=False)(y)
     y2 = keras.layers.Conv2D(dim, (1, 3), strides=1, padding='same', use_bias=False)(y2)
     y = keras.layers.Add()([y1, y2])
-    y = keras.layers.Conv2D(dim, 3, padding='same', use_bias=False)(y)
+    y = keras.layers.Conv2D(dim, 7, padding='same', use_bias=False)(y)
     y = keras.layers.BatchNormalization()(y)
     y = keras.layers.ReLU()(y)
 
     # 针对h进行普通卷积
     h = keras.layers.Conv2D(dim, (3, 3), strides=(1, 1), padding='same', dilation_rate=(2, 2), use_bias=False)(h)
-    h = keras.layers.Conv2D(dim, 3, padding='same', use_bias=False)(h)
+    h = keras.layers.Conv2D(dim, 7, padding='same', use_bias=False)(h)
     h = keras.layers.BatchNormalization()(h)
     h = keras.layers.ReLU()(h)
 
@@ -85,6 +85,9 @@ def student_model(input_shape=(448, 448, 3),
         y = _residual_block(y)
 
     for _ in range(n_downsamplings):
+
+        dim //= 2
+
         h = keras.layers.Conv2DTranspose(dim, 3, strides=2, padding='same', use_bias=False)(h)
         h = keras.layers.BatchNormalization()(h)
         h = keras.layers.ReLU()(h)
@@ -99,10 +102,11 @@ def student_model(input_shape=(448, 448, 3),
         y = keras.layers.BatchNormalization()(y)
         y = keras.layers.ReLU()(y)
 
-    h = keras.layers.Conv2D(dim, (3, 3), strides=(1, 1), padding='same', dilation_rate=(2, 2), use_bias=False)(h)
-    h = keras.layers.Conv2D(output_channels, 3, padding='same', use_bias=False)(h)
 
-    x = keras.layers.Conv2D(output_channels, (3, 3), strides=(1, 1), padding='same', dilation_rate=(3, 3),
+    h = keras.layers.Conv2D(output_channels, 7, padding='same', use_bias=False)(h)
+
+    x = keras.layers.ZeroPadding2D(padding=(3, 3))(x)
+    x = keras.layers.Conv2D(output_channels, (3, 3), strides=(1, 1), padding='valid', dilation_rate=(3, 3),
                             use_bias=False)(x)
     x = keras.layers.Conv2D(output_channels, (3, 3), strides=(1, 1), padding='same', dilation_rate=(2, 2),
                             use_bias=False)(x)
@@ -112,7 +116,7 @@ def student_model(input_shape=(448, 448, 3),
     y2 = keras.layers.Conv2D(output_channels, (3, 7), strides=1, padding='same', use_bias=False)(y)
     y2 = keras.layers.Conv2D(output_channels, (1, 3), strides=1, padding='same', use_bias=False)(y2)
     y = keras.layers.Add()([y1, y2])
-    y = keras.layers.Conv2D(output_channels, 3, padding='same', use_bias=False)(y)
+    y = keras.layers.Conv2D(output_channels, 7, padding='same', use_bias=False)(y)
 
     mix = keras.layers.Add()([h, x, y])
 
@@ -149,7 +153,3 @@ def student_model(input_shape=(448, 448, 3),
     mix_for_real = keras.layers.Softmax(name='Label_mix_for_real')(mix_for_real)
 
     return keras.Model(inputs=inputs, outputs=[h, x, y, mix, mix_for_real])
-
-
-model = student_model()
-model.summary()

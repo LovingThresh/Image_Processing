@@ -10,7 +10,7 @@ import time
 import os
 
 # from keras_flops import get_flops
-from Studen_model import student_model
+from Student_model import student_model
 import Metrics
 import pylib as py
 from Callback import CheckpointSaver, EarlyStopping, CheckpointPlot, DynamicLearningRate

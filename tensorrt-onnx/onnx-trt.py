@@ -2,7 +2,7 @@
 #  tar xzf resnet50.tar.gz
 
 # trtexec --onnx=resnet50/model.onnx --saveEngine=resnet_engine.trt  --explicitBatch=1
-# trtexec --onnx=C:\Users\liuye\Desktop\onnx\ep599.onnx --saveEngine=C:\Users\liuye\Desktop\onnx\resnet_engine.trt  --explicitBatch=1 --workspace=512
+# trtexec --onnx=C:\Users\liuye\Desktop\onnx\ep599.onnx --saveEngine=C:\Users\liuye\Desktop\onnx\resnet_engine.trt  --explicitBatch=1 --workspace=1024
 
 
 import cv2

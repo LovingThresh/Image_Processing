@@ -9,9 +9,8 @@ import datetime
 import time
 import os
 
-from keras_flops import get_flops
-
-
+# from keras_flops import get_flops
+from Studen_model import student_model
 import Metrics
 import pylib as py
 from Callback import CheckpointSaver, EarlyStopping, CheckpointPlot, DynamicLearningRate
@@ -131,7 +130,6 @@ test_dataset = get_teacher_dataset_label(test_lines,
                                          temperature=10
                                          )
 
-
 # def ChangeAsGeneratorFunction(x):
 #     return lambda: (data for data in x)
 #
@@ -152,8 +150,9 @@ test_dataset = get_teacher_dataset_label(test_lines,
 # ----------------------------------------------------------------------
 temperature = 10
 
-model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, ShallowConnect=False, dim=16, n_blocks=4,
-                                                 StudentNet=True, Temperature=temperature)
+# model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, ShallowConnect=False, dim=16, n_blocks=4,
+#                                                  StudentNet=True, Temperature=temperature)
+model = student_model()
 # flops = get_flops(model)
 # print(f"FLOPS: {flops / 10 ** 9:.03} G")
 # model = module.StudentNet(attention=True)
@@ -284,15 +283,15 @@ if training or KD:
     #                               train
     # ----------------------------------------------------------------------
     model.compile(optimizer=optimizer,
-                  loss=
-                  # Metrics.Asymmetry_Binary_Loss,
-                  {
+                  loss={
                       'Label_h': Metrics.S_KD_Loss,
                       'Label_x': Metrics.S_KD_Loss,
                       'Label_y': Metrics.S_KD_Loss,
                       'Label_mix': Metrics.S_KD_Loss,
                       'Label_mix_for_real': Metrics.H_KD_Loss,
                   },
+                  # Metrics.Asymmetry_Binary_Loss,
+
                   metrics=['accuracy', A_Precision, A_Recall, A_F1, A_IOU,
                            M_Precision, M_Recall, M_F1, M_IOU, mean_iou_keras])
 
@@ -315,14 +314,12 @@ if training or KD:
                                           A_img_paths=r'C:\Users\liuye\Desktop\data\train\img/',
                                           B_img_paths=r'C:\Users\liuye\Desktop\data\train\mask/',
                                           C_img_paths=r'C:\Users\liuye\Desktop\data\train\teacher_mask/',
-                                          size=(512, 512),
                                           shuffle=True,
                                           KD=True)
         validation_dataset = get_dataset_label(validation_lines, batch_size,
                                                A_img_paths=r'C:\Users\liuye\Desktop\data\val\img/',
                                                B_img_paths=r'C:\Users\liuye\Desktop\data\val\mask/',
                                                C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
-                                               size=(512, 512),
                                                shuffle=True,
                                                KD=True)
         model = module.StudentNet(dim=32, n_blocks=4, attention=True, Separable_convolution=False)
@@ -423,7 +420,7 @@ if test:
         plt.yticks([])
         plt.show()
 
-model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=32)
+# model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=32)
 # flops = get_flops(model)
 # print(f"FLOPS: {flops / 10 ** 9:.03} G")
 # model = module.StudentNet(attention=True)
@@ -433,16 +430,19 @@ model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=
 # model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=32)
 # model.load_weights(r'C:\Users\liuye\Desktop\weighst/')
 #
-# model = keras.models.load_model(r'E:\output\2021-12-20-22-52-34.845419\checkpoint\ep001-val_loss18411.678',
+# model = keras.models.load_model(r'E:\output\2021-12-24-18-00-24.038509\checkpoint\ep001-val_loss5556.828',
 #                                 custom_objects={'M_Precision': M_Precision,
 #                                                 'M_Recall': M_Recall,
 #                                                 'M_F1': M_F1,
 #                                                 'M_IOU': M_IOU,
 #                                                 'mean_iou_keras': mean_iou_keras,
+#                                                 'A_Precision': A_Precision,
+#                                                 'A_Recall': A_Recall,
+#                                                 'A_F1': A_F1,
 #                                                 'A_IOU': A_IOU,
-#                                                 # 'H_KD_Loss': H_KD_Loss,
-#                                                 # 'S_KD_Loss': S_KD_Loss,
-#                                                 'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss,
+#                                                 'H_KD_Loss': H_KD_Loss,
+#                                                 'S_KD_Loss': S_KD_Loss,
+#                                                 # 'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss,
 #                                                 # 'DilatedConv2D': DilatedConv2D,
 #                                                 }
 #                                 )
@@ -450,7 +450,7 @@ model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=
 # model = segnet((512, 512), 2)
 # model.summary()
 # initial_learning_rate = 3e-6
-initial_learning_rate = 2e-6
+# initial_learning_rate = 2e-6
 
 # ---------------------------------------------------------------------------
 #                              KD
@@ -509,3 +509,24 @@ initial_learning_rate = 2e-6
 #                + img[:-4] + '.png', np.repeat(predict[2][0, :, :, 0:1], 3, axis=-1))
 #     plt.imsave(r'L:\ALASegmentationNets\Data\Stage_4\test\teacher_mask\teacher_label_mix\label/'
 #                + img[:-4] + '.png', np.repeat(predict[3][0, :, :, 0:1], 3, axis=-1))
+
+# mnist = tf.keras.datasets.mnist
+#
+# (x_train, y_train),(x_test, y_test) = mnist.load_data()
+# x_train, x_test = x_train / 255.0, x_test / 255.0
+# x_train = tf.reshape(x_train, (60000, 28, 28, 1))
+# x_test = tf.reshape(x_test, (10000, 28, 28, 1))
+# model = tf.keras.models.Sequential([
+#   tf.keras.layers.Conv2D(32, (3, 3), strides=(1, 1), padding='same', dilation_rate=(2, 2), use_bias=False),
+#   tf.keras.layers.Flatten(input_shape=(28, 28)),
+#   tf.keras.layers.Dense(128, activation='relu'),
+#   tf.keras.layers.Dropout(0.2),
+#   tf.keras.layers.Dense(10, activation='softmax')
+# ])
+#
+# model.compile(optimizer='adam',
+#               loss='sparse_categorical_crossentropy',
+#               metrics=['accuracy'])
+#
+# model.fit(x_train, y_train, epochs=5)
+# model.evaluate(x_test, y_test)

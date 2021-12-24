@@ -474,7 +474,7 @@ def get_teacher_dataset_label \
                 mix_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\teacher_mask\teacher_label_mix\label/',
                 batch_size=1,
                 shuffle=True,
-                temperature=10
+                temperature=0
         ):
     numbers = len(lines)
     read_line = 0
@@ -507,9 +507,9 @@ def get_teacher_dataset_label \
             labels[:, :, 0] = (img_array[:, :, 1] == 255).astype(int).reshape(size)
             labels[:, :, 1] = (img_array[:, :, 1] != 255).astype(int).reshape(size)
             real_label = labels.astype(np.float32)
-            if temperature:
+            if temperature > 0:
                 real_label = tf.nn.softmax(real_label / temperature)
-                real_label = labels.astype(np.float32)
+                real_label = np.array(real_label, dtype=np.float32)
 
             # 根据相应标签载入相应的老师标签
             def get_label(img_paths):

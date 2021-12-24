@@ -694,7 +694,7 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(None, None, 3),
         h = x
 
         # 为什么这里不用padding参数呢？使用到了‘REFLECT’
-        h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='REFLECT')
+        h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='CONSTANT')
 
         h = keras.layers.Conv2D(dim, 3, padding='valid', use_bias=False)(h)
         h = Norm()(h)
@@ -712,8 +712,10 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(None, None, 3),
 
     # 针对x进行膨胀卷积
     x = h
-    x = DilatedConv2D(k_size=3, rate=3, out_channel=dim, padding='VALID', name='dilatedConv0_1')(x)
-    x = DilatedConv2D(k_size=3, rate=2, out_channel=dim, padding='SAME', name='dilatedConv0_2')(x)
+    # x = DilatedConv2D(k_size=3, rate=3, out_channel=dim, padding='VALID', name='dilatedConv0_1')(x)
+    x = keras.layers.Conv2D(dim, (3, 3), strides=(1, 1), padding='valid', dilation_rate=(3, 3), use_bias=False)(x)
+    # x = DilatedConv2D(k_size=3, rate=2, out_channel=dim, padding='SAME', name='dilatedConv0_2')(x)
+    x = keras.layers.Conv2D(dim, (3, 3), strides=(1, 1), padding='same', dilation_rate=(2, 2), use_bias=False)(x)
     x = Norm()(x)
     x = tf.nn.relu(x)
 
@@ -725,11 +727,11 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(None, None, 3),
     y2 = keras.layers.Conv2D(dim, (1, 3), strides=1, padding='same', use_bias=False)(y2)
     y = keras.layers.Add()([y1, y2])
     y = keras.layers.Conv2D(dim, 7, padding='valid', use_bias=False)(y)
-    # y = Norm()(y)
-    # y = tf.nn.relu(y)
+    y = Norm()(y)
+    y = tf.nn.relu(y)
     # 1
 
-    h = DilatedConv2D(k_size=3, rate=2, out_channel=dim, padding='SAME', name='dilatedConv')(h)
+    h = keras.layers.Conv2D(dim, (3, 3), strides=(1, 1), padding='same', dilation_rate=(2, 2), use_bias=False)(h)
     h = keras.layers.Conv2D(dim, 7, padding='valid', use_bias=False)(h)
     h = Norm()(h)
     h = tf.nn.relu(h)
@@ -740,8 +742,8 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(None, None, 3),
     for i in range(n_downsamplings):
         dim *= 2
 
-        x = DilatedConv2D(k_size=3, rate=3, out_channel=dim, padding='SAME', name='dilatedConv_y_0_{}'.format(i))(x)
-        x = DilatedConv2D(k_size=3, rate=2, out_channel=dim, padding='SAME', name='dilatedConv_y_1_{}'.format(i))(x)
+        x = keras.layers.Conv2D(dim, (3, 3), strides=(1, 1), padding='same', dilation_rate=(6, 6), use_bias=False)(x)
+        x = keras.layers.Conv2D(dim, (3, 3), strides=(1, 1), padding='same', dilation_rate=(6, 6), use_bias=False)(x)
         x = keras.layers.MaxPooling2D((2, 2))(x)
         x = Norm()(x)
         x = tf.nn.relu(x)
@@ -756,7 +758,7 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(None, None, 3),
         y = Norm()(y)
         y = tf.nn.relu(y)
 
-        h = DilatedConv2D(k_size=3, rate=2, out_channel=dim, padding='SAME', name='dilatedConv_h_{}'.format(i))(h)
+        h = keras.layers.Conv2D(dim, (3, 3), strides=(1, 1), padding='same', dilation_rate=(2, 2), use_bias=False)(h)
         h = keras.layers.Conv2D(dim, 3, strides=2, padding='same', use_bias=False)(h)
         h = Norm()(h)
         h = tf.nn.relu(h)
@@ -801,19 +803,21 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(None, None, 3),
     # 5
     if ShallowConnect:
         h = keras.layers.concatenate([h, f1], axis=-1)
-    h = tf.pad(h, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='REFLECT')
+    h = tf.pad(h, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='CONSTANT')
     # for _ in range(1):
     #     h = _residual_block(h)
-    x = tf.pad(x, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='REFLECT')
-    y = tf.pad(y, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='REFLECT')
+    x = tf.pad(x, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='CONSTANT')
+    y = tf.pad(y, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='CONSTANT')
 
     if input_shape == (227, 227, 3):
         h = keras.layers.Conv2D(output_channels, 8, padding='valid')(h)
     else:
         h = keras.layers.Conv2D(output_channels, 7, padding='valid', use_bias=False)(h)
 
-        x = DilatedConv2D(k_size=3, rate=3, out_channel=output_channels, padding='VALID', name='dilatedConv5_1')(x)
-        x = DilatedConv2D(k_size=3, rate=2, out_channel=output_channels, padding='SAME', name='dilatedConv5_2')(x)
+
+        x = keras.layers.Conv2D(output_channels, (3, 3), strides=(1, 1), padding='valid', dilation_rate=(3, 3), use_bias=False)(x)
+        x = keras.layers.Conv2D(output_channels, (3, 3), strides=(1, 1), padding='same', dilation_rate=(2, 2), use_bias=False)(x)
+
 
         y1 = keras.layers.Conv2D(output_channels, (7, 3), strides=1, padding='same', use_bias=False)(y)
         y1 = keras.layers.Conv2D(output_channels, (3, 1), strides=1, padding='same', use_bias=False)(y1)
@@ -860,7 +864,7 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(None, None, 3),
         y = y / Temperature
         mix_for_real = mix
         mix = mix / Temperature
-        mix_for_real = keras.layers.Softmax(name='Label_mix_for_real')(mix_for_real / Temperature)
+        mix_for_real = keras.layers.Softmax(name='Label_mix_for_real')(mix_for_real)
 
     h = keras.layers.Softmax(name='Label_h')(h)
     x = keras.layers.Softmax(name='Label_x')(x)
@@ -868,3 +872,5 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(None, None, 3),
     mix = keras.layers.Softmax(name='Label_mix')(mix)
 
     return keras.Model(inputs=inputs, outputs=[h, x, y, mix, mix_for_real])
+
+# model = ResnetGenerator_with_ThreeChannel(input_shape=(448, 448, 3), StudentNet=True, Temperature=10)

@@ -85,7 +85,8 @@ def M_Recall(y_true, y_pred):
     """召回率"""
 
     y_pred = tf.cast(y_pred > tf.constant(0.4), tf.float32)
-    tp = K.sum(K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)) * K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))  # true positives
+    tp = K.sum(
+        K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)) * K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))  # true positives
     pp = K.sum(K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)))  # possible positives
 
     recall = tp / (pp + 1e-8)
@@ -110,7 +111,7 @@ def M_IOU(y_true: tf.Tensor,
         K.round(K.clip(y_true_max[-1:, :, :, 0], 0, 1)) * predict)
     Union = K.sum(K.round(K.clip(y_true_max[-1:, :, :, 0], 0, 1)) * predict) + \
             (K.sum(K.round(K.clip(y_true[-1:, :, :, 0], 0, 1))) - K.sum(K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)) *
-                                                                      K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))) + \
+                                                                        K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))) + \
             (K.sum(K.round(K.clip(y_pred[:, :, :, 0], 0, 1))) - K.sum(K.round(K.clip(y_true_max[-1:, :, :, 0], 0, 1)) *
                                                                       K.round(K.clip(y_pred[:, :, :, 0], 0, 1))))
     iou = Intersection / (Union + 1e-8)
@@ -121,7 +122,8 @@ def M_IOU(y_true: tf.Tensor,
 def A_Precision(y_true, y_pred):
     """精确率"""
 
-    tp = K.sum(K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)) * K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))  # true positives
+    tp = K.sum(
+        K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)) * K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))  # true positives
     pp = K.sum(K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))  # predicted positives
     precision = tp / (pp + 1e-8)
     return precision
@@ -130,7 +132,8 @@ def A_Precision(y_true, y_pred):
 def A_Recall(y_true, y_pred):
     """召回率"""
 
-    tp = K.sum(K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)) * K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))  # true positives
+    tp = K.sum(
+        K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)) * K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))  # true positives
     pp = K.sum(K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)))  # possible positives
 
     recall = tp / (pp + 1e-8)
@@ -147,7 +150,6 @@ def A_F1(y_true, y_pred):
 
 def A_IOU(y_true: tf.Tensor,
           y_pred: tf.Tensor):
-
     predict = K.round(K.clip(y_pred[:, :, :, 0], 0, 1))
     Intersection = K.sum(K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)) * predict)
     Union = K.sum(K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)) + predict)
@@ -232,9 +234,9 @@ def Binary_Focal_loss(gamma=2, alpha=0.25):
 
 
 # 自定义损失函数
-def Asymmetry_Binary_Loss(y_true, y_pred):
+def Asymmetry_Binary_Loss(y_true, y_pred, alpha=200):
     # 想要损失函数更加关心裂缝的标签值1
-    y_true_0, y_pred_0 = y_true[:, :, :, 0] * 200, y_pred[:, :, :, 0] * 200
+    y_true_0, y_pred_0 = y_true[:, :, :, 0] * alpha, y_pred[:, :, :, 0] * alpha
     # y_true_0, y_pred_0 = y_true[:, :, :, 0] * 255, y_pred[:, :, :, 0] * 255
     y_true_1, y_pred_1 = y_true[:, :, :, 1], y_pred[:, :, :, 1]
     mse = tf.losses.mean_squared_error

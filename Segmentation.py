@@ -35,7 +35,7 @@ parser.add_argument('--datasets_dir', default=r'Stage_1')
 parser.add_argument('--epoch', type=int, default=100)
 parser.add_argument('--load_size', type=int, default=512)
 parser.add_argument('--crop_size', type=int, default=512)
-parser.add_argument('--batch_size', type=int, default=10)
+parser.add_argument('--batch_size', type=int, default=1)
 
 parser.add_argument('--loss', default='binary_crossentropy loss')
 parser.add_argument('--loss_parameter', default='1')
@@ -104,6 +104,7 @@ train_dataset = get_teacher_dataset_label(train_lines,
                                           mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_mix\label/',
                                           batch_size=batch_size,
                                           shuffle=True,
+                                          temperature=10
                                           )
 
 validation_dataset = get_teacher_dataset_label(validation_lines,
@@ -114,7 +115,8 @@ validation_dataset = get_teacher_dataset_label(validation_lines,
                                                y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_y\label/',
                                                mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_mix\label/',
                                                batch_size=batch_size,
-                                               shuffle=True,
+                                               shuffle=False,
+                                               temperature=10
                                                )
 
 test_dataset = get_teacher_dataset_label(test_lines,
@@ -126,6 +128,7 @@ test_dataset = get_teacher_dataset_label(test_lines,
                                          mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_mix\label/',
                                          batch_size=batch_size,
                                          shuffle=False,
+                                         temperature=10
                                          )
 
 
@@ -160,20 +163,20 @@ model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, 
 # model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=64)
 # model.load_weights(r'C:\Users\liuye\Desktop\weighst/')
 #
-# model = keras.models.load_model(r'E:\output\2021-12-22-12-23-43.273222_SOTA_4\checkpoint\ep049-val_loss2279.250',
+# model = keras.models.load_model(r'E:\output\2021-12-23-14-16-19.069673\checkpoint\ep052-val_loss3808.059',
 #                                 custom_objects={'M_Precision': M_Precision,
 #                                                 'M_Recall': M_Recall,
 #                                                 'M_F1': M_F1,
 #                                                 'M_IOU': M_IOU,
-#                                                 # 'A_Precision': A_Precision,
-#                                                 # 'A_Recall': A_Recall,
-#                                                 # 'A_F1': A_F1,
+#                                                 'A_Precision': A_Precision,
+#                                                 'A_Recall': A_Recall,
+#                                                 'A_F1': A_F1,
 #                                                 'mean_iou_keras': mean_iou_keras,
 #                                                 'A_IOU': A_IOU,
-#                                                 # 'H_KD_Loss': H_KD_Loss,
-#                                                 # 'S_KD_Loss': S_KD_Loss,
-#                                                 'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss,
-#                                                 # 'DilatedConv2D': DilatedConv2D,
+#                                                 'H_KD_Loss': H_KD_Loss,
+#                                                 'S_KD_Loss': S_KD_Loss,
+#                                                 # 'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss,
+#                                                 # 'DilatedConv2D': Layer.DilatedConv2D,
 #                                                 }
 #                                 )
 # model.evaluate(validation_dataset, steps=250)
@@ -186,6 +189,7 @@ initial_learning_rate = 5e-5
 # ---------------------------------------------------------------------------
 #                              KD
 # ---------------------------------------------------------------------------
+#
 # def teacher_model(Encoder, Temperature):
 #     input_layer = Encoder.input
 #     h = Encoder.layers[303].input
@@ -214,8 +218,8 @@ initial_learning_rate = 5e-5
 #     Teacher_model.trainable = False
 #
 #     return Teacher_model
-# #
-# #
+#
+#
 # model = teacher_model(model, temperature)
 # print(model.trainable)
 # if model.trainable:
@@ -329,10 +333,10 @@ if training or KD:
                       metrics=['accuracy', A_Precision, A_Recall, A_F1, A_IOU])
 
         model.fit_generator(train_dataset,
-                            steps_per_epoch=max(1, num_train // batch_size),
+                            steps_per_epoch=200,
                             epochs=args.epoch,
                             validation_data=validation_dataset,
-                            validation_steps=max(1, num_val // batch_size),
+                            validation_steps=200,
                             initial_epoch=0,
                             callbacks=[tensorboard, checkpoint, checkpoints])
 

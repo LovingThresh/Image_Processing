@@ -68,6 +68,8 @@ train_lines, num_train = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\
 validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\val.txt', training=False)
 test_lines, num_test = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\test.txt', training=False)
 batch_size = 1
+# train_lines, num_train = train_lines[:2], 2
+# validation_lines, num_val = validation_lines[:2], 2
 # train_dataset = get_dataset_label(train_lines, batch_size,
 #                                   A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\img/',
 #                                   B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\mask/',
@@ -103,7 +105,7 @@ train_dataset = get_teacher_dataset_label(train_lines,
                                           mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_mix\label/',
                                           batch_size=batch_size,
                                           shuffle=True,
-                                          temperature=10
+                                          temperature=0
                                           )
 
 validation_dataset = get_teacher_dataset_label(validation_lines,
@@ -115,7 +117,8 @@ validation_dataset = get_teacher_dataset_label(validation_lines,
                                                mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_mix\label/',
                                                batch_size=batch_size,
                                                shuffle=False,
-                                               temperature=10
+                                               temperature=0,
+
                                                )
 
 test_dataset = get_teacher_dataset_label(test_lines,
@@ -127,7 +130,7 @@ test_dataset = get_teacher_dataset_label(test_lines,
                                          mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_mix\label/',
                                          batch_size=batch_size,
                                          shuffle=False,
-                                         temperature=10
+                                         temperature=0
                                          )
 
 # def ChangeAsGeneratorFunction(x):
@@ -150,9 +153,11 @@ test_dataset = get_teacher_dataset_label(test_lines,
 # ----------------------------------------------------------------------
 temperature = 10
 
-# model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, ShallowConnect=False, dim=16, n_blocks=4,
-#                                                  StudentNet=True, Temperature=temperature)
-model = student_model()
+model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, ShallowConnect=False, dim=16, n_blocks=4,
+                                                 StudentNet=True, Temperature=temperature)
+
+
+# model = student_model()
 # flops = get_flops(model)
 # print(f"FLOPS: {flops / 10 ** 9:.03} G")
 # model = module.StudentNet(attention=True)
@@ -162,7 +167,7 @@ model = student_model()
 # model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=64)
 # model.load_weights(r'C:\Users\liuye\Desktop\weighst/')
 #
-# model = keras.models.load_model(r'E:\output\2021-12-23-14-16-19.069673\checkpoint\ep052-val_loss3808.059',
+# model = keras.models.load_model(r'E:\output\2021-12-24-23-54-00.417022\checkpoint\ep040-val_loss164.132',
 #                                 custom_objects={'M_Precision': M_Precision,
 #                                                 'M_Recall': M_Recall,
 #                                                 'M_F1': M_F1,

@@ -102,7 +102,6 @@ def student_model(input_shape=(448, 448, 3),
         y = keras.layers.BatchNormalization()(y)
         y = keras.layers.ReLU()(y)
 
-
     h = keras.layers.Conv2D(output_channels, 7, padding='same', use_bias=False)(h)
 
     x = keras.layers.ZeroPadding2D(padding=(3, 3))(x)

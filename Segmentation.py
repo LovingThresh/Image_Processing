@@ -105,7 +105,7 @@ train_dataset = get_teacher_dataset_label(train_lines,
                                           mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_mix\label/',
                                           batch_size=batch_size,
                                           shuffle=True,
-                                          temperature=0
+                                          temperature=10
                                           )
 
 validation_dataset = get_teacher_dataset_label(validation_lines,
@@ -117,7 +117,7 @@ validation_dataset = get_teacher_dataset_label(validation_lines,
                                                mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_mix\label/',
                                                batch_size=batch_size,
                                                shuffle=False,
-                                               temperature=0,
+                                               temperature=10,
 
                                                )
 
@@ -130,7 +130,7 @@ test_dataset = get_teacher_dataset_label(test_lines,
                                          mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_mix\label/',
                                          batch_size=batch_size,
                                          shuffle=False,
-                                         temperature=0
+                                         temperature=10
                                          )
 
 # def ChangeAsGeneratorFunction(x):
@@ -153,9 +153,9 @@ test_dataset = get_teacher_dataset_label(test_lines,
 # ----------------------------------------------------------------------
 temperature = 10
 
-model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, ShallowConnect=False, dim=16, n_blocks=4,
+model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, ShallowConnect=False, dim=16,
+                                                 n_blocks=4,
                                                  StudentNet=True, Temperature=temperature)
-
 
 # model = student_model()
 # flops = get_flops(model)
@@ -167,7 +167,7 @@ model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, 
 # model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=64)
 # model.load_weights(r'C:\Users\liuye\Desktop\weighst/')
 #
-# model = keras.models.load_model(r'E:\output\2021-12-24-23-54-00.417022\checkpoint\ep040-val_loss164.132',
+# model = keras.models.load_model(r'C:\Users\NDTplus\Desktop\student',
 #                                 custom_objects={'M_Precision': M_Precision,
 #                                                 'M_Recall': M_Recall,
 #                                                 'M_F1': M_F1,
@@ -535,3 +535,42 @@ if test:
 #
 # model.fit(x_train, y_train, epochs=5)
 # model.evaluate(x_test, y_test)
+
+
+model = keras.models.load_model(r'E:\output\2021-12-25-17-16-45.673728\checkpoint\ep078-val_loss3824.757',
+                                custom_objects={'M_Precision': M_Precision,
+                                                'M_Recall': M_Recall,
+                                                'M_F1': M_F1,
+                                                'M_IOU': M_IOU,
+                                                'A_Precision': A_Precision,
+                                                'A_Recall': A_Recall,
+                                                'A_F1': A_F1,
+                                                'mean_iou_keras': mean_iou_keras,
+                                                'A_IOU': A_IOU,
+                                                'H_KD_Loss': H_KD_Loss,
+                                                'S_KD_Loss': S_KD_Loss,
+                                                # 'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss,
+                                                # 'DilatedConv2D': Layer.DilatedConv2D,
+                                                }
+                                )
+model.save_weights(r'C:\Users\NDTplus\Desktop\student_weights/')
+temperature = 1
+
+model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, ShallowConnect=False, dim=16,
+                                                    n_blocks=4,
+                                                    StudentNet=True, Temperature=temperature)
+model.load_weights(r'C:\Users\NDTplus\Desktop\student_weights/')
+model.compile(optimizer=optimizer,
+              loss={
+                  'Label_h': Metrics.S_KD_Loss,
+                  'Label_x': Metrics.S_KD_Loss,
+                  'Label_y': Metrics.S_KD_Loss,
+                  'Label_mix': Metrics.S_KD_Loss,
+                  'Label_mix_for_real': Metrics.H_KD_Loss,
+              },
+              # Metrics.Asymmetry_Binary_Loss,
+
+              metrics=['accuracy', A_Precision, A_Recall, A_F1, A_IOU,
+                       M_Precision, M_Recall, M_F1, M_IOU])
+model.evaluate(validation_dataset, steps=250)
+model.evaluate(test_dataset, steps=250)

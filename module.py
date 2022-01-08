@@ -674,6 +674,10 @@ class pixelshuffle(tf.keras.layers.Layer):
 
 
 
+# ==============================================================================
+# =                               Network Model                                =
+# ==============================================================================
+
 def ResnetGenerator_with_ThreeChannel(input_shape=(448, 448, 3),
                     output_channels=2,
                     dim=64,
@@ -876,3 +880,4 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(448, 448, 3),
     mix = keras.layers.Softmax(name='Label_mix')(mix)
 
     return keras.Model(inputs=inputs, outputs=[h, x, y, mix, mix_for_real])
+

@@ -10,7 +10,7 @@ import time
 import os
 
 # from keras_flops import get_flops
-from Student_model import student_model
+# from Student_model import student_model
 import Metrics
 import pylib as py
 from Callback import CheckpointSaver, EarlyStopping, CheckpointPlot, DynamicLearningRate
@@ -18,6 +18,7 @@ from Metrics import *
 from I_data import *
 import module
 from SegementationModels import *
+from model_profiler import model_profiler
 from tensorflow.keras import models
 import matplotlib.pyplot as plt
 
@@ -68,33 +69,46 @@ train_lines, num_train = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\
 validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\val.txt', training=False)
 test_lines, num_test = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\test.txt', training=False)
 batch_size = 1
+
+# 下面的代码适用于测试的
+# -------------------------------------------------------------
 # train_lines, num_train = train_lines[:2], 2
 # validation_lines, num_val = validation_lines[:2], 2
-# train_dataset = get_dataset_label(train_lines, batch_size,
-#                                   A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\img/',
-#                                   B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\mask/',
-#                                   C_img_paths=r'C:\Users\liuye\Desktop\data\train_1\teacher_mask/',
-#                                   shuffle=True,
-#                                   KD=False,
-#                                   training=True,
-#                                   Augmentation=True)
-# validation_dataset = get_dataset_label(validation_lines, batch_size,
-#                                        A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\img/',
-#                                        B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\mask/',
-#                                        C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
-#                                        shuffle=False,
-#                                        KD=False,
-#                                        training=False,
-#                                        Augmentation=False)
-#
-# test_dataset = get_dataset_label(test_lines, batch_size,
-#                                  A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\img/',
-#                                  B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\mask/',
-#                                  C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
-#                                  shuffle=False,
-#                                  KD=False,
-#                                  training=False,
-#                                  Augmentation=False)
+# -------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------------------------------
+#                                        非Teacher训练
+# ---------------------------------------------------------------------------------------------------
+train_dataset = get_dataset_label(train_lines, batch_size,
+                                  A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\img/',
+                                  B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\mask/',
+                                  C_img_paths=r'C:\Users\liuye\Desktop\data\train_1\teacher_mask/',
+                                  shuffle=True,
+                                  KD=False,
+                                  training=True,
+                                  Augmentation=True)
+validation_dataset = get_dataset_label(validation_lines, batch_size,
+                                       A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\img/',
+                                       B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\mask/',
+                                       C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
+                                       shuffle=False,
+                                       KD=False,
+                                       training=False,
+                                       Augmentation=False)
+
+test_dataset = get_dataset_label(test_lines, batch_size,
+                                 A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\img/',
+                                 B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\mask/',
+                                 C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
+                                 shuffle=False,
+                                 KD=False,
+                                 training=False,
+                                 Augmentation=False)
+
+# ---------------------------------------------------------------------------------------------------
+#                                        非Teacher训练
+# ---------------------------------------------------------------------------------------------------
 
 # train_dataset = get_teacher_dataset_label(train_lines,
 #                                           A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\img/',
@@ -152,21 +166,34 @@ batch_size = 1
 #                               model
 # ----------------------------------------------------------------------
 temperature = 10
-
-model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, ShallowConnect=False, dim=16, n_blocks=4,
+#
+model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, ShallowConnect=False, dim=16,
+                                                 n_blocks=4,
                                                  StudentNet=True, Temperature=temperature)
 
-
-# model = student_model()
 # flops = get_flops(model)
 # print(f"FLOPS: {flops / 10 ** 9:.03} G")
 # model = module.StudentNet(attention=True)
-# model = module.U_Net(512, 512)
+
+
+# 模型验证阶段
+
+model = module.U_Net(448, 448)
+
+# 模型参数
+model.summary()
+
+Batch_size = 1
+profile = model_profiler(model, Batch_size)
+
+print(profile)
 # Encoder = resnet101(448, 448, 2)
 # model = ResNetDecoder(Encoder, 2)
+
+
 # model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=64)
-# model.load_weights(r'C:\Users\liuye\Desktop\weighst/')
-#
+
+
 # model = keras.models.load_model(r'E:\output\2021-12-24-23-54-00.417022\checkpoint\ep040-val_loss164.132',
 #                                 custom_objects={'M_Precision': M_Precision,
 #                                                 'M_Recall': M_Recall,
@@ -288,17 +315,18 @@ if training or KD:
     #                               train
     # ----------------------------------------------------------------------
     model.compile(optimizer=optimizer,
-                  loss={
-                      'Label_h': Metrics.S_KD_Loss,
-                      'Label_x': Metrics.S_KD_Loss,
-                      'Label_y': Metrics.S_KD_Loss,
-                      'Label_mix': Metrics.S_KD_Loss,
-                      'Label_mix_for_real': Metrics.H_KD_Loss,
-                  },
+                  loss=Metrics.Asymmetry_Binary_Loss,
+                  # {
+                  # 'Label_h': Metrics.S_KD_Loss,
+                  # 'Label_x': Metrics.S_KD_Loss,
+                  # 'Label_y': Metrics.S_KD_Loss,
+                  # 'Label_mix': Metrics.S_KD_Loss,
+                  # 'Label_mix_for_real': Metrics.H_KD_Loss,
+                  #       },
                   # Metrics.Asymmetry_Binary_Loss,
 
                   metrics=['accuracy', A_Precision, A_Recall, A_F1, A_IOU,
-                           M_Precision, M_Recall, M_F1, M_IOU, mean_iou_keras])
+                           M_Precision, M_Recall, M_F1, M_IOU])
 
     if training:
         model.fit(train_dataset,
@@ -433,29 +461,31 @@ if test:
 # Encoder = resnet34(512, 512, 2)
 # model = ResNetDecoder(Encoder, 2)
 # model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=32)
-# model.load_weights(r'C:\Users\liuye\Desktop\weighst/')
-#
-model = keras.models.load_model(r'E:\output\2021-12-25-22-20-29.152057\checkpoint\ep100-val_loss4081.724',
-                                custom_objects={'M_Precision': M_Precision,
-                                                'M_Recall': M_Recall,
-                                                'M_F1': M_F1,
-                                                'M_IOU': M_IOU,
-                                                'mean_iou_keras': mean_iou_keras,
-                                                'A_Precision': A_Precision,
-                                                'A_Recall': A_Recall,
-                                                'A_F1': A_F1,
-                                                'A_IOU': A_IOU,
-                                                'H_KD_Loss': H_KD_Loss,
-                                                'S_KD_Loss': S_KD_Loss,
-                                                # 'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss,
-                                                # 'DilatedConv2D': DilatedConv2D,
-                                                }
-                                )
-model.evaluate(validation_dataset, steps=250)
-model.evaluate(test_dataset, steps=250)
-model = keras.models.Model(inputs=model.input, outputs=model.output[-1])
-model.save(r'C:\Users\liuye\Desktop\student_1_1/')
-model.save_weights(r'C:\Users\liuye\Desktop\student_1_1_weights/')
+
+# 模型测试
+# model = keras.models.load_model(r'C:\Users\liuye\Desktop\期末\课题\student_1_1',
+#                                 custom_objects={'M_Precision': M_Precision,
+#                                                 'M_Recall': M_Recall,
+#                                                 'M_F1': M_F1,
+#                                                 'M_IOU': M_IOU,
+#                                                 'mean_iou_keras': mean_iou_keras,
+#                                                 'A_Precision': A_Precision,
+#                                                 'A_Recall': A_Recall,
+#                                                 'A_F1': A_F1,
+#                                                 'A_IOU': A_IOU,
+#                                                 'H_KD_Loss': H_KD_Loss,
+#                                                 'S_KD_Loss': S_KD_Loss,
+#                                                 # 'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss,
+#                                                 # 'DilatedConv2D': DilatedConv2D,
+#                                                 }
+#                                 )
+# model.evaluate(validation_dataset, steps=250)
+# model.evaluate(test_dataset, steps=250)
+
+
+# model = keras.models.Model(inputs=model.input, outputs=model.output[-1])
+# model.save(r'C:\Users\liuye\Desktop\student_1_1/')
+# model.save_weights(r'C:\Users\liuye\Desktop\student_1_1_weights/')
 # model = segnet((512, 512), 2)
 # model.summary()
 # initial_learning_rate = 3e-6

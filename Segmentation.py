@@ -22,6 +22,7 @@ from model_profiler import model_profiler
 from tensorflow.keras import models
 import matplotlib.pyplot as plt
 
+
 gpus = tf.config.experimental.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(gpus[0], True)
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -80,72 +81,72 @@ batch_size = 1
 # ---------------------------------------------------------------------------------------------------
 #                                        非Teacher训练
 # ---------------------------------------------------------------------------------------------------
-train_dataset = get_dataset_label(train_lines, batch_size,
-                                  A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\img/',
-                                  B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\mask/',
-                                  C_img_paths=r'C:\Users\liuye\Desktop\data\train_1\teacher_mask/',
-                                  shuffle=True,
-                                  KD=False,
-                                  training=True,
-                                  Augmentation=True)
-validation_dataset = get_dataset_label(validation_lines, batch_size,
-                                       A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\img/',
-                                       B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\mask/',
-                                       C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
-                                       shuffle=False,
-                                       KD=False,
-                                       training=False,
-                                       Augmentation=False)
-
-test_dataset = get_dataset_label(test_lines, batch_size,
-                                 A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\img/',
-                                 B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\mask/',
-                                 C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
-                                 shuffle=False,
-                                 KD=False,
-                                 training=False,
-                                 Augmentation=False)
+# train_dataset = get_dataset_label(train_lines, batch_size,
+#                                   A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\img/',
+#                                   B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\mask/',
+#                                   C_img_paths=r'C:\Users\liuye\Desktop\data\train_1\teacher_mask/',
+#                                   shuffle=True,
+#                                   KD=False,
+#                                   training=True,
+#                                   Augmentation=True)
+# validation_dataset = get_dataset_label(validation_lines, batch_size,
+#                                        A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\img/',
+#                                        B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\mask/',
+#                                        C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
+#                                        shuffle=False,
+#                                        KD=False,
+#                                        training=False,
+#                                        Augmentation=False)
+#
+# test_dataset = get_dataset_label(test_lines, batch_size,
+#                                  A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\img/',
+#                                  B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\mask/',
+#                                  C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
+#                                  shuffle=False,
+#                                  KD=False,
+#                                  training=False,
+#                                  Augmentation=False)
 
 # ---------------------------------------------------------------------------------------------------
 #                                        非Teacher训练
 # ---------------------------------------------------------------------------------------------------
 
-# train_dataset = get_teacher_dataset_label(train_lines,
-#                                           A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\img/',
-#                                           B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\mask/',
-#                                           h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_h\label/',
-#                                           x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_x\label/',
-#                                           y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_y\label/',
-#                                           mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_mix\label/',
-#                                           batch_size=batch_size,
-#                                           shuffle=True,
-#                                           temperature=0
-#                                           )
-#
-# validation_dataset = get_teacher_dataset_label(validation_lines,
-#                                                A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\img/',
-#                                                B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\mask/',
-#                                                h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_h\label/',
-#                                                x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_x\label/',
-#                                                y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_y\label/',
-#                                                mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_mix\label/',
-#                                                batch_size=batch_size,
-#                                                shuffle=False,
-#                                                temperature=0,
-#
-#                                                )
-#
-# test_dataset = get_teacher_dataset_label(test_lines,
-#                                          A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\img/',
-#                                          B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\mask/',
-#                                          h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_h\label/',
-#                                          x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_x\label/',
-#                                          y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_y\label/',
-#                                          mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_mix\label/',
-#                                          batch_size=batch_size,
-#                                          shuffle=False,
-#                                          temperature=0
-#                                          )
+train_dataset = get_teacher_dataset_label(train_lines,
+                                          A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\img/',
+                                          B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\mask/',
+                                          h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_h\label/',
+                                          x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_x\label/',
+                                          y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_y\label/',
+                                          mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_mix\label/',
+                                          batch_size=batch_size,
+                                          shuffle=True,
+                                          temperature=0
+                                          )
+
+validation_dataset = get_teacher_dataset_label(validation_lines,
+                                               A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\img/',
+                                               B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\mask/',
+                                               h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_h\label/',
+                                               x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_x\label/',
+                                               y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_y\label/',
+                                               mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_mix\label/',
+                                               batch_size=batch_size,
+                                               shuffle=False,
+                                               temperature=0,
+
+                                               )
+
+test_dataset = get_teacher_dataset_label(test_lines,
+                                         A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\img/',
+                                         B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\mask/',
+                                         h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_h\label/',
+                                         x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_x\label/',
+                                         y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_y\label/',
+                                         mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_mix\label/',
+                                         batch_size=batch_size,
+                                         shuffle=False,
+                                         temperature=0
+                                         )
 
 # def ChangeAsGeneratorFunction(x):
 #     return lambda: (data for data in x)
@@ -167,7 +168,7 @@ test_dataset = get_dataset_label(test_lines, batch_size,
 # ----------------------------------------------------------------------
 temperature = 10
 #
-model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, ShallowConnect=False, dim=16,
+model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=False, ShallowConnect=False, dim=16,
                                                  n_blocks=4,
                                                  StudentNet=True, Temperature=temperature)
 
@@ -178,7 +179,7 @@ model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, 
 
 # 模型验证阶段
 
-model = module.U_Net(448, 448)
+# model = module.U_Net(448, 448)
 
 # 模型参数
 model.summary()

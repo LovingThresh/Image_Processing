@@ -18,12 +18,12 @@ def student_model(input_shape=(448, 448, 3),
 
         # 为什么这里不用padding参数呢？使用到了‘REFLECT’
         d = keras.layers.ZeroPadding2D(padding=(1, 1))(d)
-        d = keras.layers.DepthwiseConv2D(x_dim, 3, padding='valid', use_bias=False)(d)
+        d = keras.layers.Conv2D(x_dim, 3, padding='valid', use_bias=False)(d)
         d = keras.layers.BatchNormalization()(d)
         d = keras.layers.ReLU()(d)
 
         d = keras.layers.ZeroPadding2D(padding=(1, 1))(d)
-        d = keras.layers.DepthwiseConv2D(x_dim, 3, padding='valid', use_bias=False)(d)
+        d = keras.layers.Conv2D(x_dim, 3, padding='valid', use_bias=False)(d)
         d = keras.layers.BatchNormalization()(d)
 
         return keras.layers.Add()([c, d])
@@ -33,49 +33,49 @@ def student_model(input_shape=(448, 448, 3),
     # 针对x进行膨胀卷积
     x = h
     x = keras.layers.ZeroPadding2D(padding=(3, 3))(x)
-    x = keras.layers.DepthwiseConv2D(dim, (3, 3), strides=(1, 1), padding='valid', dilation_rate=(3, 3), use_bias=False)(x)
-    x = keras.layers.DepthwiseConv2D(dim, (3, 3), strides=(1, 1), padding='same', dilation_rate=(2, 2), use_bias=False)(x)
+    x = keras.layers.Conv2D(dim, (3, 3), strides=(1, 1), padding='valid', dilation_rate=(3, 3), use_bias=False)(x)
+    x = keras.layers.Conv2D(dim, (3, 3), strides=(1, 1), padding='same', dilation_rate=(2, 2), use_bias=False)(x)
     x = keras.layers.BatchNormalization()(x)
     x = keras.layers.ReLU()(x)
 
     # 针对y进行长方形卷积
     y = h
-    y1 = keras.layers.DepthwiseConv2D(dim, (7, 3), strides=1, padding='same', use_bias=False)(y)
-    y1 = keras.layers.DepthwiseConv2D(dim, (3, 1), strides=1, padding='same', use_bias=False)(y1)
-    y2 = keras.layers.DepthwiseConv2D(dim, (3, 7), strides=1, padding='same', use_bias=False)(y)
-    y2 = keras.layers.DepthwiseConv2D(dim, (1, 3), strides=1, padding='same', use_bias=False)(y2)
+    y1 = keras.layers.Conv2D(dim, (7, 3), strides=1, padding='same', use_bias=False)(y)
+    y1 = keras.layers.Conv2D(dim, (3, 1), strides=1, padding='same', use_bias=False)(y1)
+    y2 = keras.layers.Conv2D(dim, (3, 7), strides=1, padding='same', use_bias=False)(y)
+    y2 = keras.layers.Conv2D(dim, (1, 3), strides=1, padding='same', use_bias=False)(y2)
     y = keras.layers.Add()([y1, y2])
-    y = keras.layers.DepthwiseConv2D(dim, 7, padding='same', use_bias=False)(y)
+    y = keras.layers.Conv2D(dim, 7, padding='same', use_bias=False)(y)
     y = keras.layers.BatchNormalization()(y)
     y = keras.layers.ReLU()(y)
 
     # 针对h进行普通卷积
-    h = keras.layers.DepthwiseConv2D(dim, (3, 3), strides=(1, 1), padding='same', dilation_rate=(2, 2), use_bias=False)(h)
-    h = keras.layers.DepthwiseConv2D(dim, 7, padding='same', use_bias=False)(h)
+    h = keras.layers.Conv2D(dim, (3, 3), strides=(1, 1), padding='same', dilation_rate=(2, 2), use_bias=False)(h)
+    h = keras.layers.Conv2D(dim, 7, padding='same', use_bias=False)(h)
     h = keras.layers.BatchNormalization()(h)
     h = keras.layers.ReLU()(h)
 
     for _ in range(n_downsamplings):
         dim *= 2
 
-        x = keras.layers.DepthwiseConv2D(dim, (3, 3), strides=(1, 1), padding='same', dilation_rate=(6, 6), use_bias=False)(x)
-        x = keras.layers.DepthwiseConv2D(dim, (3, 3), strides=(1, 1), padding='same', dilation_rate=(6, 6), use_bias=False)(x)
+        x = keras.layers.Conv2D(dim, (3, 3), strides=(1, 1), padding='same', dilation_rate=(6, 6), use_bias=False)(x)
+        x = keras.layers.Conv2D(dim, (3, 3), strides=(1, 1), padding='same', dilation_rate=(6, 6), use_bias=False)(x)
         x = keras.layers.MaxPooling2D((2, 2))(x)
         x = keras.layers.BatchNormalization()(x)
         x = keras.layers.ReLU()(x)
 
-        y1 = keras.layers.DepthwiseConv2D(dim, (3, 1), strides=1, padding='same', use_bias=False)(y)
-        y1 = keras.layers.DepthwiseConv2D(dim, (3, 1), strides=1, padding='same', use_bias=False)(y1)
-        y2 = keras.layers.DepthwiseConv2D(dim, (1, 3), strides=1, padding='same', use_bias=False)(y)
-        y2 = keras.layers.DepthwiseConv2D(dim, (1, 3), strides=1, padding='same', use_bias=False)(y2)
+        y1 = keras.layers.Conv2D(dim, (3, 1), strides=1, padding='same', use_bias=False)(y)
+        y1 = keras.layers.Conv2D(dim, (3, 1), strides=1, padding='same', use_bias=False)(y1)
+        y2 = keras.layers.Conv2D(dim, (1, 3), strides=1, padding='same', use_bias=False)(y)
+        y2 = keras.layers.Conv2D(dim, (1, 3), strides=1, padding='same', use_bias=False)(y2)
 
         y = keras.layers.Add()([y1, y2])
         y = keras.layers.MaxPooling2D((2, 2))(y)
         y = keras.layers.BatchNormalization()(y)
         y = keras.layers.ReLU()(y)
 
-        h = keras.layers.DepthwiseConv2D(dim, (3, 3), strides=(1, 1), padding='same', dilation_rate=(2, 2), use_bias=False)(h)
-        h = keras.layers.DepthwiseConv2D(dim, 3, strides=2, padding='same', use_bias=False)(h)
+        h = keras.layers.Conv2D(dim, (3, 3), strides=(1, 1), padding='same', dilation_rate=(2, 2), use_bias=False)(h)
+        h = keras.layers.Conv2D(dim, 3, strides=2, padding='same', use_bias=False)(h)
         h = keras.layers.BatchNormalization()(h)
         h = keras.layers.ReLU()(h)
 
@@ -102,20 +102,20 @@ def student_model(input_shape=(448, 448, 3),
         y = keras.layers.BatchNormalization()(y)
         y = keras.layers.ReLU()(y)
 
-    h = keras.layers.DepthwiseConv2D(output_channels, 7, padding='same', use_bias=False)(h)
+    h = keras.layers.Conv2D(output_channels, 7, padding='same', use_bias=False)(h)
 
     x = keras.layers.ZeroPadding2D(padding=(3, 3))(x)
-    x = keras.layers.DepthwiseConv2D(output_channels, (3, 3), strides=(1, 1), padding='valid', dilation_rate=(3, 3),
+    x = keras.layers.Conv2D(output_channels, (3, 3), strides=(1, 1), padding='valid', dilation_rate=(3, 3),
                             use_bias=False)(x)
-    x = keras.layers.DepthwiseConv2D(output_channels, (3, 3), strides=(1, 1), padding='same', dilation_rate=(2, 2),
+    x = keras.layers.Conv2D(output_channels, (3, 3), strides=(1, 1), padding='same', dilation_rate=(2, 2),
                             use_bias=False)(x)
 
-    y1 = keras.layers.DepthwiseConv2D(output_channels, (7, 3), strides=1, padding='same', use_bias=False)(y)
-    y1 = keras.layers.DepthwiseConv2D(output_channels, (3, 1), strides=1, padding='same', use_bias=False)(y1)
-    y2 = keras.layers.DepthwiseConv2D(output_channels, (3, 7), strides=1, padding='same', use_bias=False)(y)
-    y2 = keras.layers.DepthwiseConv2D(output_channels, (1, 3), strides=1, padding='same', use_bias=False)(y2)
+    y1 = keras.layers.Conv2D(output_channels, (7, 3), strides=1, padding='same', use_bias=False)(y)
+    y1 = keras.layers.Conv2D(output_channels, (3, 1), strides=1, padding='same', use_bias=False)(y1)
+    y2 = keras.layers.Conv2D(output_channels, (3, 7), strides=1, padding='same', use_bias=False)(y)
+    y2 = keras.layers.Conv2D(output_channels, (1, 3), strides=1, padding='same', use_bias=False)(y2)
     y = keras.layers.Add()([y1, y2])
-    y = keras.layers.DepthwiseConv2D(output_channels, 7, padding='same', use_bias=False)(y)
+    y = keras.layers.Conv2D(output_channels, 7, padding='same', use_bias=False)(y)
 
     mix = keras.layers.Add()([h, x, y])
 

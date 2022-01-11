@@ -307,16 +307,12 @@ def get_dataset_label(lines, batch_size,
 
                 image, label = DataAugmentation(image, label, D_seed=seed)
 
-                # data = image, [label, label, label, label]
+                data = image, [label, label, label, label]
 
-                data = image, label
-                
                 yield data
 
             else:
-                # data = image, [label, label, label, label]
-
-                data = image, label
+                data = image, [label, label, label, label]
 
                 yield data
 

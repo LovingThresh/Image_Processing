@@ -287,8 +287,7 @@ def decoder(feature_map_list, class_number, input_height=227, input_width=227, e
     x = Conv2DTranspose(class_number, (5, 5), (1, 1), 'valid')(x)
     x = BatchNormalization()(x)
 
-    x = tf.sigmoid(x)
-
+    x = tf.tanh(x)
 
     return x
 
@@ -318,16 +317,14 @@ def U_Net(Height=227, Width=227):
 
 
 def TeacherNet():
-
-
     conv_model = keras.models.load_model(r'I:\Image Processing\output\2021-09-17-13-40-41.901808\checkpoint\ep390'
                                          r'-val_loss0.004-val_acc0.999.h5',
-                                    custom_objects={'Precision': A_Precision,
-                                                    'Recall': A_Recall,
-                                                    'F1': A_F1,
-                                                    'IOU': A_IOU,
-                                                    'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss
-                                                    })
+                                         custom_objects={'Precision': A_Precision,
+                                                         'Recall': A_Recall,
+                                                         'F1': A_F1,
+                                                         'IOU': A_IOU,
+                                                         'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss
+                                                         })
     conv_model.trainable = False
     # 组建网络
     model = tf.keras.models.Sequential()
@@ -335,17 +332,19 @@ def TeacherNet():
     model.add(tf.keras.layers.Softmax(axis=3))
 
     return model
+
+
 # Teacher_Label已经构建好了，接下来进行StudentsNet的构建
 # 首先按照原始模型缩小进行实验
 # 两种形态进行对比
 def StudentNet(input_shape=(512, 512, 3),
-                    output_channels=2,
-                    dim=32,
-                    n_downsamplings=2,
-                    n_blocks=4,
-                    norm='instance_norm',
-                    attention=False,
-                    Separable_convolution=False):
+               output_channels=2,
+               dim=32,
+               n_downsamplings=2,
+               n_blocks=4,
+               norm='instance_norm',
+               attention=False,
+               Separable_convolution=False):
     Norm = _get_norm_layer(norm)
     if attention:
         output_channels = output_channels + 1
@@ -353,6 +352,7 @@ def StudentNet(input_shape=(512, 512, 3),
         layer_Conv2D = keras.layers.SeparableConv2D
     else:
         layer_Conv2D = keras.layers.Conv2D
+
     # 受保护的用法
     def _residual_block(x):
         dim = x.shape[-1]
@@ -417,6 +417,7 @@ def StudentNet(input_shape=(512, 512, 3),
 
     return keras.Model(inputs=inputs, outputs=[h, soft_target])
     # return keras.Model(inputs=inputs, outputs=h)
+
 
 # =============================Attention Cycle GAN==============================
 def AttentionCycleGAN_v1_Generator(input_shape=(227, 227, 3), output_channel=3,
@@ -484,10 +485,6 @@ def AttentionCycleGAN_v1_Generator(input_shape=(227, 227, 3), output_channel=3,
         result_layer = content_mask * attention_mask + input_layer * (1 - attention_mask)
 
     return keras.Model(inputs=input_layer, outputs=result_layer)
-
-
-
-
 
 
 # ==============================================================================
@@ -587,7 +584,7 @@ class AttentionModuleHeye(keras.layers.Layer):
     def W_g(self, x):
         x = Conv2D(self.F_int, (1, 1), (1, 1), padding='same', use_bias=True)(x),
         x = BatchNormalization()(x)
-        return  x
+        return x
 
     def W_x(self, x):
         x = Conv2D(self.F_int, (1, 1), (1, 1), padding='same', use_bias=True)(x),
@@ -673,21 +670,16 @@ class pixelshuffle(tf.keras.layers.Layer):
         return input_shape[0], rrC // (r ** 2), height, width
 
 
-
-# ==============================================================================
-# =                               Network Model                                =
-# ==============================================================================
-
 def ResnetGenerator_with_ThreeChannel(input_shape=(448, 448, 3),
-                    output_channels=2,
-                    dim=64,
-                    n_downsamplings=2,
-                    n_blocks=8,
-                    norm='instance_norm',
-                    attention=False,
-                    ShallowConnect=False,
-                    Temperature=0,
-                    StudentNet=False):
+                                      output_channels=2,
+                                      dim=64,
+                                      n_downsamplings=2,
+                                      n_blocks=8,
+                                      norm='instance_norm',
+                                      attention=False,
+                                      ShallowConnect=False,
+                                      Temperature=0,
+                                      StudentNet=False):
     Norm = _get_norm_layer(norm)
     if attention:
         output_channels = output_channels + 1
@@ -821,11 +813,10 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(448, 448, 3),
     else:
         h = keras.layers.Conv2D(output_channels, 7, padding='same', use_bias=False)(h)
 
-
-        x = keras.layers.Conv2D(output_channels, (3, 3), strides=(1, 1), padding='valid', dilation_rate=(3, 3), use_bias=False)(x)
-        x = keras.layers.Conv2D(output_channels, (3, 3), strides=(1, 1), padding='same', dilation_rate=(2, 2), use_bias=False)(x)
-
-
+        x = keras.layers.Conv2D(output_channels, (3, 3), strides=(1, 1), padding='valid', dilation_rate=(3, 3),
+                                use_bias=False)(x)
+        x = keras.layers.Conv2D(output_channels, (3, 3), strides=(1, 1), padding='same', dilation_rate=(2, 2),
+                                use_bias=False)(x)
 
         y1 = keras.layers.Conv2D(output_channels, (7, 3), strides=1, padding='same', use_bias=False)(y)
         y1 = keras.layers.Conv2D(output_channels, (3, 1), strides=1, padding='same', use_bias=False)(y1)
@@ -872,7 +863,7 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(448, 448, 3),
         y = y / Temperature
         mix_for_real = mix
         mix = mix / Temperature
-        mix_for_real = keras.layers.Softmax(name='Label_mix_for_real')(mix_for_real)
+        mix_for_real = keras.layers.Softmax(name='Label_mix_for_real')(mix_for_real / Temperature)
 
     h = keras.layers.Softmax(name='Label_h')(h)
     x = keras.layers.Softmax(name='Label_x')(x)
@@ -880,4 +871,6 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(448, 448, 3),
     mix = keras.layers.Softmax(name='Label_mix')(mix)
 
     return keras.Model(inputs=inputs, outputs=[h, x, y, mix, mix_for_real])
+
+
 

@@ -1,6 +1,7 @@
 # 明确任务:实现tensorflow向onnx的转换
 
 
+
 # python -m tf2onnx.convert --saved-model tensorrt-onnx/ep001-val_loss0.567-val_acc0.973 --output tensorrt-onnx/ep001 --opset 13
 
 # 这个命令是成功的
@@ -49,7 +50,6 @@ def load_engine(trt_runtime, engine_path):
     engine = trt_runtime.deserialize_cuda_engine(engine_data)
     return engine
 
-
 # engine_file_path = '/home/JestonNano/ep599_2.engine'
 
 
@@ -64,27 +64,22 @@ engine_file_path = r'I:\Image Processing\tensorrt-onnx\ep599_2.engine'
 
 def get_engine(onnx_file_path):
     """Attempts to load a serialized engine if available, otherwise builds a new TensorRT engine and saves it."""
-
     def build_engine():
         """Takes an ONNX file and creates a TensorRT engine to run inference with"""
-        with trt.Builder(TRT_LOGGER) as builder, builder.create_network(
-                1) as network, builder.create_builder_config() as config, trt.OnnxParser(network,
-                                                                                         TRT_LOGGER) as parser, trt.Runtime(
-                TRT_LOGGER) as runtime:
-            config.max_workspace_size = 1 << 30  # 256MiB
+        with trt.Builder(TRT_LOGGER) as builder, builder.create_network(1) as network, builder.create_builder_config() as config, trt.OnnxParser(network, TRT_LOGGER) as parser, trt.Runtime(TRT_LOGGER) as runtime:
+            config.max_workspace_size = 1 << 30 # 256MiB
             builder.max_batch_size = 1
             # Parse model file
             if not os.path.exists(onnx_file_path):
-                print(
-                    'ONNX file {} not found, please run yolov3_to_onnx.py first to generate it.'.format(onnx_file_path))
+                print('ONNX file {} not found, please run yolov3_to_onnx.py first to generate it.'.format(onnx_file_path))
                 exit(0)
             print('Loading ONNX file from path {}...'.format(onnx_file_path))
             with open(onnx_file_path, 'rb') as model:
                 print('Beginning ONNX file parsing')
                 if not parser.parse(model.read()):
-                    print('ERROR: Failed to parse the ONNX file.')
+                    print ('ERROR: Failed to parse the ONNX file.')
                     for error in range(parser.num_errors):
-                        print(parser.get_error(error))
+                        print (parser.get_error(error))
                     return None
             # The actual yolov3.onnx is generated with batch size 64. Reshape input to batch size 1
             network.get_input(0).shape = [1, 512, 512, 3]
@@ -96,7 +91,6 @@ def get_engine(onnx_file_path):
             with open(engine_file_path, "wb") as f:
                 f.write(plan)
             return engine
-
     return build_engine()
 
 
@@ -141,12 +135,13 @@ y_pred = np.around(a)
 # y_pred = np.round(a).reshape(1, 512, 512, 2)
 # y_pred = y_pred[0,:,:,0]
 # y_pred_0 = y_pred
-y_pred_0 = np.zeros((512 * 512))
+y_pred_0 = np.zeros((512*512))
 
 for i in range(512 * 512):
     y_pred_0[i] = y_pred[2 * i]
 y_pred = y_pred_0.reshape(512, 512)
 cv2.imwrite('y_pred_0.png', y_pred_0.reshape(512, 512, 1) * 255)
+
 
 # y_true_0 = (y_true[:,:,0] / 255).ravel()
 # y_true_1 = (1 - y_true[:,:,0] / 255).ravel()
@@ -154,6 +149,9 @@ cv2.imwrite('y_pred_0.png', y_pred_0.reshape(512, 512, 1) * 255)
 # for i in range(512*512):
 #     y_true[2 * i] = y_true_0[i]
 #     y_true[2 * i + 1] = y_true_1[i]
+
+
+
 
 
 # print(trt_outputs[0].shape)
@@ -194,6 +192,8 @@ print(1)
 # # Create a stream in which to copy inputs/outputs and run inference.
 # stream = cuda.Stream()
 # context = engine.create_execution_context()
+
+
 
 
 # data_path = '/home/JestonNano/hy31.png'

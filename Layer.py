@@ -8,18 +8,18 @@ class DilatedConv2D(keras.layers.Layer):
     w_init: RandomNormal
     weight: Variable
 
-    def __init__(self, k_size=3, rate=1, units=32, padding='SAME', _name='dilatedConv2D', **kwargs):
+    def __init__(self, k_size=3, rate=1, out_channel=32, padding='SAME', name='dilatedConv2D', **kwargs):
         self.k_size = k_size
         self.rate = rate
-        self.units = units
+        self.uints = out_channel
         self.padding = padding
-        self._name = _name
+        self._name = name
         super(DilatedConv2D, self).__init__(**kwargs)
 
     def build(self, input_shape):
         self.w_init = tf.random_normal_initializer()
         self.weight = tf.Variable(
-            initial_value=self.w_init(shape=(self.k_size, self.k_size, input_shape[-1], self.units),
+            initial_value=self.w_init(shape=(self.k_size, self.k_size, input_shape[-1], self.uints),
                                       dtype='float32'), trainable=True)
 
     def call(self, inputs, **kwargs):  # Defines the computation from inputs to outputs
@@ -32,7 +32,7 @@ class DilatedConv2D(keras.layers.Layer):
         config.update({
             'k_size': self.k_size,
             'rate': self.rate,
-            'units': self.units,
+            'uints': self.uints,
             'padding': self.padding,
             '_name': self._name
         })

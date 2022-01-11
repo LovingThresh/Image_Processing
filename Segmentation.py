@@ -110,7 +110,7 @@ batch_size = 1
 # ---------------------------------------------------------------------------------------------------
 #                                        非Teacher训练
 # ---------------------------------------------------------------------------------------------------
-
+# 当temperature设置为0时，train_dataset不对标签做处理，即real_mix的值域是1~0
 train_dataset = get_teacher_dataset_label(train_lines,
                                           A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\img/',
                                           B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\mask/',
@@ -167,7 +167,9 @@ test_dataset = get_teacher_dataset_label(test_lines,
 #                               model
 # ----------------------------------------------------------------------
 temperature = 10
-#
+# 设置一个纯净版的ResnetGenerator_with_ThreeChannel，目前temperature对train_dataset不起作用，要与之相对应
+# 纯净版包括哪些条件——普通卷积、无注意力机制、损失函数为平衡状态、KD方式为温度升降同时
+# 条件均满足————可开始消融实验
 model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=False, ShallowConnect=False, dim=16,
                                                  n_blocks=4,
                                                  StudentNet=True, Temperature=temperature)

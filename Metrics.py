@@ -237,7 +237,7 @@ def Binary_Focal_loss(gamma=2, alpha=0.25):
 def Asymmetry_Binary_Loss(y_true, y_pred, alpha=200):
     # 纯净状态下alpha为1
     # 想要损失函数更加关心裂缝的标签值1
-    alpha = 1
+    alpha = 20
     y_true_0, y_pred_0 = y_true[:, :, :, 0] * alpha, y_pred[:, :, :, 0] * alpha
     # y_true_0, y_pred_0 = y_true[:, :, :, 0] * 255, y_pred[:, :, :, 0] * 255
     y_true_1, y_pred_1 = y_true[:, :, :, 1], y_pred[:, :, :, 1]

@@ -120,7 +120,7 @@ train_dataset = get_teacher_dataset_label(train_lines,
                                           mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_mix\label/',
                                           batch_size=batch_size,
                                           shuffle=True,
-                                          temperature=10
+                                          temperature=0
                                           )
 
 validation_dataset = get_teacher_dataset_label(validation_lines,
@@ -132,7 +132,7 @@ validation_dataset = get_teacher_dataset_label(validation_lines,
                                                mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_mix\label/',
                                                batch_size=batch_size,
                                                shuffle=False,
-                                               temperature=10,
+                                               temperature=0,
 
                                                )
 
@@ -198,23 +198,24 @@ print(profile)
 # model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=64)
 
 
-# model = keras.models.load_model(r'E:\output\2021-12-24-23-54-00.417022\checkpoint\ep040-val_loss164.132',
-#                                 custom_objects={'M_Precision': M_Precision,
-#                                                 'M_Recall': M_Recall,
-#                                                 'M_F1': M_F1,
-#                                                 'M_IOU': M_IOU,
-#                                                 'A_Precision': A_Precision,
-#                                                 'A_Recall': A_Recall,
-#                                                 'A_F1': A_F1,
-#                                                 'mean_iou_keras': mean_iou_keras,
-#                                                 'A_IOU': A_IOU,
-#                                                 'H_KD_Loss': H_KD_Loss,
-#                                                 'S_KD_Loss': S_KD_Loss,
-#                                                 # 'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss,
-#                                                 # 'DilatedConv2D': Layer.DilatedConv2D,
-#                                                 }
-#                                 )
-# model.evaluate(validation_dataset, steps=250)
+model = keras.models.load_model(r'E:\output\2022-01-15-09-15-26.417780\checkpoint\ep085-val_loss13.004',
+                                custom_objects={'M_Precision': M_Precision,
+                                                'M_Recall': M_Recall,
+                                                'M_F1': M_F1,
+                                                'M_IOU': M_IOU,
+                                                'A_Precision': A_Precision,
+                                                'A_Recall': A_Recall,
+                                                'A_F1': A_F1,
+                                                'mean_iou_keras': mean_iou_keras,
+                                                'A_IOU': A_IOU,
+                                                # 'H_KD_Loss': H_KD_Loss,
+                                                # 'S_KD_Loss': S_KD_Loss,
+                                                'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss,
+                                                # 'DilatedConv2D': Layer.DilatedConv2D,
+                                                }
+                                )
+model.evaluate(validation_dataset, steps=250)
+model.evaluate(test_dataset, steps=250)
 # model = segnet((512, 512), 2)
 # model.summary()
 # initial_learning_rate = 3e-6

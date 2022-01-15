@@ -120,7 +120,7 @@ train_dataset = get_teacher_dataset_label(train_lines,
                                           mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_mix\label/',
                                           batch_size=batch_size,
                                           shuffle=True,
-                                          temperature=0
+                                          temperature=10
                                           )
 
 validation_dataset = get_teacher_dataset_label(validation_lines,
@@ -132,7 +132,7 @@ validation_dataset = get_teacher_dataset_label(validation_lines,
                                                mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_mix\label/',
                                                batch_size=batch_size,
                                                shuffle=False,
-                                               temperature=0,
+                                               temperature=10,
 
                                                )
 
@@ -171,7 +171,7 @@ temperature = 10
 # 纯净版包括哪些条件——普通卷积、无注意力机制、损失函数为平衡状态、KD方式为温度升降同时
 # 条件均满足————可开始消融实验
 # 消融实验-1-纯净版+注意力机制+不平衡损失函数+普通蒸馏（200改10）
-model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, ShallowConnect=False, dim=16,
+model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=False, ShallowConnect=False, dim=16,
                                                  n_blocks=4,
                                                  StudentNet=True, Temperature=temperature)
 

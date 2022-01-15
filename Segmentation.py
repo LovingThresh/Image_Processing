@@ -170,8 +170,8 @@ temperature = 10
 # 设置一个纯净版的ResnetGenerator_with_ThreeChannel，目前temperature对train_dataset不起作用，要与之相对应
 # 纯净版包括哪些条件——普通卷积、无注意力机制、损失函数为平衡状态、KD方式为温度升降同时
 # 条件均满足————可开始消融实验
-# 消融实验-1-纯净版+注意力机制+不平衡损失函数（200改100）
-model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, ShallowConnect=False, dim=16,
+# 消融实验-1-纯净版+不平衡损失函数（200）
+model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=False, ShallowConnect=False, dim=16,
                                                  n_blocks=4,
                                                  StudentNet=True, Temperature=temperature)
 

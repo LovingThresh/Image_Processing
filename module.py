@@ -863,7 +863,7 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(448, 448, 3),
         y = y / Temperature
         mix_for_real = mix
         mix = mix / Temperature
-        mix_for_real = keras.layers.Softmax(name='Label_mix_for_real')(mix_for_real / Temperature)
+        mix_for_real = keras.layers.Softmax(name='Label_mix_for_real')(mix_for_real)
 
     h = keras.layers.Softmax(name='Label_h')(h)
     x = keras.layers.Softmax(name='Label_x')(x)

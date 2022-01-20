@@ -98,6 +98,7 @@ class SegNet(Network):
                           strides=1,
                           kernel_initializer='he_normal')(x)
         x = layers.BatchNormalization()(x)
-
+        # 增加Softmax层
+        x = layers.Softmax()(x)
         outputs = x
         return models.Model(inputs, outputs, name=self.version)

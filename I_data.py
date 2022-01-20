@@ -200,6 +200,7 @@ def get_dataset_label(lines, batch_size,
             # img = img.resize(size)
             img_array = np.array(img)
             # img_array = to_clahe(img_array)
+            img_array = cv2.resize(img_array, (448, 448))
             size = (img_array.shape[0], img_array.shape[1])
             img_teacher_array = cv2.imread(C_img_paths + train_teacher_y_name, cv2.IMREAD_GRAYSCALE)
             img_array = img_array / 255.0  # 标准化
@@ -215,6 +216,7 @@ def get_dataset_label(lines, batch_size,
 
             # 根据图片名字读取图片
             img_array = cv2.imread(B_img_paths + train_y_name)
+            img_array = cv2.resize(img_array, (448, 448))
             if img_array.shape == (600, 800, 3):
                 img_array = cv2.dilate(img_array, kernel=(5, 5), iterations=5)
             img_array = cv2.dilate(img_array, kernel=(3, 3), iterations=5)
@@ -307,12 +309,14 @@ def get_dataset_label(lines, batch_size,
 
                 image, label = DataAugmentation(image, label, D_seed=seed)
 
-                data = image, label
+                label = label.reshape((448, 448, 2))
+                data = image, np.asarray([label, label, label, label])
 
                 yield data
 
             else:
-                data = image, label
+                label = label.reshape((448, 448, 2))
+                data = image, np.asarray([label, label, label, label])
 
                 yield data
 

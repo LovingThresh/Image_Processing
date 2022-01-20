@@ -287,7 +287,7 @@ def decoder(feature_map_list, class_number, input_height=227, input_width=227, e
     x = Conv2DTranspose(class_number, (5, 5), (1, 1), 'valid')(x)
     x = BatchNormalization()(x)
 
-    x = tf.tanh(x)
+    x = keras.layers.Softmax()(x)
 
     return x
 
@@ -870,7 +870,4 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(448, 448, 3),
     y = keras.layers.Softmax(name='Label_y')(y)
     mix = keras.layers.Softmax(name='Label_mix')(mix)
 
-    return keras.Model(inputs=inputs, outputs=[h, x, y, mix, mix_for_real])
-
-
-
+    return keras.Model(inputs=inputs, outputs=[h, x, y, mix])

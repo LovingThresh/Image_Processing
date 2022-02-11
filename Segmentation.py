@@ -66,16 +66,15 @@ args = parser.parse_args()
 # train_dataset = get_dataset_label(lines[:num_train], batch_size)
 # validation_dataset = get_dataset_label(lines[num_train:], batch_size)
 
-# train_lines, num_train = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\train.txt', training=False)
-# validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\val.txt', training=False)
-# test_lines, num_test = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\test.txt', training=False)
-# batch_size = 1
+train_lines, num_train = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\train.txt', training=False)
+validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\val.txt', training=False)
+test_lines, num_test = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\test.txt', training=False)
 
-train_lines, num_train = get_data(path=r'L:\CRACK500\train.txt', training=False)
-validation_lines, num_val = get_data(path=r'L:\CRACK500\val.txt', training=False)
-test_lines, num_test = get_data(path=r'L:\CRACK500\test.txt', training=False)
+# train_lines, num_train = get_data(path=r'L:\CRACK500\train.txt', training=False)
+# validation_lines, num_val = get_data(path=r'L:\CRACK500\val.txt', training=False)
+# test_lines, num_test = get_data(path=r'L:\CRACK500\test.txt', training=False)
 
-batch_size = 1
+batch_size = 16
 # 下面的代码适用于测试的
 # -------------------------------------------------------------
 # train_lines, num_train = train_lines[:2], 2
@@ -86,44 +85,17 @@ batch_size = 1
 # ---------------------------------------------------------------------------------------------------
 #                                        非Teacher训练
 # ---------------------------------------------------------------------------------------------------
-# train_dataset = get_dataset_label(train_lines, batch_size,
-#                                   A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\img/',
-#                                   B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\mask/',
-#                                   C_img_paths=r'C:\Users\liuye\Desktop\data\train_1\teacher_mask/',
-#                                   shuffle=True,
-#                                   KD=False,
-#                                   training=True,
-#                                   Augmentation=True)
-# validation_dataset = get_dataset_label(validation_lines, batch_size,
-#                                        A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\img/',
-#                                        B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\mask/',
-#                                        C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
-#                                        shuffle=False,
-#                                        KD=False,
-#                                        training=False,
-#                                        Augmentation=False)
-#
-# test_dataset = get_dataset_label(test_lines, batch_size,
-#                                  A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\img/',
-#                                  B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\mask/',
-#                                  C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
-#                                  shuffle=False,
-#                                  KD=False,
-#                                  training=False,
-#                                  Augmentation=False)
-
-
 train_dataset = get_dataset_label(train_lines, batch_size,
-                                  A_img_paths=r'L:\CRACK500\traincrop/',
-                                  B_img_paths=r'L:\CRACK500\traincrop/',
+                                  A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\img/',
+                                  B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\mask/',
                                   C_img_paths=r'C:\Users\liuye\Desktop\data\train_1\teacher_mask/',
                                   shuffle=True,
                                   KD=False,
                                   training=True,
                                   Augmentation=True)
 validation_dataset = get_dataset_label(validation_lines, batch_size,
-                                       A_img_paths=r'L:\CRACK500\valcrop/',
-                                       B_img_paths=r'L:\CRACK500\valcrop/',
+                                       A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\img/',
+                                       B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\mask/',
                                        C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
                                        shuffle=False,
                                        KD=False,
@@ -131,13 +103,40 @@ validation_dataset = get_dataset_label(validation_lines, batch_size,
                                        Augmentation=False)
 
 test_dataset = get_dataset_label(test_lines, batch_size,
-                                 A_img_paths=r'L:\CRACK500\testcrop/',
-                                 B_img_paths=r'L:\CRACK500\testcrop/',
+                                 A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\img/',
+                                 B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\mask/',
                                  C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
                                  shuffle=False,
                                  KD=False,
                                  training=False,
                                  Augmentation=False)
+
+
+# train_dataset = get_dataset_label(train_lines, batch_size,
+#                                   A_img_paths=r'L:\CRACK500\traincrop/',
+#                                   B_img_paths=r'L:\CRACK500\traincrop/',
+#                                   C_img_paths=r'C:\Users\liuye\Desktop\data\train_1\teacher_mask/',
+#                                   shuffle=True,
+#                                   KD=False,
+#                                   training=True,
+#                                   Augmentation=True)
+# validation_dataset = get_dataset_label(validation_lines, batch_size,
+#                                        A_img_paths=r'L:\CRACK500\valcrop/',
+#                                        B_img_paths=r'L:\CRACK500\valcrop/',
+#                                        C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
+#                                        shuffle=False,
+#                                        KD=False,
+#                                        training=False,
+#                                        Augmentation=False)
+#
+# test_dataset = get_dataset_label(test_lines, batch_size,
+#                                  A_img_paths=r'L:\CRACK500\testcrop/',
+#                                  B_img_paths=r'L:\CRACK500\testcrop/',
+#                                  C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
+#                                  shuffle=False,
+#                                  KD=False,
+#                                  training=False,
+#                                  Augmentation=False)
 
 # ---------------------------------------------------------------------------------------------------
 #                                        非Teacher训练
@@ -203,15 +202,15 @@ test_dataset = get_dataset_label(test_lines, batch_size,
 # 纯净版包括哪些条件——普通卷积、无注意力机制、损失函数为平衡状态、KD方式为温度升降同时
 # 条件均满足————可开始消融实验
 # 消融实验-1-纯净版+注意力机制+不平衡损失函数+普通蒸馏（200改10）
-model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, ShallowConnect=False, dim=64,
-                                                 n_blocks=8,
+model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, ShallowConnect=False, dim=16,
+                                                 n_blocks=4,
                                                  StudentNet=False, Temperature=0)
 
 # flops = get_flops(model)
 # print(f"FLOPS: {flops / 10 ** 9:.03} G")
 # model = module.StudentNet(attention=True)
 
-# model, base_model = builder(2, (448, 448), model='SegNet', base_model='ResNet50   ')
+# model, base_model = builder(2, (448, 448), model='FCN-32s', base_model='DenseNet121')
 # Encoder = resnet101(448, 448, 2)
 # model = ResNetDecoder(Encoder, 2)
 # 模型验证阶段
@@ -221,15 +220,15 @@ model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, 
 # 模型参数
 model.summary()
 
-Batch_size = 1
+Batch_size = 16
 profile = model_profiler(model, Batch_size)
 
 print(profile)
 
-# model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=64)
+# model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=16, n_blocks=4)
 
 
-# model = keras.models.load_model(r'E:\output\2022-01-15-09-15-26.417780\checkpoint\ep085-val_loss13.004',
+# model = keras.models.load_model(r'D:\student_0_1',
 #                                 custom_objects={'M_Precision': M_Precision,
 #                                                 'M_Recall': M_Recall,
 #                                                 'M_F1': M_F1,
@@ -245,11 +244,11 @@ print(profile)
 #                                                 # 'DilatedConv2D': Layer.DilatedConv2D,
 #                                                 }
 #                                 )
-# model.evaluate(validation_dataset, steps=250)
+# model.evaluate(validation_dataset, steps=348)
 # model.evaluate(test_dataset, steps=250)
 # model = segnet((512, 512), 2)
 # model.summary()
-initial_learning_rate = 2e-6
+initial_learning_rate = 5e-5
 # initial_learning_rate = 5e-5
 # initial_learning_rate_list = [1e-5, 5e-6, 2e-6, 1e-6]
 

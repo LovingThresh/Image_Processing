@@ -69,7 +69,7 @@ def H_KD_Loss(y_true, y_pred, alpha=0.9):
 def M_Precision(y_true, y_pred):
     """精确率"""
 
-    # y_pred = tf.cast(y_pred > tf.constant(0.4), tf.float32)
+    y_pred = tf.cast(y_pred > tf.constant(0.35), tf.float32)
 
     max_pool_2d = tf.keras.layers.MaxPooling2D(pool_size=(5, 5), strides=(1, 1), padding='same')
     y_true_max = max_pool_2d(y_true)
@@ -84,7 +84,7 @@ def M_Precision(y_true, y_pred):
 def M_Recall(y_true, y_pred):
     """召回率"""
 
-    # y_pred = tf.cast(y_pred > tf.constant(0.4), tf.float32)
+    y_pred = tf.cast(y_pred > tf.constant(0.35), tf.float32)
     tp = K.sum(
         K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)) * K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))  # true positives
     pp = K.sum(K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)))  # possible positives
@@ -103,7 +103,7 @@ def M_F1(y_true, y_pred):
 
 def M_IOU(y_true: tf.Tensor,
           y_pred: tf.Tensor):
-    # y_pred = tf.cast(y_pred > tf.constant(0.4), tf.float32)
+    y_pred = tf.cast(y_pred > tf.constant(0.35), tf.float32)
     max_pool_2d = tf.keras.layers.MaxPooling2D(pool_size=(5, 5), strides=(1, 1), padding='same')
     y_true_max = max_pool_2d(y_true)
     predict = K.round(K.clip(y_pred[:, :, :, 0], 0, 1))

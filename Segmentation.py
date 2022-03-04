@@ -74,7 +74,7 @@ test_lines, num_test = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\te
 # validation_lines, num_val = get_data(path=r'L:\CRACK500\val.txt', training=False)
 # test_lines, num_test = get_data(path=r'L:\CRACK500\test.txt', training=False)
 
-batch_size = 16
+batch_size = 1
 # 下面的代码适用于测试的
 # -------------------------------------------------------------
 # train_lines, num_train = train_lines[:2], 2
@@ -202,8 +202,8 @@ test_dataset = get_dataset_label(test_lines, batch_size,
 # 纯净版包括哪些条件——普通卷积、无注意力机制、损失函数为平衡状态、KD方式为温度升降同时
 # 条件均满足————可开始消融实验
 # 消融实验-1-纯净版+注意力机制+不平衡损失函数+普通蒸馏（200改10）
-model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, ShallowConnect=False, dim=16,
-                                                 n_blocks=4,
+model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, ShallowConnect=False, dim=64,
+                                                 n_blocks=8,
                                                  StudentNet=False, Temperature=0)
 
 # flops = get_flops(model)
@@ -220,15 +220,15 @@ model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, 
 # 模型参数
 model.summary()
 
-Batch_size = 16
-profile = model_profiler(model, Batch_size)
-
-print(profile)
+# batch_size = 4
+# profile = model_profiler(model, batch_size)
+#
+# print(profile)
 
 # model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=16, n_blocks=4)
 
 
-# model = keras.models.load_model(r'D:\student_0_1',
+# model = keras.models.load_model(r'ep049-val_loss2279.250',
 #                                 custom_objects={'M_Precision': M_Precision,
 #                                                 'M_Recall': M_Recall,
 #                                                 'M_F1': M_F1,
@@ -248,7 +248,7 @@ print(profile)
 # model.evaluate(test_dataset, steps=250)
 # model = segnet((512, 512), 2)
 # model.summary()
-initial_learning_rate = 5e-5
+initial_learning_rate = 5e-6
 # initial_learning_rate = 5e-5
 # initial_learning_rate_list = [1e-5, 5e-6, 2e-6, 1e-6]
 
@@ -604,3 +604,21 @@ if test:
 #
 # model.fit(x_train, y_train, epochs=5)
 # model.evaluate(x_test, y_test)
+
+
+filepath = r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\crack\Positive/'
+output_path = r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\label\crack\Positive/'
+
+files = os.listdir(filepath)
+for i in files:
+    image = cv2.imread(filepath + i)
+    image = cv2.resize(image, (448, 448))
+    image = image / 255.
+    image = image * 2 - 1
+
+    predict = model.predict(image.reshape(1, 448, 448, 3))
+    predict = cv2.resize(predict[-1].reshape(448, 448, 2), (227, 227))
+    predict = (predict[:, :, 0] > 0.4).astype(np.uint8) * 255
+    cv2.imwrite(output_path + i, predict)
+
+

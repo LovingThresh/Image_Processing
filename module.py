@@ -692,12 +692,12 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(448, 448, 3),
         # 为什么这里不用padding参数呢？使用到了‘REFLECT’
         h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='CONSTANT')
 
-        h = keras.layers.DepthwiseConv2D(3, padding='valid', use_bias=False)(h)
+        h = keras.layers.Conv2D(dim, (3, 3), 1, padding='valid', use_bias=False)(h)
         h = Norm()(h)
         h = tf.nn.relu(h)
 
         h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='CONSTANT')
-        h = keras.layers.DepthwiseConv2D(3, padding='valid', use_bias=False)(h)
+        h = keras.layers.Conv2D(dim, (3, 3), 1, padding='valid', use_bias=False)(h)
         h = Norm()(h)
 
         return keras.layers.add([x, h])

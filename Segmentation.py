@@ -9,6 +9,7 @@ import datetime
 import time
 import os
 
+import utils.losses
 from builders import builder
 # from keras_flops import get_flops
 # from Student_model import student_model
@@ -111,7 +112,7 @@ test_dataset = get_dataset_label(test_lines, batch_size,
                                  training=False,
                                  Augmentation=False)
 
-
+#
 # train_dataset = get_dataset_label(train_lines, batch_size,
 #                                   A_img_paths=r'L:\CRACK500\traincrop/',
 #                                   B_img_paths=r'L:\CRACK500\traincrop/',
@@ -202,9 +203,15 @@ test_dataset = get_dataset_label(test_lines, batch_size,
 # 纯净版包括哪些条件——普通卷积、无注意力机制、损失函数为平衡状态、KD方式为温度升降同时
 # 条件均满足————可开始消融实验
 # 消融实验-1-纯净版+注意力机制+不平衡损失函数+普通蒸馏（200改10）
-model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, ShallowConnect=False, dim=64,
-                                                 n_blocks=8,
-                                                 StudentNet=False, Temperature=0)
+# model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, ShallowConnect=False, dim=64,
+#                                                  n_blocks=8,
+#                                                  StudentNet=False, Temperature=0)
+
+model, base_model = builder(2, input_size=(448, 448), model='DenseASPP', base_model='DenseNet201')
+batch_size = 1
+profile = model_profiler(model, batch_size)
+
+print(profile)
 
 # flops = get_flops(model)
 # print(f"FLOPS: {flops / 10 ** 9:.03} G")
@@ -218,7 +225,7 @@ model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, 
 # model = module.U_Net(448, 448)
 
 # 模型参数
-model.summary()
+# model.summary()
 
 # batch_size = 4
 # profile = model_profiler(model, batch_size)
@@ -228,7 +235,7 @@ model.summary()
 # model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=16, n_blocks=4)
 
 
-# model = keras.models.load_model(r'ep049-val_loss2279.250',
+# model = keras.models.load_model(r'E:\output\2022-03-06-23-18-41.346776\checkpoint\ep025-val_loss2001.124',
 #                                 custom_objects={'M_Precision': M_Precision,
 #                                                 'M_Recall': M_Recall,
 #                                                 'M_F1': M_F1,
@@ -236,7 +243,7 @@ model.summary()
 #                                                 'A_Precision': A_Precision,
 #                                                 'A_Recall': A_Recall,
 #                                                 'A_F1': A_F1,
-#                                                 'mean_iou_keras': mean_iou_keras,
+#                                                 # 'mean_iou_keras': mean_iou_keras,
 #                                                 'A_IOU': A_IOU,
 #                                                 # 'H_KD_Loss': H_KD_Loss,
 #                                                 # 'S_KD_Loss': S_KD_Loss,
@@ -248,7 +255,7 @@ model.summary()
 # model.evaluate(test_dataset, steps=250)
 # model = segnet((512, 512), 2)
 # model.summary()
-initial_learning_rate = 5e-6
+initial_learning_rate = 5e-5
 # initial_learning_rate = 5e-5
 # initial_learning_rate_list = [1e-5, 5e-6, 2e-6, 1e-6]
 
@@ -349,8 +356,10 @@ if training or KD:
     # ----------------------------------------------------------------------
     #                               train
     # ----------------------------------------------------------------------
+    loss = utils.losses.miou_loss()
     model.compile(optimizer=optimizer,
-                  loss=Metrics.Asymmetry_Binary_Loss,
+                  # loss=Metrics.Asymmetry_Binary_Loss,
+                  loss=loss,
                   # {
                   # 'Label_h': Metrics.S_KD_Loss,
                   # 'Label_x': Metrics.S_KD_Loss,
@@ -606,19 +615,19 @@ if test:
 # model.evaluate(x_test, y_test)
 
 
-filepath = r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\crack\Positive/'
-output_path = r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\label\crack\Positive/'
-
-files = os.listdir(filepath)
-for i in files:
-    image = cv2.imread(filepath + i)
-    image = cv2.resize(image, (448, 448))
-    image = image / 255.
-    image = image * 2 - 1
-
-    predict = model.predict(image.reshape(1, 448, 448, 3))
-    predict = cv2.resize(predict[-1].reshape(448, 448, 2), (227, 227))
-    predict = (predict[:, :, 0] > 0.4).astype(np.uint8) * 255
-    cv2.imwrite(output_path + i, predict)
+# filepath = r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\crack\Positive/'
+# output_path = r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\label\crack\Positive/'
+#
+# files = os.listdir(filepath)
+# for i in files:
+#     image = cv2.imread(filepath + i)
+#     image = cv2.resize(image, (448, 448))
+#     image = image / 255.
+#     image = image * 2 - 1
+#
+#     predict = model.predict(image.reshape(1, 448, 448, 3))
+#     predict = cv2.resize(predict[-1].reshape(448, 448, 2), (227, 227))
+#     predict = (predict[:, :, 0] > 0.4).astype(np.uint8) * 255
+#     cv2.imwrite(output_path + i, predict)
 
 

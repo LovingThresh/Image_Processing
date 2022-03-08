@@ -78,7 +78,7 @@ class DeepLabV3Plus(Network):
         x = layers.Dropout(rate=0.5)(x)
 
         x = self._conv_bn_relu(x, 256, 3, 1)
-        x = layers.Dropout(rate=0.1)(x)
+        x = layers.Dropout(rate=0.5)(x)
 
         x = layers.Conv2D(num_classes, 1, strides=1)(x)
         x = layers.UpSampling2D(size=(4, 4), interpolation='bilinear')(x)

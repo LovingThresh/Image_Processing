@@ -703,7 +703,7 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(448, 448, 3),
         return keras.layers.add([x, h])
 
     # 0
-    h = inputs = keras.Input(shape=input_shape)
+    h = inputs = keras.Input(shape=input_shape, name='input_0')
     # h = tf.pad(h, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='CONSTANT')
 
     # 针对x进行膨胀卷积
@@ -863,7 +863,7 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(448, 448, 3),
         y = y / Temperature
         mix_for_real = mix
         mix = mix / Temperature
-        mix_for_real = keras.layers.Softmax(name='Label_mix_for_real')(mix_for_real)
+        mix_for_real = keras.layers.Softmax(name='output_0')(mix_for_real)
 
     h = keras.layers.Softmax(name='Label_h')(h)
     x = keras.layers.Softmax(name='Label_x')(x)

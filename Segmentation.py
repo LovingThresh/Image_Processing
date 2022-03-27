@@ -71,13 +71,13 @@ args = parser.parse_args()
 # train_dataset = get_dataset_label(lines[:num_train], batch_size)
 # validation_dataset = get_dataset_label(lines[num_train:], batch_size)
 
-# train_lines, num_train = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\train.txt', training=False)
-# validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\val.txt', training=False)
-# test_lines, num_test = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\test.txt', training=False)
+train_lines, num_train = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\train.txt', training=False)
+validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\val.txt', training=False)
+test_lines, num_test = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\test.txt', training=False)
 
-train_lines, num_train = get_data(path=r'L:\CRACK500\train.txt', training=False)
-validation_lines, num_val = get_data(path=r'L:\CRACK500\val.txt', training=False)
-test_lines, num_test = get_data(path=r'L:\CRACK500\test.txt', training=False)
+# train_lines, num_train = get_data(path=r'L:\CRACK500\train.txt', training=False)
+# validation_lines, num_val = get_data(path=r'L:\CRACK500\val.txt', training=False)
+# test_lines, num_test = get_data(path=r'L:\CRACK500\test.txt', training=False)
 
 batch_size = 1
 # 下面的代码适用于测试的
@@ -90,44 +90,17 @@ batch_size = 1
 # ---------------------------------------------------------------------------------------------------
 #                                        非Teacher训练
 # ---------------------------------------------------------------------------------------------------
-# train_dataset = get_dataset_label(train_lines, batch_size,
-#                                   A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\img/',
-#                                   B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\mask/',
-#                                   C_img_paths=r'C:\Users\liuye\Desktop\data\train_1\teacher_mask/',
-#                                   shuffle=True,
-#                                   KD=False,
-#                                   training=True,
-#                                   Augmentation=True)
-# validation_dataset = get_dataset_label(validation_lines, batch_size,
-#                                        A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\img/',
-#                                        B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\mask/',
-#                                        C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
-#                                        shuffle=False,
-#                                        KD=False,
-#                                        training=False,
-#                                        Augmentation=False)
-#
-# test_dataset = get_dataset_label(test_lines, batch_size,
-#                                  A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\img/',
-#                                  B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\mask/',
-#                                  C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
-#                                  shuffle=False,
-#                                  KD=False,
-#                                  training=False,
-#                                  Augmentation=False)
-
-#
 train_dataset = get_dataset_label(train_lines, batch_size,
-                                  A_img_paths=r'L:\CRACK500\traincrop/',
-                                  B_img_paths=r'L:\CRACK500\traincrop/',
+                                  A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\img/',
+                                  B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\mask/',
                                   C_img_paths=r'C:\Users\liuye\Desktop\data\train_1\teacher_mask/',
                                   shuffle=True,
                                   KD=False,
                                   training=True,
                                   Augmentation=True)
 validation_dataset = get_dataset_label(validation_lines, batch_size,
-                                       A_img_paths=r'L:\CRACK500\valcrop/',
-                                       B_img_paths=r'L:\CRACK500\valcrop/',
+                                       A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\img/',
+                                       B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\mask/',
                                        C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
                                        shuffle=False,
                                        KD=False,
@@ -135,13 +108,40 @@ validation_dataset = get_dataset_label(validation_lines, batch_size,
                                        Augmentation=False)
 
 test_dataset = get_dataset_label(test_lines, batch_size,
-                                 A_img_paths=r'L:\CRACK500\testcrop/',
-                                 B_img_paths=r'L:\CRACK500\testcrop/',
+                                 A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\img/',
+                                 B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\mask/',
                                  C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
                                  shuffle=False,
                                  KD=False,
                                  training=False,
                                  Augmentation=False)
+
+#
+# train_dataset = get_dataset_label(train_lines, batch_size,
+#                                   A_img_paths=r'L:\CRACK500\traincrop/',
+#                                   B_img_paths=r'L:\CRACK500\traincrop/',
+#                                   C_img_paths=r'C:\Users\liuye\Desktop\data\train_1\teacher_mask/',
+#                                   shuffle=True,
+#                                   KD=False,
+#                                   training=True,
+#                                   Augmentation=True)
+# validation_dataset = get_dataset_label(validation_lines, batch_size,
+#                                        A_img_paths=r'L:\CRACK500\valcrop/',
+#                                        B_img_paths=r'L:\CRACK500\valcrop/',
+#                                        C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
+#                                        shuffle=False,
+#                                        KD=False,
+#                                        training=False,
+#                                        Augmentation=False)
+#
+# test_dataset = get_dataset_label(test_lines, batch_size,
+#                                  A_img_paths=r'L:\CRACK500\testcrop/',
+#                                  B_img_paths=r'L:\CRACK500\testcrop/',
+#                                  C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
+#                                  shuffle=False,
+#                                  KD=False,
+#                                  training=False,
+#                                  Augmentation=False)
 
 # ---------------------------------------------------------------------------------------------------
 #                                        非Teacher训练
@@ -207,9 +207,9 @@ test_dataset = get_dataset_label(test_lines, batch_size,
 # 纯净版包括哪些条件——普通卷积、无注意力机制、损失函数为平衡状态、KD方式为温度升降同时
 # 条件均满足————可开始消融实验
 # 消融实验-1-纯净版+注意力机制+不平衡损失函数+普通蒸馏（200改10）
-model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=False, ShallowConnect=False, dim=16,
-                                                 n_blocks=4,
-                                                 StudentNet=False, Temperature=0)
+# model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=False, ShallowConnect=False, dim=16,
+#                                                  n_blocks=4,
+#                                                  StudentNet=False, Temperature=0)
 #
 # model, base_model = builder(2, input_size=(448, 448), model='DenseASPP', base_model='DenseNet201')
 # batch_size = 1
@@ -239,24 +239,24 @@ model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=False,
 # model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=16, n_blocks=4)
 
 
-# model = keras.models.load_model(r'E:\output\2022-03-15-22-57-40.775466\checkpoint\ep020-val_loss0.121',
-#                                 custom_objects={'M_Precision': M_Precision,
-#                                                 'M_Recall': M_Recall,
-#                                                 'M_F1': M_F1,
-#                                                 'M_IOU': M_IOU,
-#                                                 'A_Precision': A_Precision,
-#                                                 'A_Recall': A_Recall,
-#                                                 'A_F1': A_F1,
-#                                                 # 'mean_iou_keras': mean_iou_keras,
-#                                                 'A_IOU': A_IOU,
-#                                                 # 'H_KD_Loss': H_KD_Loss,
-#                                                 # 'S_KD_Loss': S_KD_Loss,
-#                                                 'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss,
-#                                                 # 'DilatedConv2D': Layer.DilatedConv2D,
-#                                                 }
-#                                 )
-# model.evaluate(validation_dataset, steps=348)
-# model.evaluate(test_dataset, steps=1124)
+model = keras.models.load_model(r'E:\MCFF_checkpoint\ep083-val_loss5790.019',
+                                custom_objects={'M_Precision': M_Precision,
+                                                'M_Recall': M_Recall,
+                                                'M_F1': M_F1,
+                                                'M_IOU': M_IOU,
+                                                'A_Precision': A_Precision,
+                                                'A_Recall': A_Recall,
+                                                'A_F1': A_F1,
+                                                # 'mean_iou_keras': mean_iou_keras,
+                                                'A_IOU': A_IOU,
+                                                # 'H_KD_Loss': H_KD_Loss,
+                                                # 'S_KD_Loss': S_KD_Loss,
+                                                'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss,
+                                                # 'DilatedConv2D': Layer.DilatedConv2D,
+                                                }
+                                )
+model.evaluate(validation_dataset, steps=250)
+model.evaluate(test_dataset, steps=250)
 # model = segnet((512, 512), 2)
 # model.summary()
 initial_learning_rate = 5e-5
@@ -619,19 +619,20 @@ if test:
 # model.evaluate(x_test, y_test)
 
 
-# filepath = r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\crack\Positive/'
-# output_path = r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\label\crack\Positive/'
+filepath = r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\crack\Positive/'
+output_path = r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\label\crack\Positive_0.2/'
+os.mkdir(output_path)
 #
-# files = os.listdir(filepath)
-# for i in files:
-#     image = cv2.imread(filepath + i)
-#     image = cv2.resize(image, (448, 448))
-#     image = image / 255.
-#     image = image * 2 - 1
-#
-#     predict = model.predict(image.reshape(1, 448, 448, 3))
-#     predict = cv2.resize(predict[-1].reshape(448, 448, 2), (227, 227))
-#     predict = (predict[:, :, 0] > 0.4).astype(np.uint8) * 255
-#     cv2.imwrite(output_path + i, predict)
+files = os.listdir(filepath)
+for i in files:
+    image = cv2.imread(filepath + i)
+    image = cv2.resize(image, (448, 448))
+    image = image / 255.
+    image = image * 2 - 1
+
+    predict = model.predict(image.reshape(1, 448, 448, 3))
+    predict = cv2.resize(predict[-1].reshape(448, 448, 2), (227, 227))
+    predict = (predict[:, :, 0] > 0.2).astype(np.uint16) * 255
+    cv2.imwrite(output_path + i, predict)
 
 

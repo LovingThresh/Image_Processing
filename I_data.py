@@ -367,7 +367,7 @@ def get_test_dataset_label(lines,
         # img_array = np.array(img)
         # img_array, 三个通道数相同， 没法做交叉熵， 所以下面要进行”图像分层“
 
-        # 生成标签， 标签的shape是（227， 227， class_numbers) = (227, 227, 2), 里面的值全是0
+        # 生成标签， 标签的shape是（size[0]， size[1]， class_numbers) = (227, 227, 2), 里面的值全是0
         labels = np.zeros((size[0], size[1], 2), np.int)
 
         # 下面将(224,224,3) => (224,224,2),不仅是通道数的变化，还有，
@@ -375,6 +375,8 @@ def get_test_dataset_label(lines,
         # 如，labels,第0通道放背景，是背景的位置，显示为1，其余位置显示为0
         # labels, 第1通道放斑马线，图上斑马线的位置，显示1，其余位置显示为0
         # 相当于合并的图层分层！！！！
+
+        labels[:, :, 0] = (img_array[:, :, 0] == 255).astype(int).reshape(size)
         labels[:, :, 0] = (img_array[:, :, 0] == 255).astype(int).reshape(size)
         labels[:, :, 1] = (img_array[:, :, 0] != 255).astype(int).reshape(size)
 

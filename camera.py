@@ -118,7 +118,6 @@ while True:
     key = cv2.waitKey(1)
     if key == ord('q'):
         # 如果按键为q 代表quit 退出程序
-        print("程序正常退出...Bye 不要想我哦")
         break
     elif key == ord('c'):
         # 如果c键按下，则进行图片保存

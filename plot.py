@@ -5,16 +5,34 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 from PIL import Image
+import numpy as np
 
 
-def plot_heatmap(save_path, predict_array, size=(512, 512)):
+def plot_heatmap(save_path, predict_array):
     if predict_array.ndim == 4:
-        h_map = sns.heatmap(predict_array[:, :, :, 0].reshape((predict_array.shape[1], predict_array.shape[2])),
-                            xticklabels=False, yticklabels=False)
+        sns.heatmap(predict_array[:, :, :, 0].reshape((predict_array.shape[1], predict_array.shape[2])),
+                    # annot=True,
+                    xticklabels=False, yticklabels=False)
     else:
-        h_map = sns.heatmap(predict_array[:, :, 0].reshape((predict_array.shape[0], predict_array.shape[1])),
-                            xticklabels=False, yticklabels=False)
+        sns.heatmap(predict_array[:, :, 0].reshape((predict_array.shape[0], predict_array.shape[1])),
+                    # annot=True,
+                    xticklabels=False, yticklabels=False)
     plt.savefig(save_path)
+
+
+def plot_heatmap_crop_image(save_path, crop_array):
+    plt.figure(figsize=(8, 3))
+
+    sns.heatmap(crop_array[:, :, 0], annot=False, xticklabels=False, yticklabels=False,
+                vmin=0, vmax=1,
+                square=True, cbar='hot', cbar_kws={"shrink": 0.92})
+
+    plt.savefig(save_path, bbox_inches='tight', pad_inches=-0.000)
+
+
+def normalization(data):
+    _range = np.max(data) - np.min(data)
+    return (data - np.min(data)) / _rang
 
 
 # 此函数是为了裁剪师姐的数据而创建的，目前已经裁剪完成，但是由于裁剪中心的设置，有一些图片需要进一步调整
@@ -36,12 +54,10 @@ def crop_image(image_path, size=227):
 
 # 此函数是为了将原始的细长裂缝的裂缝图像227×227填充至512×512，然后调用分割效果极好的模型进行分割
 def pad_img(img, pad_size=(512, 512), values=255):
-
     new_image = np.pad(img, ((512 - img.shape[0], 0), (512 - img.shape[1], 0), (0, 0)), 'constant',
                        constant_values=values)
 
     return new_image
-
 
 # path = r'C:\Users\liuye\Desktop\Slender Cracks Positive/'
 # for i in os.listdir(path):

@@ -857,17 +857,17 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(448, 448, 3),
         mix = content_mask * attention_mask
     # h = tf.tanh(h)
 
-    if (Temperature != 0) & (StudentNet):
+    if (Temperature != 0) & StudentNet:
         h = h / Temperature
         x = x / Temperature
         y = y / Temperature
         mix_for_real = mix
         mix = mix / Temperature
-        mix_for_real = keras.layers.Softmax(name='output_0')(mix_for_real)
+        mix_for_real = keras.layers.Softmax(name='Label_mix_for_real')(mix_for_real)
 
     h = keras.layers.Softmax(name='Label_h')(h)
     x = keras.layers.Softmax(name='Label_x')(x)
     y = keras.layers.Softmax(name='Label_y')(y)
     mix = keras.layers.Softmax(name='Label_mix')(mix)
 
-    return keras.Model(inputs=inputs, outputs=[h, x, y, mix])
+    return keras.Model(inputs=inputs, outputs=[h, x, y, mix, mix_for_real])

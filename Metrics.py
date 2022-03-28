@@ -69,7 +69,7 @@ def H_KD_Loss(y_true, y_pred, alpha=0.9):
 def M_Precision(y_true, y_pred):
     """精确率"""
 
-    y_pred = tf.cast(y_pred > tf.constant(0.39), tf.float32)
+    y_pred = tf.cast(y_pred > tf.constant(0.4), tf.float32)
 
     max_pool_2d = tf.keras.layers.MaxPooling2D(pool_size=(5, 5), strides=(1, 1), padding='same')
     y_true_max = max_pool_2d(y_true)
@@ -84,7 +84,7 @@ def M_Precision(y_true, y_pred):
 def M_Recall(y_true, y_pred):
     """召回率"""
 
-    y_pred = tf.cast(y_pred > tf.constant(0.39), tf.float32)
+    y_pred = tf.cast(y_pred > tf.constant(0.4), tf.float32)
     tp = K.sum(
         K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)) * K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))  # true positives
     pp = K.sum(K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)))  # possible positives
@@ -103,7 +103,7 @@ def M_F1(y_true, y_pred):
 
 def M_IOU(y_true: tf.Tensor,
           y_pred: tf.Tensor):
-    y_pred = tf.cast(y_pred > tf.constant(0.39), tf.float32)
+    y_pred = tf.cast(y_pred > tf.constant(0.4), tf.float32)
     max_pool_2d = tf.keras.layers.MaxPooling2D(pool_size=(5, 5), strides=(1, 1), padding='same')
     y_true_max = max_pool_2d(y_true)
     predict = K.round(K.clip(y_pred[:, :, :, 0], 0, 1))
@@ -237,7 +237,7 @@ def Binary_Focal_loss(gamma=2, alpha=0.25):
 def Asymmetry_Binary_Loss(y_true, y_pred, alpha=200):
     # 纯净状态下alpha为1
     # 想要损失函数更加关心裂缝的标签值1
-    alpha = 10
+    alpha = 1
     y_true_0, y_pred_0 = y_true[:, :, :, 0] * alpha, y_pred[:, :, :, 0] * alpha
     # y_true_0, y_pred_0 = y_true[:, :, :, 0] * 255, y_pred[:, :, :, 0] * 255
     y_true_1, y_pred_1 = y_true[:, :, :, 1], y_pred[:, :, :, 1]

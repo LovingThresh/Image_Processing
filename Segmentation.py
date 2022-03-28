@@ -8,9 +8,9 @@ import argparse
 import datetime
 import time
 import os
+import shutil
 
-import utils.losses
-from builders import builder
+
 # from keras_flops import get_flops
 # from Student_model import student_model
 import Metrics
@@ -20,7 +20,7 @@ from Metrics import *
 from I_data import *
 import module
 from SegementationModels import *
-from model_profiler import model_profiler
+# from model_profiler import model_profiler
 from tensorflow.keras import models
 import matplotlib.pyplot as plt
 # from tensorflow.keras.mixed_precision import experimental as mixed_precision
@@ -202,15 +202,15 @@ test_dataset = get_dataset_label(test_lines, batch_size,
 # ----------------------------------------------------------------------
 #                               model
 # ----------------------------------------------------------------------
-# temperature = 10
+temperature = 0
 # 设置一个纯净版的ResnetGenerator_with_ThreeChannel，目前temperature对train_dataset不起作用，要与之相对应
 # 纯净版包括哪些条件——普通卷积、无注意力机制、损失函数为平衡状态、KD方式为温度升降同时
 # 条件均满足————可开始消融实验
 # 消融实验-1-纯净版+注意力机制+不平衡损失函数+普通蒸馏（200改10）
-# model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=False, ShallowConnect=False, dim=16,
-#                                                  n_blocks=4,
-#                                                  StudentNet=False, Temperature=0)
-#
+model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=False, ShallowConnect=False, dim=16,
+                                                 n_blocks=4,
+                                                 StudentNet=False, Temperature=temperature)
+
 # model, base_model = builder(2, input_size=(448, 448), model='DenseASPP', base_model='DenseNet201')
 # batch_size = 1
 # profile = model_profiler(model, batch_size)
@@ -356,6 +356,21 @@ if training or KD:
                                          max_to_keep=3)
     checkpoints = CheckpointSaver(manager=manager)
     py.args_to_yaml('E:/output/{}/settings.yml'.format(c), args)
+    output_dir = r'E:/output/{}'.format(c)
+    module_dir = py.join(output_dir, 'module_code')
+    py.mkdir(module_dir)
+
+    # 本地复制源代码，便于复现(模型文件、数据文件、训练文件、测试文件)
+    # 冷代码
+    shutil.copytree('imlib', '{}/{}'.format(module_dir, 'imlib'))
+    shutil.copytree('pylib', '{}/{}'.format(module_dir, 'pylib'))
+    shutil.copytree('tf2lib', '{}/{}'.format(module_dir, 'tf2lib'))
+
+    # 个人热代码
+    shutil.copy('module.py', module_dir)
+    shutil.copy('I_data.py', module_dir)
+    shutil.copy('Metrics.py', module_dir)
+    shutil.copy('Segmentation.py', module_dir)
 
     # ----------------------------------------------------------------------
     #                               train
@@ -619,20 +634,18 @@ if test:
 # model.evaluate(x_test, y_test)
 
 
-filepath = r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\crack\Positive/'
-output_path = r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\label\crack\Positive_0.2/'
-os.mkdir(output_path)
+# filepath = r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\crack\Positive/'
+# output_path = r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\label\crack\Positive_0.2/'
+# os.mkdir(output_path)
+# #
+# files = os.listdir(filepath)
+# for i in files:
+#     image = cv2.imread(filepath + i)
+#     image = cv2.resize(image, (448, 448))
+#     image = image / 255.
+#     image = image * 2 - 1
 #
-files = os.listdir(filepath)
-for i in files:
-    image = cv2.imread(filepath + i)
-    image = cv2.resize(image, (448, 448))
-    image = image / 255.
-    image = image * 2 - 1
-
-    predict = model.predict(image.reshape(1, 448, 448, 3))
-    predict = cv2.resize(predict[-1].reshape(448, 448, 2), (227, 227))
-    predict = (predict[:, :, 0] > 0.2).astype(np.uint16) * 255
-    cv2.imwrite(output_path + i, predict)
-
-
+#     predict = model.predict(image.reshape(1, 448, 448, 3))
+#     predict = cv2.resize(predict[-1].reshape(448, 448, 2), (227, 227))
+#     predict = (predict[:, :, 0] > 0.2).astype(np.uint16) * 255
+#     cv2.imwrite(output_path + i, predict)

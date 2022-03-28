@@ -239,24 +239,24 @@ test_dataset = get_dataset_label(test_lines, batch_size,
 # model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=16, n_blocks=4)
 
 
-model = keras.models.load_model(r'E:\MCFF_checkpoint\ep083-val_loss5790.019',
-                                custom_objects={'M_Precision': M_Precision,
-                                                'M_Recall': M_Recall,
-                                                'M_F1': M_F1,
-                                                'M_IOU': M_IOU,
-                                                'A_Precision': A_Precision,
-                                                'A_Recall': A_Recall,
-                                                'A_F1': A_F1,
-                                                # 'mean_iou_keras': mean_iou_keras,
-                                                'A_IOU': A_IOU,
-                                                # 'H_KD_Loss': H_KD_Loss,
-                                                # 'S_KD_Loss': S_KD_Loss,
-                                                'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss,
-                                                # 'DilatedConv2D': Layer.DilatedConv2D,
-                                                }
-                                )
-model.evaluate(validation_dataset, steps=250)
-model.evaluate(test_dataset, steps=250)
+# model = keras.models.load_model(r'E:\MCFF_checkpoint\ep083-val_loss5790.019',
+#                                 custom_objects={'M_Precision': M_Precision,
+#                                                 'M_Recall': M_Recall,
+#                                                 'M_F1': M_F1,
+#                                                 'M_IOU': M_IOU,
+#                                                 'A_Precision': A_Precision,
+#                                                 'A_Recall': A_Recall,
+#                                                 'A_F1': A_F1,
+#                                                 # 'mean_iou_keras': mean_iou_keras,
+#                                                 'A_IOU': A_IOU,
+#                                                 # 'H_KD_Loss': H_KD_Loss,
+#                                                 # 'S_KD_Loss': S_KD_Loss,
+#                                                 'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss,
+#                                                 # 'DilatedConv2D': Layer.DilatedConv2D,
+#                                                 }
+#                                 )
+# model.evaluate(validation_dataset, steps=250)
+# model.evaluate(test_dataset, steps=250)
 # model = segnet((512, 512), 2)
 # model.summary()
 initial_learning_rate = 5e-5

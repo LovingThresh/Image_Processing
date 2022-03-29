@@ -156,7 +156,7 @@ train_dataset = get_teacher_dataset_label(train_lines,
                                           mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_mix_15\label/',
                                           batch_size=batch_size,
                                           shuffle=True,
-                                          temperature=0
+                                          temperature=5
                                           )
 
 validation_dataset = get_teacher_dataset_label(validation_lines,
@@ -168,7 +168,7 @@ validation_dataset = get_teacher_dataset_label(validation_lines,
                                                mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_mix_15\label/',
                                                batch_size=batch_size,
                                                shuffle=False,
-                                               temperature=0,
+                                               temperature=5,
 
                                                )
 
@@ -181,7 +181,7 @@ test_dataset = get_teacher_dataset_label(test_lines,
                                          mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_mix_15\label/',
                                          batch_size=batch_size,
                                          shuffle=False,
-                                         temperature=0
+                                         temperature=5
                                          )
 
 # def ChangeAsGeneratorFunction(x):

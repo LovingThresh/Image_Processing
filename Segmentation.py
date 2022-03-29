@@ -150,10 +150,10 @@ batch_size = 1
 train_dataset = get_teacher_dataset_label(train_lines,
                                           A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\img/',
                                           B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\mask/',
-                                          h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_h_5\label/',
-                                          x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_x_5\label/',
-                                          y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_y_5\label/',
-                                          mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_mix_5\label/',
+                                          h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_h_15\label/',
+                                          x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_x_15\label/',
+                                          y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_y_15\label/',
+                                          mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_mix_15\label/',
                                           batch_size=batch_size,
                                           shuffle=True,
                                           temperature=5
@@ -162,10 +162,10 @@ train_dataset = get_teacher_dataset_label(train_lines,
 validation_dataset = get_teacher_dataset_label(validation_lines,
                                                A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\img/',
                                                B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\mask/',
-                                               h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_h_5\label/',
-                                               x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_x_5\label/',
-                                               y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_y_5\label/',
-                                               mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_mix_5\label/',
+                                               h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_h_15\label/',
+                                               x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_x_15\label/',
+                                               y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_y_15\label/',
+                                               mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_mix_15\label/',
                                                batch_size=batch_size,
                                                shuffle=False,
                                                temperature=5,
@@ -175,10 +175,10 @@ validation_dataset = get_teacher_dataset_label(validation_lines,
 test_dataset = get_teacher_dataset_label(test_lines,
                                          A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\img/',
                                          B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\mask/',
-                                         h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_h_5\label/',
-                                         x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_x_5\label/',
-                                         y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_y_5\label/',
-                                         mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_mix_5\label/',
+                                         h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_h_15\label/',
+                                         x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_x_15\label/',
+                                         y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_y_15\label/',
+                                         mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_mix_15\label/',
                                          batch_size=batch_size,
                                          shuffle=False,
                                          temperature=5
@@ -202,7 +202,7 @@ test_dataset = get_teacher_dataset_label(test_lines,
 # ----------------------------------------------------------------------
 #                               model
 # ----------------------------------------------------------------------
-temperature = 5
+temperature = 15
 # 设置一个纯净版的ResnetGenerator_with_ThreeChannel，目前temperature对train_dataset不起作用，要与之相对应
 # 纯净版包括哪些条件——普通卷积、无注意力机制、损失函数为平衡状态、KD方式为温度升降同时
 # 条件均满足————可开始消融实验

@@ -13,6 +13,8 @@ import shutil
 
 # from keras_flops import get_flops
 # from Student_model import student_model
+import keras.models
+
 import Metrics
 import pylib as py
 from Callback import CheckpointSaver, EarlyStopping, CheckpointPlot, DynamicLearningRate
@@ -150,10 +152,10 @@ batch_size = 1
 train_dataset = get_teacher_dataset_label(train_lines,
                                           A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\img/',
                                           B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\mask/',
-                                          h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_h_15\label/',
-                                          x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_x_15\label/',
-                                          y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_y_15\label/',
-                                          mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_mix_15\label/',
+                                          h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_h_5\label/',
+                                          x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_x_5\label/',
+                                          y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_y_5\label/',
+                                          mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_mix_5\label/',
                                           batch_size=batch_size,
                                           shuffle=True,
                                           temperature=0
@@ -162,10 +164,10 @@ train_dataset = get_teacher_dataset_label(train_lines,
 validation_dataset = get_teacher_dataset_label(validation_lines,
                                                A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\img/',
                                                B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\mask/',
-                                               h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_h_15\label/',
-                                               x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_x_15\label/',
-                                               y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_y_15\label/',
-                                               mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_mix_15\label/',
+                                               h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_h_5\label/',
+                                               x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_x_5\label/',
+                                               y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_y_5\label/',
+                                               mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_mix_5\label/',
                                                batch_size=batch_size,
                                                shuffle=False,
                                                temperature=0,
@@ -175,10 +177,10 @@ validation_dataset = get_teacher_dataset_label(validation_lines,
 test_dataset = get_teacher_dataset_label(test_lines,
                                          A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\img/',
                                          B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\mask/',
-                                         h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_h_15\label/',
-                                         x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_x_15\label/',
-                                         y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_y_15\label/',
-                                         mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_mix_15\label/',
+                                         h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_h_5\label/',
+                                         x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_x_5\label/',
+                                         y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_y_5\label/',
+                                         mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_mix_5\label/',
                                          batch_size=batch_size,
                                          shuffle=False,
                                          temperature=0
@@ -202,7 +204,7 @@ test_dataset = get_teacher_dataset_label(test_lines,
 # ----------------------------------------------------------------------
 #                               model
 # ----------------------------------------------------------------------
-temperature = 15
+temperature = 5
 # 设置一个纯净版的ResnetGenerator_with_ThreeChannel，目前temperature对train_dataset不起作用，要与之相对应
 # 纯净版包括哪些条件——普通卷积、无注意力机制、损失函数为平衡状态、KD方式为温度升降同时
 # 条件均满足————可开始消融实验
@@ -239,24 +241,28 @@ model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=False,
 # model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=16, n_blocks=4)
 
 
-# model = keras.models.load_model(r'E:\MCFF_checkpoint\ep083-val_loss5790.019',
-#                                 custom_objects={'M_Precision': M_Precision,
-#                                                 'M_Recall': M_Recall,
-#                                                 'M_F1': M_F1,
-#                                                 'M_IOU': M_IOU,
-#                                                 'A_Precision': A_Precision,
-#                                                 'A_Recall': A_Recall,
-#                                                 'A_F1': A_F1,
-#                                                 # 'mean_iou_keras': mean_iou_keras,
-#                                                 'A_IOU': A_IOU,
-#                                                 # 'H_KD_Loss': H_KD_Loss,
-#                                                 # 'S_KD_Loss': S_KD_Loss,
-#                                                 'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss,
-#                                                 # 'DilatedConv2D': Layer.DilatedConv2D,
-#                                                 }
-#                                 )
-# model.evaluate(validation_dataset, steps=250)
-# model.evaluate(test_dataset, steps=250)
+model = keras.models.load_model(r'E:\output\2022-03-29-09-23-10.927153\checkpoint\ep035-val_loss0.237',
+                                custom_objects={'M_Precision': M_Precision,
+                                                'M_Recall': M_Recall,
+                                                'M_F1': M_F1,
+                                                'M_IOU': M_IOU,
+                                                'A_Precision': A_Precision,
+                                                'A_Recall': A_Recall,
+                                                'A_F1': A_F1,
+                                                # 'mean_iou_keras': mean_iou_keras,
+                                                'A_IOU': A_IOU,
+                                                # 'H_KD_Loss': H_KD_Loss,
+                                                # 'S_KD_Loss': S_KD_Loss,
+                                                'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss,
+                                                # 'DilatedConv2D': Layer.DilatedConv2D,
+                                                }
+                                )
+input = model.input
+output = model.layers[-1].input
+output = tf.math.softmax(output)
+model = keras.models.Model(inputs=input, outputs=[output, output, output, output, output])
+model.evaluate(validation_dataset, steps=250)
+model.evaluate(test_dataset, steps=250)
 # model = segnet((512, 512), 2)
 # model.summary()
 initial_learning_rate = 5e-5

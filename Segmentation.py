@@ -22,7 +22,7 @@ from Metrics import *
 from I_data import *
 import module
 from SegementationModels import *
-# from model_profiler import model_profiler
+from model_profiler import model_profiler
 from tensorflow.keras import models
 import matplotlib.pyplot as plt
 # from tensorflow.keras.mixed_precision import experimental as mixed_precision
@@ -152,10 +152,10 @@ batch_size = 1
 train_dataset = get_teacher_dataset_label(train_lines,
                                           A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\img/',
                                           B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\mask/',
-                                          h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_h_5\label/',
-                                          x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_x_5\label/',
-                                          y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_y_5\label/',
-                                          mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_mix_5\label/',
+                                          h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_h\label/',
+                                          x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_x\label/',
+                                          y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_y\label/',
+                                          mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_mix\label/',
                                           batch_size=batch_size,
                                           shuffle=True,
                                           temperature=0
@@ -164,10 +164,10 @@ train_dataset = get_teacher_dataset_label(train_lines,
 validation_dataset = get_teacher_dataset_label(validation_lines,
                                                A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\img/',
                                                B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\mask/',
-                                               h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_h_5\label/',
-                                               x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_x_5\label/',
-                                               y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_y_5\label/',
-                                               mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_mix_5\label/',
+                                               h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_h\label/',
+                                               x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_x\label/',
+                                               y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_y\label/',
+                                               mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_mix\label/',
                                                batch_size=batch_size,
                                                shuffle=False,
                                                temperature=0,
@@ -177,10 +177,10 @@ validation_dataset = get_teacher_dataset_label(validation_lines,
 test_dataset = get_teacher_dataset_label(test_lines,
                                          A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\img/',
                                          B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\mask/',
-                                         h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_h_5\label/',
-                                         x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_x_5\label/',
-                                         y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_y_5\label/',
-                                         mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_mix_5\label/',
+                                         h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_h\label/',
+                                         x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_x\label/',
+                                         y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_y\label/',
+                                         mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_mix\label/',
                                          batch_size=batch_size,
                                          shuffle=False,
                                          temperature=0
@@ -204,7 +204,7 @@ test_dataset = get_teacher_dataset_label(test_lines,
 # ----------------------------------------------------------------------
 #                               model
 # ----------------------------------------------------------------------
-temperature = 5
+temperature = 10
 # 设置一个纯净版的ResnetGenerator_with_ThreeChannel，目前temperature对train_dataset不起作用，要与之相对应
 # 纯净版包括哪些条件——普通卷积、无注意力机制、损失函数为平衡状态、KD方式为温度升降同时
 # 条件均满足————可开始消融实验
@@ -214,10 +214,10 @@ model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=False,
                                                  StudentNet=True, Temperature=temperature)
 
 # model, base_model = builder(2, input_size=(448, 448), model='DenseASPP', base_model='DenseNet201')
-# batch_size = 1
-# profile = model_profiler(model, batch_size)
-#
-# print(profile)
+batch_size = 1
+profile = model_profiler(model, batch_size)
+
+print(profile)
 
 # flops = get_flops(model)
 # print(f"FLOPS: {flops / 10 ** 9:.03} G")
@@ -240,8 +240,8 @@ model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=False,
 
 # model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=16, n_blocks=4)
 
-
-model = keras.models.load_model(r'E:\output\2022-03-29-09-23-10.927153\checkpoint\ep035-val_loss0.237',
+#
+model = keras.models.load_model(r'E:\output\2022-03-06-23-18-41.346776_SOTA4\checkpoint\ep025-val_loss2001.124',
                                 custom_objects={'M_Precision': M_Precision,
                                                 'M_Recall': M_Recall,
                                                 'M_F1': M_F1,
@@ -257,10 +257,10 @@ model = keras.models.load_model(r'E:\output\2022-03-29-09-23-10.927153\checkpoin
                                                 # 'DilatedConv2D': Layer.DilatedConv2D,
                                                 }
                                 )
-input = model.input
-output = model.layers[-1].input
-output = tf.math.softmax(output)
-model = keras.models.Model(inputs=input, outputs=[output, output, output, output, output])
+# input = model.input
+# output = model.layers[-1].input
+# output = tf.math.softmax(output)
+# model = keras.models.Model(inputs=input, outputs=[output, output, output, output, output])
 model.evaluate(validation_dataset, steps=250)
 model.evaluate(test_dataset, steps=250)
 # model = segnet((512, 512), 2)
@@ -333,7 +333,7 @@ optimizer = keras.optimizers.RMSprop(initial_learning_rate)
 # ----------------------------------------------------------------------
 #                               output
 # ----------------------------------------------------------------------
-training = True
+training = False
 KD = False
 
 if training or KD:

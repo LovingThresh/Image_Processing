@@ -13,7 +13,7 @@ import shutil
 
 # from keras_flops import get_flops
 # from Student_model import student_model
-import keras.models
+# import keras.models
 
 import Metrics
 import pylib as py
@@ -209,15 +209,15 @@ temperature = 10
 # 纯净版包括哪些条件——普通卷积、无注意力机制、损失函数为平衡状态、KD方式为温度升降同时
 # 条件均满足————可开始消融实验
 # 消融实验-1-纯净版+注意力机制+不平衡损失函数+普通蒸馏（200改10）
-model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=False, ShallowConnect=False, dim=16,
+model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, ShallowConnect=False, dim=16,
                                                  n_blocks=4,
                                                  StudentNet=True, Temperature=temperature)
 
 # model, base_model = builder(2, input_size=(448, 448), model='DenseASPP', base_model='DenseNet201')
-batch_size = 1
-profile = model_profiler(model, batch_size)
-
-print(profile)
+# batch_size = 1
+# profile = model_profiler(model, batch_size)
+#
+# print(profile)
 
 # flops = get_flops(model)
 # print(f"FLOPS: {flops / 10 ** 9:.03} G")
@@ -241,28 +241,28 @@ print(profile)
 # model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=16, n_blocks=4)
 
 #
-model = keras.models.load_model(r'E:\output\2022-03-06-23-18-41.346776_SOTA4\checkpoint\ep025-val_loss2001.124',
-                                custom_objects={'M_Precision': M_Precision,
-                                                'M_Recall': M_Recall,
-                                                'M_F1': M_F1,
-                                                'M_IOU': M_IOU,
-                                                'A_Precision': A_Precision,
-                                                'A_Recall': A_Recall,
-                                                'A_F1': A_F1,
-                                                # 'mean_iou_keras': mean_iou_keras,
-                                                'A_IOU': A_IOU,
-                                                # 'H_KD_Loss': H_KD_Loss,
-                                                # 'S_KD_Loss': S_KD_Loss,
-                                                'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss,
-                                                # 'DilatedConv2D': Layer.DilatedConv2D,
-                                                }
-                                )
+# model = keras.models.load_model(r'E:\output\2022-03-06-23-18-41.346776_SOTA4\checkpoint\ep025-val_loss2001.124',
+#                                 custom_objects={'M_Precision': M_Precision,
+#                                                 'M_Recall': M_Recall,
+#                                                 'M_F1': M_F1,
+#                                                 'M_IOU': M_IOU,
+#                                                 'A_Precision': A_Precision,
+#                                                 'A_Recall': A_Recall,
+#                                                 'A_F1': A_F1,
+#                                                 # 'mean_iou_keras': mean_iou_keras,
+#                                                 'A_IOU': A_IOU,
+#                                                 # 'H_KD_Loss': H_KD_Loss,
+#                                                 # 'S_KD_Loss': S_KD_Loss,
+#                                                 'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss,
+#                                                 # 'DilatedConv2D': Layer.DilatedConv2D,
+#                                                 }
+#                                 )
 # input = model.input
 # output = model.layers[-1].input
 # output = tf.math.softmax(output)
 # model = keras.models.Model(inputs=input, outputs=[output, output, output, output, output])
-model.evaluate(validation_dataset, steps=250)
-model.evaluate(test_dataset, steps=250)
+# model.evaluate(validation_dataset, steps=250)
+# model.evaluate(test_dataset, steps=250)
 # model = segnet((512, 512), 2)
 # model.summary()
 initial_learning_rate = 5e-5
@@ -333,7 +333,7 @@ optimizer = keras.optimizers.RMSprop(initial_learning_rate)
 # ----------------------------------------------------------------------
 #                               output
 # ----------------------------------------------------------------------
-training = False
+training = True
 KD = False
 
 if training or KD:

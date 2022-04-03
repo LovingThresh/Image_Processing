@@ -686,23 +686,35 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(448, 448, 3),
 
     # 受保护的用法
     def _residual_block(x):
+        # dim = x.shape[-1]
+        # h = x
+        #
+        # # 为什么这里不用padding参数呢？使用到了‘REFLECT’
+        # h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='CONSTANT')
+        #
+        # h = keras.layers.SeparableConv2D(dim / 4, (3, 3), padding='valid', use_bias=False)(h)
+        # h = keras.layers.Conv2D(dim, (1, 1), 1, padding='same', use_bias=False)(h)
+        # h = Norm()(h)
+        # h = tf.nn.relu(h)
+        #
+        # h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='CONSTANT')
+        # h = keras.layers.SeparableConv2D(dim, (3, 3), padding='valid', use_bias=False)(h)
+        # h = keras.layers.Conv2D(dim, (1, 1), 1, padding='same', use_bias=False)(h)
+        # h = Norm()(h)
+        #
+        # return keras.layers.add([x, h])
         dim = x.shape[-1]
         h = x
+        x = keras.layers.DepthwiseConv2D(kernel_size=(7, 7), strides=(1, 1), padding='same', use_bias=False)(x)
+        x = Norm()(x)
+        x = keras.layers.Conv2D(filters=dim * 4, kernel_size=(1, 1), strides=(1, 1), padding='same',
+                                use_bias=False)(x)
+        x = keras.activations.gelu(x)
+        x = keras.layers.Conv2D(filters=dim, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False)(x)
 
-        # 为什么这里不用padding参数呢？使用到了‘REFLECT’
-        h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='CONSTANT')
+        x = keras.layers.Add()([x, h])
 
-        h = keras.layers.SeparableConv2D(dim / 4, (3, 3), padding='valid', use_bias=False)(h)
-        h = keras.layers.Conv2D(dim, (1, 1), 1, padding='same', use_bias=False)(h)
-        h = Norm()(h)
-        h = tf.nn.relu(h)
-
-        h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='CONSTANT')
-        h = keras.layers.SeparableConv2D(dim, (3, 3), padding='valid', use_bias=False)(h)
-        h = keras.layers.Conv2D(dim, (1, 1), 1, padding='same', use_bias=False)(h)
-        h = Norm()(h)
-
-        return keras.layers.add([x, h])
+        return x
 
     # 0
     h = inputs = keras.Input(shape=input_shape, name='input_0')

@@ -1,17 +1,14 @@
 import numpy as np
+
 from Metrics import *
 from Layer import *
-import tensorflow as tf
 import tensorflow_addons as tfa
-import tensorflow.keras as keras
-from tensorflow.keras.layers import *
-from tensorflow.keras.models import *
-
+import tensorflow as tf
+from tensorflow import keras
 
 # ==============================================================================
 # =                                  networks                                  =
 # ==============================================================================
-
 
 # ==================================Res-Net======================================
 def _get_norm_layer(norm):

@@ -15,20 +15,20 @@ import shutil
 # from Student_model import student_model
 # import keras.models
 
+import module
 import Metrics
 import pylib as py
-from Callback import CheckpointSaver, EarlyStopping, CheckpointPlot, DynamicLearningRate
+
 from Metrics import *
 from I_data import *
-import module
-from SegementationModels import *
-from model_profiler import model_profiler
+
+import tensorflow as tf
+from tensorflow import keras
 from tensorflow.keras import models
+from tensorflow.keras import losses
 import matplotlib.pyplot as plt
-# from tensorflow.keras.mixed_precision import experimental as mixed_precision
-#
-# policy = mixed_precision.Policy('mixed_float16')
-# mixed_precision.set_policy(policy)
+from Callback import CheckpointSaver, EarlyStopping, CheckpointPlot, DynamicLearningRate
+
 
 gpus = tf.config.experimental.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(gpus[0], True)
@@ -383,7 +383,7 @@ if training or KD:
     # ----------------------------------------------------------------------
     # loss = utils.losses.miou_loss()
     model.compile(optimizer=optimizer,
-                  loss=Metrics.Asymmetry_Binary_Loss,
+                  loss=losses.BinaryCrossentropy(),
                   # loss=loss,
                   # {
                   # 'Label_h': Metrics.S_KD_Loss,

@@ -9,6 +9,7 @@ The implementation of DeepLabV3Plus based on Tensorflow.
 from utils import layers as custom_layers
 from models import Network
 import tensorflow as tf
+import tensorflow_addons as tfa
 
 layers = tf.keras.layers
 models = tf.keras.models
@@ -88,7 +89,8 @@ class DeepLabV3Plus(Network):
 
     def _conv_bn_relu(self, x, filters, kernel_size, strides=1):
         x = layers.Conv2D(filters, kernel_size, strides=strides, padding='same')(x)
-        x = layers.BatchNormalization()(x)
+        x = tfa.layers.InstanceNormalization()(x)
+        # x = layers.BatchNormalization()(x)
         x = layers.ReLU()(x)
         return x
 
@@ -107,6 +109,7 @@ class DeepLabV3Plus(Network):
 
         x = custom_layers.Concatenate(out_size=self.aspp_size)(xs)
         x = layers.Conv2D(out_filters, 1, strides=1, kernel_initializer='he_normal')(x)
-        x = layers.BatchNormalization()(x)
+        x = tfa.layers.InstanceNormalization()(x)
+        # x = layers.BatchNormalization()(x)
 
         return x

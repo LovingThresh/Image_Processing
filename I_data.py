@@ -316,7 +316,7 @@ def get_dataset_label(lines, batch_size,
 
             else:
                 label = label.reshape((448, 448, 2))
-                data = image, np.asarray([label, label, label, label])
+                data = image, np.asarray([label])
 
                 yield data
 

@@ -8,7 +8,7 @@ The implementation of SegNet and Bayesian-SegNet based on Tensorflow.
 """
 from models import Network
 import tensorflow as tf
-
+import tensorflow_addons as tfa
 layers = tf.keras.layers
 models = tf.keras.models
 backend = tf.keras.backend
@@ -53,7 +53,8 @@ class SegNet(Network):
                           strides=strides,
                           padding='same',
                           kernel_initializer='he_normal')(x)
-        x = layers.BatchNormalization()(x)
+        instance_nor = tfa.layers.InstanceNormalization()
+        x = instance_nor(x)
         x = layers.ReLU()(x)
         return x
 
@@ -97,7 +98,9 @@ class SegNet(Network):
         x = layers.Conv2D(num_classes, 1,
                           strides=1,
                           kernel_initializer='he_normal')(x)
-        x = layers.BatchNormalization()(x)
+        # x = layers.BatchNormalization()(x)
+        instance_nor = tfa.layers.InstanceNormalization()
+        x = instance_nor(x)
         # 增加Softmax层
         x = layers.Softmax()(x)
         outputs = x

@@ -8,7 +8,7 @@ Some codes are based on official tensorflow source codes.
 
 """
 import tensorflow as tf
-
+import tensorflow_addons as tfa
 layers = tf.keras.layers
 backend = tf.keras.backend
 
@@ -64,7 +64,8 @@ class ResNet(object):
         x = layers.Conv2D(filters1, (1, 1),
                           kernel_initializer='he_normal',
                           name=conv_name_base + '2a')(input_tensor)
-        x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2a')(x)
+        x = tfa.layers.InstanceNormalization()(x)
+        # x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2a')(x)
         x = layers.Activation('relu')(x)
 
         x = layers.Conv2D(filters2, kernel_size,
@@ -72,13 +73,15 @@ class ResNet(object):
                           kernel_initializer='he_normal',
                           name=conv_name_base + '2b',
                           dilation_rate=dilation)(x)
-        x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2b')(x)
+        x = tfa.layers.InstanceNormalization()(x)
+        # x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2a')(x)
         x = layers.Activation('relu')(x)
 
         x = layers.Conv2D(filters3, (1, 1),
                           kernel_initializer='he_normal',
                           name=conv_name_base + '2c')(x)
-        x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2c')(x)
+        x = tfa.layers.InstanceNormalization()(x)
+        # x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2a')(x)
 
         x = layers.add([x, input_tensor])
         x = layers.Activation('relu')(x)
@@ -123,27 +126,29 @@ class ResNet(object):
         x = layers.Conv2D(filters1, (1, 1), strides=strides,
                           kernel_initializer='he_normal',
                           name=conv_name_base + '2a')(input_tensor)
-        x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2a')(x)
+        x = tfa.layers.InstanceNormalization()(x)
+        # x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2a')(x)
         x = layers.Activation('relu')(x)
 
         x = layers.Conv2D(filters2, kernel_size, padding='same',
                           kernel_initializer='he_normal',
                           name=conv_name_base + '2b',
                           dilation_rate=dilation)(x)
-        x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2b')(x)
+        x = tfa.layers.InstanceNormalization()(x)
+        # x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2a')(x)
         x = layers.Activation('relu')(x)
 
         x = layers.Conv2D(filters3, (1, 1),
                           kernel_initializer='he_normal',
                           name=conv_name_base + '2c')(x)
-        x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2c')(x)
+        x = tfa.layers.InstanceNormalization()(x)
+        # x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2a')(x)
 
         shortcut = layers.Conv2D(filters3, (1, 1), strides=strides,
                                  kernel_initializer='he_normal',
                                  name=conv_name_base + '1')(input_tensor)
-        shortcut = layers.BatchNormalization(
-            axis=bn_axis, name=bn_name_base + '1')(shortcut)
-
+        shortcut = tfa.layers.InstanceNormalization()(shortcut)
+        # x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2a')(x)
         x = layers.add([x, shortcut])
         x = layers.Activation('relu')(x)
         return x
@@ -169,7 +174,8 @@ class ResNet(object):
                           padding='valid',
                           kernel_initializer='he_normal',
                           name='conv1')(x)
-        x = layers.BatchNormalization(axis=bn_axis, name='bn_conv1')(x)
+        x = tfa.layers.InstanceNormalization()(x)
+        # x = layers.BatchNormalization(axis=bn_axis, name=bn_name_base + '2a')(x)
         x = layers.Activation('relu')(x)
         x = layers.ZeroPadding2D(padding=(1, 1), name='pool1_pad')(x)
         x = layers.MaxPooling2D((3, 3), strides=(2, 2))(x)

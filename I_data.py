@@ -160,7 +160,6 @@ def get_data(path=r'I:\Image Processing\train.txt',
 def get_dataset_label(lines, batch_size,
                       A_img_paths=r'I:\Image Processing\Rebuild_Image_95/',
                       B_img_paths=r'I:\Image Processing\Mix_img\95\label/',
-                      C_img_paths=r'I:\Image Processing\Mix_img\95\label/',
                       shuffle=True, KD=False, training=False, Augmentation=False):
     """
         生成器， 读取图片， 并对图片进行处理， 生成（样本，标签）
@@ -179,150 +178,106 @@ def get_dataset_label(lines, batch_size,
     global train_teacher_y_name, seed
     numbers = len(lines)
     read_line = 0
+    if shuffle:
+        np.random.shuffle(lines)
 
     while True:
 
         x_train = []
         y_train = []
-        y_teacher_train = []
-
-        # 一次获取batch——size大小的数据
 
         for t in range(batch_size):
-            if shuffle:
-                np.random.shuffle(lines)
 
-            # 1. 获取训练文件的名字
+            # 1.Get the filename
             train_x_name = lines[read_line].split(',')[0]
 
-            # 根据图片名字读取图片
+            # 2.Read the image
             img = cv2.imread(A_img_paths + train_x_name)
-            # img = img.resize(size)
             img_array = np.array(img)
-            # img_array = to_clahe(img_array)
-            img_array = cv2.resize(img_array, (448, 448))
             size = (img_array.shape[0], img_array.shape[1])
-            # img_teacher_array = cv2.imread(C_img_paths + train_teacher_y_name, cv2.IMREAD_GRAYSCALE)
+            img_array = cv2.resize(img_array, size)
             img_array = img_array / 255.0  # 标准化
             img_array = img_array * 2 - 1
             x_train.append(img_array)
 
-            # 2.1 获取训练样本标签的名字
             train_y_name = lines[read_line].split(',')[1].replace('\n', '')
-
-            # 2.2 获取Teacher训练样本标签的名字,此处将文件的后缀.png改成.jpg就能转移到相应的Teacher_Label了
-            if KD:
-                train_teacher_y_name = lines[read_line].split(',')[0].replace('\n', '')[:-4] + '.jpg'
-
-            # 根据图片名字读取图片
             img_array = cv2.imread(B_img_paths + train_y_name)
-            img_array = cv2.resize(img_array, (448, 448))
-            if img_array.shape == (600, 800, 3):
-                img_array = cv2.dilate(img_array, kernel=(5, 5), iterations=5)
-            img_array = cv2.dilate(img_array, kernel=(3, 3), iterations=5)
-            if KD:
-                img_teacher_array = cv2.imread(C_img_paths + train_teacher_y_name, cv2.IMREAD_GRAYSCALE)
-            # img.show()
-            # print(train_y_name)
-            # img = img.resize(size)  # 改变图片大小 -> (227, 227)
-            # img_array = np.array(img)
-            # img_array = img[:, :, :2]
-            # img_array, 三个通道数相同， 没法做交叉熵， 所以下面要进行”图像分层“
-
-            # 生成标签， 标签的shape是（227， 227， class_numbers) = (227, 227, 2), 里面的值全是0
+            img_array = cv2.resize(img_array, size)
+            img_array = cv2.dilate(img_array, kernel=(3, 3), iterations=3)
             labels = np.zeros((img_array.shape[0], img_array.shape[1], 2), np.int)
 
-            # 下面将(224,224,3) => (224,224,2),不仅是通道数的变化，还有，
-            # 原本背景和裂缝在一个通道里面，现在将斑马线和背景放在不同的通道里面。
-            # 如，labels,第0通道放背景，是背景的位置，显示为1，其余位置显示为0
-            # labels, 第1通道放斑马线，图上斑马线的位置，显示1，其余位置显示为0
-            # 相当于合并的图层分层！！！！
+            # 3.Image channels separation
             labels[:, :, 0] = (img_array[:, :, 1] == 255).astype(int).reshape(size)
             labels[:, :, 1] = (img_array[:, :, 1] != 255).astype(int).reshape(size)
             labels = labels.astype(np.float32)
-            # labels[:, :, 0] = (img_array[:, :, 1] == 1).astype(int).reshape(size)
-            # labels[:, :, 1] = (img_array[:, :, 1] != 1).astype(int).reshape(size)
-            if KD:
-                teacher_label = ((img_teacher_array - 127.5) / 127.5).astype(np.float32).reshape(512, 512, 1)
-                teacher_label_opposite = 1 - teacher_label
-                teacher_label = np.concatenate([teacher_label, teacher_label_opposite], axis=2)
 
             y_train.append(labels)
-            if KD:
-                y_teacher_train.append(teacher_label)
 
-            # 遍历所有数据，记录现在所处的行， 读取完所有数据后，read_line=0,打乱重新开始
+            # 4.Iterate over all data
             read_line = (read_line + 1) % numbers
 
-        if not KD:
-            image, label = np.array(x_train, dtype=np.float32), np.array(y_train, dtype=np.float32)
+        # 5.Data Augmentation
+        image, label = np.array(x_train, dtype=np.float32), np.array(y_train, dtype=np.float32)
+        if training:
 
-            if training:
+            if Augmentation:
+                seed = random.choice([0, 0, 0, 1, 2, 3, 4, 5, 6])
+            if not Augmentation:
+                seed = random.choice([0, 0, 0])
 
-                if Augmentation:
-                    seed = random.choice([0, 0, 0, 1, 2, 3, 4, 5, 6])
-                if not Augmentation:
-                    seed = random.choice([0, 0, 0])
+            def DataAugmentation(row_image, row_label, D_seed=0):
 
-                def DataAugmentation(row_image, row_label, D_seed=0):
+                global Aug_image, Aug_label
+                in_seed = np.random.randint(0, 6)
 
-                    global Aug_image, Aug_label
-                    in_seed = np.random.randint(0, 6)
+                if D_seed == 0:
+                    Aug_image = row_image
+                    Aug_label = row_label
 
-                    if D_seed == 0:
-                        Aug_image = row_image
-                        Aug_label = row_label
+                if D_seed == 1:
+                    Aug_image = tf.image.random_flip_left_right(row_image, seed=in_seed)
+                    Aug_label = tf.image.random_flip_left_right(row_label, seed=in_seed)
+                    Aug_image = np.array(np.reshape(Aug_image, row_image.shape))
+                    Aug_label = np.array(np.reshape(Aug_label, row_label.shape))
 
-                    if D_seed == 1:
-                        Aug_image = tf.image.random_flip_left_right(row_image, seed=in_seed)
-                        Aug_label = tf.image.random_flip_left_right(row_label, seed=in_seed)
-                        Aug_image = np.array(np.reshape(Aug_image, row_image.shape))
-                        Aug_label = np.array(np.reshape(Aug_label, row_label.shape))
+                if D_seed == 2:
+                    Aug_image = tf.image.random_flip_up_down(row_image, seed=in_seed)
+                    Aug_label = tf.image.random_flip_up_down(row_label, seed=in_seed)
+                    Aug_image = np.array(np.reshape(Aug_image, row_image.shape))
+                    Aug_label = np.array(np.reshape(Aug_label, row_label.shape))
 
-                    if D_seed == 2:
-                        Aug_image = tf.image.random_flip_up_down(row_image, seed=in_seed)
-                        Aug_label = tf.image.random_flip_up_down(row_label, seed=in_seed)
-                        Aug_image = np.array(np.reshape(Aug_image, row_image.shape))
-                        Aug_label = np.array(np.reshape(Aug_label, row_label.shape))
+                if D_seed == 3:
+                    Aug_image = tf.image.random_saturation(row_image, 0.2, 0.8)
+                    Aug_image = np.array(np.reshape(Aug_image, row_image.shape))
+                    Aug_label = row_label
 
-                    if D_seed == 3:
-                        Aug_image = tf.image.random_saturation(row_image, 0.2, 0.8)
-                        Aug_image = np.array(np.reshape(Aug_image, row_image.shape))
-                        Aug_label = row_label
+                if D_seed == 4:
+                    Aug_image = tf.image.random_contrast(row_image, 0.2, 0.8)
+                    Aug_image = np.array(np.reshape(Aug_image, row_image.shape))
+                    Aug_label = row_label
 
-                    if D_seed == 4:
-                        Aug_image = tf.image.random_contrast(row_image, 0.2, 0.8)
-                        Aug_image = np.array(np.reshape(Aug_image, row_image.shape))
-                        Aug_label = row_label
+                if D_seed == 5:
+                    Aug_image = tf.image.random_brightness(row_image, 0.5)
+                    Aug_image = np.array(np.reshape(Aug_image, row_image.shape))
+                    Aug_label = row_label
 
-                    if D_seed == 5:
-                        Aug_image = tf.image.random_brightness(row_image, 0.5)
-                        Aug_image = np.array(np.reshape(Aug_image, row_image.shape))
-                        Aug_label = row_label
+                if D_seed == 6:
+                    Aug_image = tf.image.random_hue(row_image, 0.5)
+                    Aug_image = np.array(np.reshape(Aug_image, row_image.shape))
+                    Aug_label = row_label
 
-                    if D_seed == 6:
-                        Aug_image = tf.image.random_hue(row_image, 0.5)
-                        Aug_image = np.array(np.reshape(Aug_image, row_image.shape))
-                        Aug_label = row_label
+                return Aug_image, Aug_label
 
-                    return Aug_image, Aug_label
+            image, label = DataAugmentation(image, label, D_seed=seed)
 
-                image, label = DataAugmentation(image, label, D_seed=seed)
+            data = image, [label, label, label, label]
 
-                label = label.reshape((448, 448, 2))
-                data = image, np.asarray([label, label, label, label])
+            yield data
 
-                yield data
+        else:
+            data = image, [label, label, label, label]
 
-            else:
-                label = label.reshape((448, 448, 2))
-                data = image, np.asarray([label])
-
-                yield data
-
-            # yield np.array(x_train), np.array(y_train)
-        if KD:
-            yield np.array(x_train), [np.array(y_train), np.array(y_teacher_train)]
+            yield data
 
 
 def get_test_dataset_label(lines,
@@ -469,8 +424,7 @@ def map_function(file_path: str or list,
             return data, label
 
 
-def get_teacher_dataset_label \
-                (
+def get_teacher_dataset_label(
                 lines,
                 A_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\img/',
                 B_img_paths=r'L:\ALASegmentationNets\Data\Stage_4\train\mask/',

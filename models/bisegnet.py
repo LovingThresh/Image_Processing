@@ -40,8 +40,8 @@ class BiSegNet(Network):
 
     def _conv_block(self, x, filters, kernel_size=3, strides=1):
         x = layers.Conv2D(filters, kernel_size, strides, padding='same', kernel_initializer='he_normal')(x)
-        x = tfa.layers.InstanceNormalization()(x)
-        # x = layers.BatchNormalization()(x)
+        # x = tfa.layers.InstanceNormalization()(x)
+        x = layers.BatchNormalization()(x)
         x = layers.ReLU()(x)
         return x
 
@@ -51,8 +51,8 @@ class BiSegNet(Network):
 
         glb = custom_layers.GlobalAveragePooling2D(keep_dims=True)(x)
         glb = layers.Conv2D(c, 1, strides=1, kernel_initializer='he_normal')(glb)
-        glb = tfa.layers.InstanceNormalization()(glb)
-        # glb = layers.BatchNormalization()(glb)
+        # glb = tfa.layers.InstanceNormalization()(glb)
+        glb = layers.BatchNormalization()(glb)
         glb = layers.Activation(activation='sigmoid')(glb)
 
         x = layers.Multiply()([x, glb])

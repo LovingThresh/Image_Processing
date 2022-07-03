@@ -232,7 +232,6 @@ model.summary()
 batch_size = 1
 profile = model_profiler.model_profiler(model, batch_size)
 print(profile)
-print(profile)
 
 # flops = get_flops(model)
 # print(f"FLOPS: {flops / 10 ** 9:.03} G")

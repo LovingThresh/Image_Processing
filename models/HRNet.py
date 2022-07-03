@@ -8,7 +8,7 @@
 # From https://github.com/niecongchong/Adjusted-HRNet-for-Semantic-Segmentation/blob/master/seg_fc_hrnet.py
 import keras.backend as K
 from keras.models import Model
-from keras.layers import Input, Conv2D, BatchNormalization, Activation
+from keras.layers import Input, Conv2D, BatchNormalization, Activation, Softmax
 from keras.layers import UpSampling2D, add, concatenate, Dropout
 
 
@@ -88,7 +88,7 @@ def make_branch(x, out_filters=32):
     return x
 
 
-def _make_fuse_layers(x, num_branches, out_filters_list=[32, 64, 96, 128, 160, 192, 224, 256], multi_scale_output=False):
+def _make_fuse_layers(x, num_branches, out_filters_list=[32, 64, 96, 128, 160, 192, 224], multi_scale_output=False):
     fuse_layers = []
     for i in range(num_branches if multi_scale_output else 1):
         fuse_layer = []
@@ -124,7 +124,7 @@ def _make_fuse_layers(x, num_branches, out_filters_list=[32, 64, 96, 128, 160, 1
 def seg_fc_hrnet(height=512, width=512, channel=3, classes=6):
     inputs = Input(shape=(height, width, channel))
 
-    out_filters_list = [32, 64, 96, 128, 160, 192, 224, 256]
+    out_filters_list = [32, 64, 96, 128, 160, 192, 224]
     x = _make_transition_layer(inputs, out_filters_list=out_filters_list)
 
     x1 = []
@@ -153,8 +153,7 @@ def seg_fc_hrnet(height=512, width=512, channel=3, classes=6):
 
     out = Conv2D(classes, 1, use_bias=False, kernel_initializer='he_normal')(x3[0])
     out = BatchNormalization(axis=3)(out)
-    out = Activation('softmax', name='Classification')(out)
-
+    out = Softmax(name='Label')(out)
     model = Model(inputs=inputs, outputs=out)
 
     return model

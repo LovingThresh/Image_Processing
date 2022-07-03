@@ -9,7 +9,7 @@ import datetime
 import time
 import os
 import shutil
-
+from builders.model_builder import builder
 
 # from keras_flops import get_flops
 # from Student_model import student_model
@@ -22,7 +22,9 @@ import model_profiler
 
 from Metrics import *
 from I_data import *
-
+from models.HRNet import seg_fc_hrnet
+from models.ESPNet import ESPNet_tf
+from models.ConvNext import ConvNext
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import models
@@ -74,13 +76,13 @@ args = parser.parse_args()
 # train_dataset = get_dataset_label(lines[:num_train], batch_size)
 # validation_dataset = get_dataset_label(lines[num_train:], batch_size)
 
-# train_lines, num_train = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\train.txt', training=False)
-# validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\val.txt', training=False)
-# test_lines, num_test = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\test.txt', training=False)
+train_lines, num_train = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\train.txt', training=False)
+validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\val.txt', training=False)
+test_lines, num_test = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\test.txt', training=False)
 
-train_lines, num_train = get_data(path=r'L:\CRACK500\train.txt', training=False)
-validation_lines, num_val = get_data(path=r'L:\CRACK500\val.txt', training=False)
-test_lines, num_test = get_data(path=r'L:\CRACK500\test.txt', training=False)
+# train_lines, num_train = get_data(path=r'L:\CRACK500\train.txt', training=False)
+# validation_lines, num_val = get_data(path=r'L:\CRACK500\val.txt', training=False)
+# test_lines, num_test = get_data(path=r'L:\CRACK500\test.txt', training=False)
 
 batch_size = 1
 # 下面的代码适用于测试的
@@ -93,58 +95,52 @@ batch_size = 1
 # ---------------------------------------------------------------------------------------------------
 #                                        非Teacher训练
 # ---------------------------------------------------------------------------------------------------
-# train_dataset = get_dataset_label(train_lines, batch_size,
-#                                   A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\img/',
-#                                   B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\mask/',
-#                                   C_img_paths=r'C:\Users\liuye\Desktop\data\train_1\teacher_mask/',
-#                                   shuffle=True,
-#                                   KD=False,
-#                                   training=True,
-#                                   Augmentation=True)
-# validation_dataset = get_dataset_label(validation_lines, batch_size,
-#                                        A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\img/',
-#                                        B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\mask/',
-#                                        C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
-#                                        shuffle=False,
-#                                        KD=False,
-#                                        training=False,
-#                                        Augmentation=False)
-#
-# test_dataset = get_dataset_label(test_lines, batch_size,
-#                                  A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\img/',
-#                                  B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\mask/',
-#                                  C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
-#                                  shuffle=False,
-#                                  KD=False,
-#                                  training=False,
-#                                  Augmentation=False)
-
-
 train_dataset = get_dataset_label(train_lines, batch_size,
-                                  A_img_paths=r'L:\CRACK500\traincrop/',
-                                  B_img_paths=r'L:\CRACK500\traincrop/',
-                                  C_img_paths=r'C:\Users\liuye\Desktop\data\train_1\teacher_mask/',
+                                  A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\img/',
+                                  B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\mask/',
                                   shuffle=True,
                                   KD=False,
                                   training=True,
                                   Augmentation=True)
 validation_dataset = get_dataset_label(validation_lines, batch_size,
-                                       A_img_paths=r'L:\CRACK500\valcrop/',
-                                       B_img_paths=r'L:\CRACK500\valcrop/',
-                                       C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
+                                       A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\img/',
+                                       B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\mask/',
                                        shuffle=False,
                                        KD=False,
                                        training=False,
                                        Augmentation=False)
 
 test_dataset = get_dataset_label(test_lines, batch_size,
-                                 A_img_paths=r'L:\CRACK500\testcrop/',
-                                 B_img_paths=r'L:\CRACK500\testcrop/',
-                                 C_img_paths=r'C:\Users\liuye\Desktop\data\val\teacher_mask/',
+                                 A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\img/',
+                                 B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\mask/',
                                  shuffle=False,
                                  KD=False,
                                  training=False,
                                  Augmentation=False)
+
+a = next(train_dataset)
+# train_dataset = get_dataset_label(train_lines, batch_size,
+#                                   A_img_paths=r'L:\CRACK500\traincrop/',
+#                                   B_img_paths=r'L:\CRACK500\traincrop/',
+#                                   shuffle=True,
+#                                   KD=False,
+#                                   training=True,
+#                                   Augmentation=True)
+# validation_dataset = get_dataset_label(validation_lines, batch_size,
+#                                        A_img_paths=r'L:\CRACK500\valcrop/',
+#                                        B_img_paths=r'L:\CRACK500\valcrop/',
+#                                        shuffle=False,
+#                                        KD=False,
+#                                        training=False,
+#                                        Augmentation=False)
+#
+# test_dataset = get_dataset_label(test_lines, batch_size,
+#                                  A_img_paths=r'L:\CRACK500\testcrop/',
+#                                  B_img_paths=r'L:\CRACK500\testcrop/',
+#                                  shuffle=False,
+#                                  KD=False,
+#                                  training=False,
+#                                  Augmentation=False)
 
 # ---------------------------------------------------------------------------------------------------
 #                                        Teacher训练
@@ -210,14 +206,32 @@ temperature = 10
 # 纯净版包括哪些条件——普通卷积、无注意力机制、损失函数为平衡状态、KD方式为温度升降同时
 # 条件均满足————可开始消融实验
 # 消融实验-1-纯净版+注意力机制+不平衡损失函数+普通蒸馏（200改10）
-model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, ShallowConnect=False, dim=64,
-                                                 n_blocks=8,
-                                                 StudentNet=False, Temperature=temperature)
+# model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, ShallowConnect=False, dim=64,
+#                                                  n_blocks=8,
+#                                                 StudentNet=False, Temperature=temperature)
+# ——————————————————————————————————————新测试——————————————————————————————————————
 
+# model, base_model = builder(2, (448, 448), model='BiSegNet', base_model='MobileNetV2')
+
+# model = seg_fc_hrnet(448, 448, channel=3, classes=2)
+
+model = ConvNext()
+
+# 轻量化网络
+
+
+# model, base_model = builder(2, (448, 448), model='UNet', base_model='MobileNetV1')
+# model, base_model = builder(2, (448, 448), model='UNet', base_model='MobileNetV2')
+# model = ESPNet_tf(classes=128, p=4, q=6)()
+
+# ——————————————————————————————————————新测试——————————————————————————————————————
+
+
+model.summary()
 # model, base_model = builder(2, input_size=(448, 448), model='DenseASPP', base_model='DenseNet201')
 batch_size = 1
 profile = model_profiler.model_profiler(model, batch_size)
-
+print(profile)
 print(profile)
 
 # flops = get_flops(model)
@@ -384,7 +398,7 @@ if training or KD:
     # ----------------------------------------------------------------------
     # loss = utils.losses.miou_loss()
     model.compile(optimizer=optimizer,
-                  loss=losses.BinaryCrossentropy(),
+                  loss=Metrics.Asymmetry_Binary_Loss,
                   # loss=loss,
                   # {
                   # 'Label_h': Metrics.S_KD_Loss,

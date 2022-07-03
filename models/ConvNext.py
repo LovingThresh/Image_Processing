@@ -8,7 +8,6 @@ import numpy as np
 import tensorflow as tf
 import tensorflow_addons as tfa
 from tensorflow import keras as keras
-from tensorflow.python.keras.layers import *
 
 
 def _get_norm_layer(norm):
@@ -22,7 +21,7 @@ def _get_norm_layer(norm):
         return keras.layers.LayerNormalization
 
 
-def ConvNext(input_shape=(448, 448, 3), output_channel=3, dim=96,
+def ConvNext(input_shape=(448, 448, 3), output_channel=2, dim=96,
                                    n_downsampling=2, n_ResBlock=9,
                                    norm='layer_norm', attention=False):
     Norm = _get_norm_layer(norm)
@@ -46,8 +45,8 @@ def ConvNext(input_shape=(448, 448, 3), output_channel=3, dim=96,
     h = keras.layers.Conv2D(filters=dim, kernel_size=(4, 4), strides=(4, 4), padding='valid', use_bias=False)(h)
     for i in range(n_downsampling):
         dim = dim * 2
-        # for _ in range(3):
-        #     h = ResNeXt_block(h)
+        for _ in range(3):
+            h = ResNeXt_block(h)
         h = keras.layers.Conv2D(filters=dim, kernel_size=(2, 2), strides=(2, 2), padding='valid', use_bias=False)(h)
 
     assert h.shape[-1] == dim
@@ -57,8 +56,8 @@ def ConvNext(input_shape=(448, 448, 3), output_channel=3, dim=96,
 
     for i in range(n_upsampling):
         dim = dim / 2
-        # for _ in range(3):
-        #     h = ResNeXt_block(h)
+        for _ in range(3):
+            h = ResNeXt_block(h)
         h = keras.layers.Conv2DTranspose(filters=dim, kernel_size=(2, 2), strides=(2, 2), padding='valid',
                                          use_bias=False)(h)
 
@@ -69,5 +68,5 @@ def ConvNext(input_shape=(448, 448, 3), output_channel=3, dim=96,
 
     h = keras.layers.Conv2D(filters=output_channel, kernel_size=(7, 7), strides=(1, 1), padding='same',
                             use_bias=False)(h)
-    h = keras.layer.Softmax(h)
+    h = keras.layers.Softmax()(h)
     return keras.Model(inputs=inputs, outputs=h)

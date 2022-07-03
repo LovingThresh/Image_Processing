@@ -35,13 +35,13 @@ class BiSegNet(Network):
 
         if inputs is None:
             assert isinstance(input_size, tuple)
-            inputs = layers.Input(shape=input_size+(3,))
+            inputs = layers.Input(shape=input_size + (3,))
         return self._bisegnet(inputs)
 
     def _conv_block(self, x, filters, kernel_size=3, strides=1):
         x = layers.Conv2D(filters, kernel_size, strides, padding='same', kernel_initializer='he_normal')(x)
         # x = tfa.layers.InstanceNormalization()(x)
-        x = layers.BatchNormalization()(x)
+        x = tfa.layers.InstanceNormalization()(x)
         x = layers.ReLU()(x)
         return x
 
@@ -49,10 +49,10 @@ class BiSegNet(Network):
         # Global average pooling
         _, _, _, c = backend.int_shape(x)
 
-        glb = custom_layers.GlobalAveragePooling2D(keep_dims=True)(x)
+        glb = layers.GlobalAveragePooling2D(keepdims=True)(x)
         glb = layers.Conv2D(c, 1, strides=1, kernel_initializer='he_normal')(glb)
         # glb = tfa.layers.InstanceNormalization()(glb)
-        glb = layers.BatchNormalization()(glb)
+        glb = tfa.layers.InstanceNormalization()(glb)
         glb = layers.Activation(activation='sigmoid')(glb)
 
         x = layers.Multiply()([x, glb])
@@ -66,7 +66,7 @@ class BiSegNet(Network):
         # Global average pooling
         _, _, _, c = backend.int_shape(inputs)
 
-        glb = custom_layers.GlobalAveragePooling2D(keep_dims=True)(inputs)
+        glb = layers.GlobalAveragePooling2D(keepdims=True)(inputs)
         glb = layers.Conv2D(filters, 1, strides=1, activation='relu', kernel_initializer='he_normal')(glb)
         glb = layers.Conv2D(filters, 1, strides=1, activation='sigmoid', kernel_initializer='he_normal')(glb)
 
@@ -99,20 +99,28 @@ class BiSegNet(Network):
         c4 = self._attention_refinement_module(c4)
         c5 = self._attention_refinement_module(c5)
 
-        glb = custom_layers.GlobalAveragePooling2D(keep_dims=True)(c5)
+        glb = layers.GlobalAveragePooling2D(keepdims=True)(c5)
         c5 = layers.Multiply()([c5, glb])
 
         # combining the paths
+        # c4 = layers.Conv2DTranspose(c4.shape[-1], (2, 2), (2, 2))(c4)
+        # c4 = tfa.layers.InstanceNormalization()(c4)
+        # c4 = layers.ReLU()(c4)
         c4 = layers.UpSampling2D(size=(2, 2), interpolation='bilinear')(c4)
-        c5 = layers.UpSampling2D(size=(4, 4), interpolation='bilinear')(c5)
-
+        # c5 = layers.UpSampling2D(size=(4, 4), interpolation='bilinear')(c5)
+        c5 = layers.Conv2DTranspose(c5.shape[-1], (4, 4), (4, 4))(c5)
+        c5 = tfa.layers.InstanceNormalization()(c5)
+        c5 = layers.ReLU()(c5)
         cx = layers.Concatenate()([c4, c5])
 
         x = self._feature_fusion_module(sx, cx, num_classes)
-
+        # x = layers.Conv2DTranspose(x.shape[-1], (8, 8), (8, 8))(x)
+        # x = tfa.layers.InstanceNormalization()(x)
+        # x = layers.ReLU()(x)
         x = layers.UpSampling2D(size=(8, 8), interpolation='bilinear')(x)
         x = layers.Conv2D(num_classes, 1, 1, kernel_initializer='he_normal')(x)
-
+        x = tfa.layers.InstanceNormalization()(x)
+        x = layers.Softmax()(x)
         outputs = x
 
         return models.Model(inputs, outputs, name=self.version)

@@ -193,6 +193,7 @@ def get_dataset_label(lines, batch_size,
 
             # 2.Read the image
             img = cv2.imread(A_img_paths + train_x_name)
+            img - cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
             img_array = np.array(img)
             size = (img_array.shape[0], img_array.shape[1])
             img_array = cv2.resize(img_array, size)
@@ -270,13 +271,13 @@ def get_dataset_label(lines, batch_size,
 
             image, label = DataAugmentation(image, label, D_seed=seed)
 
-            data = image, [label, label, label, label]
-
+            # data = image, [label, label, label, label]
+            data = image, label
             yield data
 
         else:
-            data = image, [label, label, label, label]
-
+            # data = image, [label, label, label, label]
+            data = image, label
             yield data
 
 

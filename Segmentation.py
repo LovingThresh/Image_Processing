@@ -11,7 +11,7 @@ import os
 import shutil
 from builders.model_builder import builder
 
-# from keras_flops import get_flops
+from keras_flops import get_flops
 # from Student_model import student_model
 # import keras.models
 
@@ -25,6 +25,8 @@ from I_data import *
 from models.HRNet import seg_fc_hrnet
 from models.ESPNet import ESPNet_tf
 from models.ConvNext import ConvNext
+from models.GhostNet import GhostModel
+from models.EfficienttNet import efficient_net
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras import models
@@ -76,15 +78,15 @@ args = parser.parse_args()
 # train_dataset = get_dataset_label(lines[:num_train], batch_size)
 # validation_dataset = get_dataset_label(lines[num_train:], batch_size)
 
-train_lines, num_train = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\train.txt', training=False)
-validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\val.txt', training=False)
-test_lines, num_test = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\test.txt', training=False)
+train_lines, num_train = get_data(path='ALASegmentationNets_v2/Data/Stage_4/train.txt', training=False)
+validation_lines, num_val = get_data(path=r'ALASegmentationNets_v2/Data/Stage_4/val.txt', training=False)
+test_lines, num_test = get_data(path=r'ALASegmentationNets_v2/Data/Stage_4/test.txt', training=False)
 
 # train_lines, num_train = get_data(path=r'L:\CRACK500\train.txt', training=False)
 # validation_lines, num_val = get_data(path=r'L:\CRACK500\val.txt', training=False)
 # test_lines, num_test = get_data(path=r'L:\CRACK500\test.txt', training=False)
 
-batch_size = 1
+batch_size = 4
 # 下面的代码适用于测试的
 # -------------------------------------------------------------
 # train_lines, num_train = train_lines[:2], 2
@@ -96,23 +98,23 @@ batch_size = 1
 #                                        非Teacher训练
 # ---------------------------------------------------------------------------------------------------
 train_dataset = get_dataset_label(train_lines, batch_size,
-                                  A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\img/',
-                                  B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\mask/',
+                                  A_img_paths='ALASegmentationNets_v2/Data/Stage_4/train/img/',
+                                  B_img_paths='ALASegmentationNets_v2/Data/Stage_4/train/mask/',
                                   shuffle=True,
                                   KD=False,
                                   training=True,
                                   Augmentation=True)
 validation_dataset = get_dataset_label(validation_lines, batch_size,
-                                       A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\img/',
-                                       B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\mask/',
+                                       A_img_paths='ALASegmentationNets_v2/Data/Stage_4/val/img/',
+                                       B_img_paths='ALASegmentationNets_v2/Data/Stage_4/val/mask/',
                                        shuffle=False,
                                        KD=False,
                                        training=False,
                                        Augmentation=False)
 
 test_dataset = get_dataset_label(test_lines, batch_size,
-                                 A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\img/',
-                                 B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\mask/',
+                                 A_img_paths=r'ALASegmentationNets_v2/Data/Stage_4/test/img/',
+                                 B_img_paths=r'ALASegmentationNets_v2/Data/Stage_4/test/mask/',
                                  shuffle=False,
                                  KD=False,
                                  training=False,
@@ -201,7 +203,7 @@ a = next(train_dataset)
 # ----------------------------------------------------------------------
 #                               model
 # ----------------------------------------------------------------------
-temperature = 10
+# temperature = 10
 # 设置一个纯净版的ResnetGenerator_with_ThreeChannel，目前temperature对train_dataset不起作用，要与之相对应
 # 纯净版包括哪些条件——普通卷积、无注意力机制、损失函数为平衡状态、KD方式为温度升降同时
 # 条件均满足————可开始消融实验
@@ -215,24 +217,24 @@ temperature = 10
 
 # model = seg_fc_hrnet(448, 448, channel=3, classes=2)
 
-model = ConvNext()
+# model = ConvNext()
 
 # 轻量化网络
 
-
-# model, base_model = builder(2, (448, 448), model='UNet', base_model='MobileNetV1')
+# model = GhostModel(2, 448, 3).model
+# model, base_model = builder(2, (448, 448), model='BiSegNet', base_model='MobileNetV1')
 # model, base_model = builder(2, (448, 448), model='UNet', base_model='MobileNetV2')
-# model = ESPNet_tf(classes=128, p=4, q=6)()
+# model = ESPNet_tf(classes=144, p=4, q=6)()
+# model  = efficient_net()
 
 # ——————————————————————————————————————新测试——————————————————————————————————————
 
 
-model.summary()
 # model, base_model = builder(2, input_size=(448, 448), model='DenseASPP', base_model='DenseNet201')
-batch_size = 1
+batch_size = 2
 profile = model_profiler.model_profiler(model, batch_size)
 print(profile)
-
+print(profile)
 # flops = get_flops(model)
 # print(f"FLOPS: {flops / 10 ** 9:.03} G")
 # model = module.StudentNet(attention=True)
@@ -357,26 +359,26 @@ if training or KD:
     b[13] = '-'
     b[16] = '-'
     c = ''.join(b)
-    os.makedirs(r'E:/output/{}'.format(c))
-    tensorboard = tf.keras.callbacks.TensorBoard(log_dir='E:/output/{}/tensorboard/'.format(c))
-    checkpoint = tf.keras.callbacks.ModelCheckpoint('E:/output/{}/checkpoint/'.format(c) +
+    os.makedirs(r'E/output/{}'.format(c))
+    tensorboard = tf.keras.callbacks.TensorBoard(log_dir='E/output/{}/tensorboard/'.format(c))
+    checkpoint = tf.keras.callbacks.ModelCheckpoint('E/output/{}/checkpoint/'.format(c) +
                                                     'ep{epoch:03d}-val_loss{val_loss:.3f}/',
                                                     # 'Output_Label_loss:.3f}-val_acc{'
                                                     # 'Output_Label_accuracy:.3f}/',
                                                     monitor='val_accuracy', verbose=0,
-                                                    save_best_only=False, save_weights_only=False,
+                                                    save_best_only=True, save_weights_only=False,
                                                     mode='auto', period=1)
 
-    os.makedirs(r'E:/output/{}/plot/'.format(c))
-    plot_path = r'E:/output/{}/plot/'.format(c)
-    checkpoints_directory = r'E:/output/{}/checkpoints/'.format(c)
+    os.makedirs(r'E/output/{}/plot/'.format(c))
+    plot_path = r'E/output/{}/plot/'.format(c)
+    checkpoints_directory = r'E/output/{}/checkpoints/'.format(c)
     checkpointplot = CheckpointPlot(generator=validation_dataset, path=plot_path)
     checkpoints = tf.train.Checkpoint()
     manager = tf.train.CheckpointManager(checkpoints, directory=os.path.join(checkpoints_directory, "ckpt"),
                                          max_to_keep=3)
     checkpoints = CheckpointSaver(manager=manager)
-    py.args_to_yaml('E:/output/{}/settings.yml'.format(c), args)
-    output_dir = r'E:/output/{}'.format(c)
+    py.args_to_yaml('E/output/{}/settings.yml'.format(c), args)
+    output_dir = r'E/output/{}'.format(c)
     module_dir = py.join(output_dir, 'module_code')
     py.mkdir(module_dir)
 
@@ -654,18 +656,18 @@ if test:
 # model.evaluate(x_test, y_test)
 
 
-filepath = r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\crack\Positive/'
-output_path = r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\label\crack\Positive_0.2/'
-# os.mkdir(output_path)
+# filepath = r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\crack\Positive/'
+# output_path = r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\label\crack\Positive_0.2/'
+# # os.mkdir(output_path)
+# #
+# files = os.listdir(filepath)
+# for i in files:
+#     image = cv2.imread(filepath + i)
+#     image = cv2.resize(image, (448, 448))
+#     image = image / 255.
+#     image = image * 2 - 1
 #
-files = os.listdir(filepath)
-for i in files:
-    image = cv2.imread(filepath + i)
-    image = cv2.resize(image, (448, 448))
-    image = image / 255.
-    image = image * 2 - 1
-
-    predict = model.predict(image.reshape(1, 448, 448, 3))
-    predict = cv2.resize(predict[-1].reshape(448, 448, 2), (224, 224))
-    predict = (predict[:, :, 0] > 0.2).astype(np.uint16) * 255
-    cv2.imwrite(output_path + i, predict)
+#     predict = model.predict(image.reshape(1, 448, 448, 3))
+#     predict = cv2.resize(predict[-1].reshape(448, 448, 2), (224, 224))
+#     predict = (predict[:, :, 0] > 0.2).astype(np.uint16) * 255
+#     cv2.imwrite(output_path + i, predict)

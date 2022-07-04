@@ -8,7 +8,7 @@ import tensorflow as tf
 from tensorflow.keras import backend as K
 from tensorflow.keras import Input, Model
 from tensorflow.keras.layers import Conv2D, BatchNormalization, Activation, GlobalAveragePooling2D, Dropout, Lambda, \
-    Reshape, DepthwiseConv2D, Concatenate, add
+    Reshape, DepthwiseConv2D, Concatenate, add, Conv2DTranspose, Softmax
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.utils import plot_model
 from keras.activations import softmax
@@ -137,27 +137,26 @@ class GhostModel(object):
         x = BatchNormalization(axis=-1)(x)
         x = Activation('relu')(x)
 
-        x = GlobalAveragePooling2D(data_format='channels_last')(x)
-        # x = Reshape((1,1,int(x.shape[1])))(x)
-        x = Lambda(reshapes)(x)
-        x = Conv2D(1280, (1, 1), strides=(1, 1), padding='same', data_format='channels_last', activation=None,
-                   use_bias=False)(x)
+        x = Conv2DTranspose(1024, (2, 2), (2, 2), use_bias=False)(x)
         x = BatchNormalization(axis=-1)(x)
         x = Activation('relu')(x)
 
-        x = Dropout(0.05)(x)
-        x = Conv2D(self.numclass, (1, 1), strides=(1, 1), padding='same', data_format='channels_last', activation=None,
-                   use_bias=False)(x)
-        # x = K.squeeze(x,1)
-        # x = K.squeeze(x,1)
-        # out = softmax(x)
-        x = Lambda(squeezes)(x)
-        x = Lambda(squeezes)(x)
-        out = Lambda(softmaxs)(x)
+        x = Conv2DTranspose(512, (2, 2), (2, 2), use_bias=False)(x)
+        x = BatchNormalization(axis=-1)(x)
+        x = Activation('relu')(x)
 
-        model = Model(inputdata, out)
-        return model
+        x = Conv2DTranspose(256, (2, 2), (2, 2), use_bias=False)(x)
+        x = BatchNormalization(axis=-1)(x)
+        x = Activation('relu')(x)
 
+        x = Conv2DTranspose(256, (2, 2), (2, 2), use_bias=False)(x)
+        x = BatchNormalization(axis=-1)(x)
+        x = Activation('relu')(x)
 
-model = GhostModel(2, 224, 3).GhostNet()
-a = model.predict(tf.ones((1, 224, 224, 3)))
+        x = Conv2DTranspose(self.numclass, (2, 2), (2, 2), use_bias=False)(x)
+        x = BatchNormalization(axis=-1)(x)
+        x = Activation('relu')(x)
+
+        out = Softmax()(x)
+        ghost_model = Model(inputdata, out)
+        return ghost_model

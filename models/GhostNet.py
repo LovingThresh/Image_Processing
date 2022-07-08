@@ -118,7 +118,7 @@ class GhostModel(object):
         x = GhostBottleneck(x, 3, 1, 16, 16, 2, False)
         x = GhostBottleneck(x, 3, 2, 48, 24, 2, False)
         x = GhostBottleneck(x, 3, 1, 72, 24, 2, False)
-        x = GhostBottleneck(x, 5, 2, 72, 40, 2, True)
+        x = GhostBottleneck(x, 5, 1, 72, 40, 2, True)
         x = GhostBottleneck(x, 5, 1, 120, 40, 2, True)
         x = GhostBottleneck(x, 3, 2, 240, 80, 2, False)
         x = GhostBottleneck(x, 3, 1, 200, 80, 2, False)

@@ -104,7 +104,7 @@ class DeepLabV3Plus(Network):
             xs.append(xi)
         img_pool = custom_layers.A_GlobalAveragePooling2D(keep_dims=True)(x)
         img_pool = layers.Conv2D(out_filters, 1, 1, kernel_initializer='he_normal')(img_pool)
-        img_pool = layers.UpSampling2D(size=self.aspp_size, interpolation='bilinear')(img_pool)
+        img_pool = layers.Conv2DTranspose(img_pool.shape[-1], self.aspp_size, self.aspp_size)(img_pool)
         xs.append(img_pool)
 
         x = custom_layers.Concatenate(out_size=self.aspp_size)(xs)

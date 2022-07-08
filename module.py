@@ -866,7 +866,7 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(448, 448, 3),
         attention_mask = tf.concat([attention_mask, attention_mask], axis=3)
         mix = content_mask * attention_mask
     # h = tf.tanh(h)
-
+    mix = keras.layers.Add()([h, y, x, mix])
     if (Temperature != 0) & StudentNet:
         h = h / Temperature
         x = x / Temperature

@@ -11,7 +11,7 @@ import os
 import shutil
 from builders.model_builder import builder
 
-from keras_flops import get_flops
+# from keras_flops import get_flops
 # from Student_model import student_model
 # import keras.models
 
@@ -86,7 +86,7 @@ test_lines, num_test = get_data(path=r'ALASegmentationNets_v2/Data/Stage_4/test.
 # validation_lines, num_val = get_data(path=r'L:\CRACK500\val.txt', training=False)
 # test_lines, num_test = get_data(path=r'L:\CRACK500\test.txt', training=False)
 
-batch_size = 4
+batch_size = 1
 # 下面的代码适用于测试的
 # -------------------------------------------------------------
 # train_lines, num_train = train_lines[:2], 2
@@ -120,7 +120,6 @@ test_dataset = get_dataset_label(test_lines, batch_size,
                                  training=False,
                                  Augmentation=False)
 
-a = next(train_dataset)
 # train_dataset = get_dataset_label(train_lines, batch_size,
 #                                   A_img_paths=r'L:\CRACK500\traincrop/',
 #                                   B_img_paths=r'L:\CRACK500\traincrop/',
@@ -203,14 +202,14 @@ a = next(train_dataset)
 # ----------------------------------------------------------------------
 #                               model
 # ----------------------------------------------------------------------
-# temperature = 10
+temperature = 10
 # 设置一个纯净版的ResnetGenerator_with_ThreeChannel，目前temperature对train_dataset不起作用，要与之相对应
 # 纯净版包括哪些条件——普通卷积、无注意力机制、损失函数为平衡状态、KD方式为温度升降同时
 # 条件均满足————可开始消融实验
 # 消融实验-1-纯净版+注意力机制+不平衡损失函数+普通蒸馏（200改10）
-# model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, ShallowConnect=False, dim=64,
-#                                                  n_blocks=8,
-#                                                 StudentNet=False, Temperature=temperature)
+model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, ShallowConnect=False, dim=64,
+                                                 n_blocks=8,
+                                                 StudentNet=False, Temperature=temperature)
 # ——————————————————————————————————————新测试——————————————————————————————————————
 
 # model, base_model = builder(2, (448, 448), model='BiSegNet', base_model='MobileNetV2')
@@ -221,20 +220,21 @@ a = next(train_dataset)
 
 # 轻量化网络
 
-# model = GhostModel(2, 448, 3).model
-# model, base_model = builder(2, (448, 448), model='BiSegNet', base_model='MobileNetV1')
-# model, base_model = builder(2, (448, 448), model='UNet', base_model='MobileNetV2')
-# model = ESPNet_tf(classes=144, p=4, q=6)()
-# model  = efficient_net()
 
+# model, base_model = builder(2, (448, 448), model='UNet', base_model='MobileNetV1')
+# model, base_model = builder(2, (448, 448), model='UNet', base_model='MobileNetV2')
+# model = ESPNet_tf(classes=128, p=4, q=6)()
+# model  = efficient_net()
+# model = GhostModel(2, 448, 3).model
 # ——————————————————————————————————————新测试——————————————————————————————————————
 
 
-# model, base_model = builder(2, input_size=(448, 448), model='DenseASPP', base_model='DenseNet201')
-batch_size = 2
+# model.summary()
+# # model, base_model = builder(2, input_size=(448, 448), model='DenseASPP', base_model='DenseNet201')
+batch_size = 1
 profile = model_profiler.model_profiler(model, batch_size)
 print(profile)
-print(profile)
+batch_size = 1
 # flops = get_flops(model)
 # print(f"FLOPS: {flops / 10 ** 9:.03} G")
 # model = module.StudentNet(attention=True)
@@ -272,7 +272,7 @@ print(profile)
 #                                                 'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss,
 #                                                 # 'DilatedConv2D': Layer.DilatedConv2D,
 #                                                 }
-#                                 )
+#                                  )
 # input = model.input
 # output = model.layers[-1].input
 # output = tf.math.softmax(output)
@@ -366,7 +366,7 @@ if training or KD:
                                                     # 'Output_Label_loss:.3f}-val_acc{'
                                                     # 'Output_Label_accuracy:.3f}/',
                                                     monitor='val_accuracy', verbose=0,
-                                                    save_best_only=True, save_weights_only=False,
+                                                    save_best_only=False, save_weights_only=False,
                                                     mode='auto', period=1)
 
     os.makedirs(r'E/output/{}/plot/'.format(c))

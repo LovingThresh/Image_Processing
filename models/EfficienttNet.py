@@ -248,4 +248,4 @@ def efficient_net():
     return get_efficient_net(1.0, 1.0, 448, 0.2)
 
 
-model  = efficient_net()
+

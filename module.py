@@ -841,21 +841,21 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(448, 448, 3),
         # attention_mask = tf.sigmoid(h[:, :, :, :1])
         content_mask = h[:, :, :, 1:]
         attention_mask = tf.expand_dims(attention_mask, axis=3)
-        attention_mask = tf.concat([attention_mask, attention_mask], axis=3)
+        attention_mask = tf.concat([attention_mask, attention_mask, attention_mask], axis=3)
         h = content_mask * attention_mask
 
         attention_mask = tf.sigmoid(x[:, :, :, 0])
         # attention_mask = tf.sigmoid(h[:, :, :, :1])
         content_mask = x[:, :, :, 1:]
         attention_mask = tf.expand_dims(attention_mask, axis=3)
-        attention_mask = tf.concat([attention_mask, attention_mask], axis=3)
+        attention_mask = tf.concat([attention_mask, attention_mask, attention_mask], axis=3)
         x = content_mask * attention_mask
 
         attention_mask = tf.sigmoid(y[:, :, :, 0])
         # attention_mask = tf.sigmoid(h[:, :, :, :1])
         content_mask = y[:, :, :, 1:]
         attention_mask = tf.expand_dims(attention_mask, axis=3)
-        attention_mask = tf.concat([attention_mask, attention_mask], axis=3)
+        attention_mask = tf.concat([attention_mask, attention_mask, attention_mask], axis=3)
         y = content_mask * attention_mask
         # content_mask.shape=(B,H,W,C[通道数是输入时的C，此例中为2])  attention_mask.shape=(B,H,W,1) *[可解释为expand] C)
 
@@ -863,7 +863,7 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(448, 448, 3),
         # attention_mask = tf.sigmoid(h[:, :, :, :1])
         content_mask = mix[:, :, :, 1:]
         attention_mask = tf.expand_dims(attention_mask, axis=3)
-        attention_mask = tf.concat([attention_mask, attention_mask], axis=3)
+        attention_mask = tf.concat([attention_mask, attention_mask, attention_mask], axis=3)
         mix = content_mask * attention_mask
     # h = tf.tanh(h)
     mix = keras.layers.Add()([h, y, x, mix])

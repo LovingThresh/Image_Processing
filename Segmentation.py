@@ -78,9 +78,8 @@ args = parser.parse_args()
 # train_dataset = get_dataset_label(lines[:num_train], batch_size)
 # validation_dataset = get_dataset_label(lines[num_train:], batch_size)
 
-train_lines, num_train = get_data(path='ALASegmentationNets_v2/Data/Stage_4/train.txt', training=False)
-validation_lines, num_val = get_data(path=r'ALASegmentationNets_v2/Data/Stage_4/val.txt', training=False)
-test_lines, num_test = get_data(path=r'ALASegmentationNets_v2/Data/Stage_4/test.txt', training=False)
+train_lines, num_train = get_data(path='T:/Data_liu/data_third/train.txt', training=False)
+validation_lines, num_val = get_data(path=r'T:/Data_liu/data_third/val.txt', training=False)
 
 # train_lines, num_train = get_data(path=r'L:\CRACK500\train.txt', training=False)
 # validation_lines, num_val = get_data(path=r'L:\CRACK500\val.txt', training=False)
@@ -98,28 +97,20 @@ batch_size = 1
 #                                        非Teacher训练
 # ---------------------------------------------------------------------------------------------------
 train_dataset = get_dataset_label(train_lines, batch_size,
-                                  A_img_paths='ALASegmentationNets_v2/Data/Stage_4/train/img/',
-                                  B_img_paths='ALASegmentationNets_v2/Data/Stage_4/train/mask/',
+                                  A_img_paths='T:/Data_liu/data_third/img_dir/train/',
+                                  B_img_paths='T:/Data_liu/data_third/ann_dir/train/',
                                   shuffle=True,
                                   KD=False,
                                   training=True,
                                   Augmentation=True)
 validation_dataset = get_dataset_label(validation_lines, batch_size,
-                                       A_img_paths='ALASegmentationNets_v2/Data/Stage_4/val/img/',
-                                       B_img_paths='ALASegmentationNets_v2/Data/Stage_4/val/mask/',
+                                       A_img_paths='T:/Data_liu/data_third/img_dir/val/',
+                                       B_img_paths='T:/Data_liu/data_third/ann_dir/val/',
                                        shuffle=False,
                                        KD=False,
                                        training=False,
                                        Augmentation=False)
-
-test_dataset = get_dataset_label(test_lines, batch_size,
-                                 A_img_paths=r'ALASegmentationNets_v2/Data/Stage_4/test/img/',
-                                 B_img_paths=r'ALASegmentationNets_v2/Data/Stage_4/test/mask/',
-                                 shuffle=False,
-                                 KD=False,
-                                 training=False,
-                                 Augmentation=False)
-
+a = next(train_dataset)
 # train_dataset = get_dataset_label(train_lines, batch_size,
 #                                   A_img_paths=r'L:\CRACK500\traincrop/',
 #                                   B_img_paths=r'L:\CRACK500\traincrop/',
@@ -207,7 +198,7 @@ temperature = 10
 # 纯净版包括哪些条件——普通卷积、无注意力机制、损失函数为平衡状态、KD方式为温度升降同时
 # 条件均满足————可开始消融实验
 # 消融实验-1-纯净版+注意力机制+不平衡损失函数+普通蒸馏（200改10）
-model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), attention=True, ShallowConnect=False, dim=64,
+model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), output_channels=3, attention=True, ShallowConnect=False, dim=64,
                                                  n_blocks=8,
                                                  StudentNet=False, Temperature=temperature)
 # ——————————————————————————————————————新测试——————————————————————————————————————
@@ -410,8 +401,7 @@ if training or KD:
                   #       },
                   # Metrics.Asymmetry_Binary_Loss,
 
-                  metrics=['accuracy', A_Precision, A_Recall, A_F1, A_IOU,
-                           M_Precision, M_Recall, M_F1, M_IOU])
+                  metrics=['accuracy', M_IOU_0, M_Precision_1, M_Recall_1, M_F1_1, M_IOU_1, M_IOU_2])
 
     if training:
         model.fit(train_dataset,
@@ -671,3 +661,9 @@ if test:
 #     predict = cv2.resize(predict[-1].reshape(448, 448, 2), (224, 224))
 #     predict = (predict[:, :, 0] > 0.2).astype(np.uint16) * 255
 #     cv2.imwrite(output_path + i, predict)
+# img_path = r'T:\Data_liu\data_third\img_dir\val/'
+# save_path = r'T:\Data_liu\data_third\img_dir/'
+# file_list = os.listdir(img_path)
+# with open(save_path + 'val.txt', 'w') as f:
+#     for file in file_list:
+#         f.write(file + '\n')

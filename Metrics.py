@@ -66,44 +66,49 @@ def H_KD_Loss(y_true, y_pred, alpha=0.9):
     return (1 - alpha) * hard_label_loss
 
 
-def M_Precision(y_true, y_pred):
+def M_Precision_1(y_true, y_pred):
     """精确率"""
-
-    y_pred = tf.cast(y_pred > tf.constant(0.05), tf.float32)
+    y_pred = tf.argmax(y_pred, axis=-1)
+    y_pred = tf.one_hot(y_pred, depth=3, dtype=tf.float32)
 
     max_pool_2d = tf.keras.layers.MaxPooling2D(pool_size=(5, 5), strides=(1, 1), padding='same')
     y_true_max = max_pool_2d(y_true)
     # true positives
-    tp = K.sum(K.round(K.round(K.clip(y_pred[:, :, :, 0], 0, 1)) * K.round(K.clip(y_true_max[-1:, :, :, 0], 0, 1))))
-    pp = K.sum(K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))  # predicted positives
+    tp = K.sum(K.round(K.round(K.clip(y_pred[:, :, :, 1], 0, 1)) * K.round(K.clip(y_true_max[-1:, :, :, 1], 0, 1))))
+    pp = K.sum(K.round(K.clip(y_pred[:, :, :, 1], 0, 1)))  # predicted positives
     precision = tp / (pp + 1e-8)
     return precision
 
 
 # 只看核心区域
-def M_Recall(y_true, y_pred):
+def M_Recall_1(y_true, y_pred):
     """召回率"""
 
-    y_pred = tf.cast(y_pred > tf.constant(0.05), tf.float32)
+    y_pred = tf.argmax(y_pred, axis=-1)
+    y_pred = tf.one_hot(y_pred, depth=3, dtype=tf.float32)
+
     tp = K.sum(
-        K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)) * K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))  # true positives
-    pp = K.sum(K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)))  # possible positives
+        K.round(K.clip(y_true[-1:, :, :, 1], 0, 1)) * K.round(K.clip(y_pred[:, :, :, 1], 0, 1)))  # true positives
+    pp = K.sum(K.round(K.clip(y_true[-1:, :, :, 1], 0, 1)))  # possible positives
 
     recall = tp / (pp + 1e-8)
     return recall
 
 
-def M_F1(y_true, y_pred):
+def M_F1_1(y_true, y_pred):
     """F1-score"""
-    precision = M_Precision(y_true, y_pred)
-    recall = M_Recall(y_true, y_pred)
+    precision = M_Precision_1(y_true, y_pred)
+    recall = M_Recall_1(y_true, y_pred)
     f1 = 2 * (precision * recall) / (precision + recall + 1e-8)
     return f1
 
 
-def M_IOU(y_true: tf.Tensor,
+def M_IOU_0(y_true: tf.Tensor,
           y_pred: tf.Tensor):
-    y_pred = tf.cast(y_pred > tf.constant(0.05), tf.float32)
+
+    y_pred = tf.argmax(y_pred, axis=-1)
+    y_pred = tf.one_hot(y_pred, depth=3, dtype=tf.float32)
+
     max_pool_2d = tf.keras.layers.MaxPooling2D(pool_size=(5, 5), strides=(1, 1), padding='same')
     y_true_max = max_pool_2d(y_true)
     predict = K.round(K.clip(y_pred[:, :, :, 0], 0, 1))
@@ -114,6 +119,48 @@ def M_IOU(y_true: tf.Tensor,
                                                                         K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))) + \
             (K.sum(K.round(K.clip(y_pred[:, :, :, 0], 0, 1))) - K.sum(K.round(K.clip(y_true_max[-1:, :, :, 0], 0, 1)) *
                                                                       K.round(K.clip(y_pred[:, :, :, 0], 0, 1))))
+    iou = Intersection / (Union + 1e-8)
+
+    return iou
+
+
+def M_IOU_1(y_true: tf.Tensor,
+            y_pred: tf.Tensor):
+
+    y_pred = tf.argmax(y_pred, axis=-1)
+    y_pred = tf.one_hot(y_pred, depth=3, dtype=tf.float32)
+
+    max_pool_2d = tf.keras.layers.MaxPooling2D(pool_size=(5, 5), strides=(1, 1), padding='same')
+    y_true_max = max_pool_2d(y_true)
+    predict = K.round(K.clip(y_pred[:, :, :, 1], 0, 1))
+    Intersection = K.sum(
+        K.round(K.clip(y_true_max[-1:, :, :, 1], 0, 1)) * predict)
+    Union = K.sum(K.round(K.clip(y_true_max[-1:, :, :, 1], 0, 1)) * predict) + \
+            (K.sum(K.round(K.clip(y_true[-1:, :, :, 1], 0, 1))) - K.sum(K.round(K.clip(y_true[-1:, :, :, 1], 0, 1)) *
+                                                                        K.round(K.clip(y_pred[:, :, :, 1], 0, 1)))) + \
+            (K.sum(K.round(K.clip(y_pred[:, :, :, 1], 0, 1))) - K.sum(K.round(K.clip(y_true_max[-1:, :, :, 1], 0, 1)) *
+                                                                      K.round(K.clip(y_pred[:, :, :, 1], 0, 1))))
+    iou = Intersection / (Union + 1e-8)
+
+    return iou
+
+
+def M_IOU_2(y_true: tf.Tensor,
+            y_pred: tf.Tensor):
+
+    y_pred = tf.argmax(y_pred, axis=-1)
+    y_pred = tf.one_hot(y_pred, depth=3, dtype=tf.float32)
+
+    max_pool_2d = tf.keras.layers.MaxPooling2D(pool_size=(5, 5), strides=(1, 1), padding='same')
+    y_true_max = max_pool_2d(y_true)
+    predict = K.round(K.clip(y_pred[:, :, :, 2], 0, 1))
+    Intersection = K.sum(
+        K.round(K.clip(y_true_max[-1:, :, :, 2], 0, 1)) * predict)
+    Union = K.sum(K.round(K.clip(y_true_max[-1:, :, :, 2], 0, 1)) * predict) + \
+            (K.sum(K.round(K.clip(y_true[-1:, :, :, 2], 0, 1))) - K.sum(K.round(K.clip(y_true[-1:, :, :, 2], 0, 1)) *
+                                                                        K.round(K.clip(y_pred[:, :, :, 2], 0, 1)))) + \
+            (K.sum(K.round(K.clip(y_pred[:, :, :, 2], 0, 1))) - K.sum(K.round(K.clip(y_true_max[-1:, :, :, 2], 0, 1)) *
+                                                                      K.round(K.clip(y_pred[:, :, :, 2], 0, 1))))
     iou = Intersection / (Union + 1e-8)
 
     return iou
@@ -237,10 +284,10 @@ def Binary_Focal_loss(gamma=2, alpha=0.25):
 def Asymmetry_Binary_Loss(y_true, y_pred, alpha=200):
     # 纯净状态下alpha为1
     # 想要损失函数更加关心裂缝的标签值1
-    alpha = 10
-    y_true_0, y_pred_0 = y_true[:, :, :, 0] * alpha, y_pred[:, :, :, 0] * alpha
+    alpha = 100
+    y_true_0, y_pred_0 = y_true[:, :, :, 0], y_pred[:, :, :, 0]
     # y_true_0, y_pred_0 = y_true[:, :, :, 0] * 255, y_pred[:, :, :, 0] * 255
-    y_true_1, y_pred_1 = y_true[:, :, :, 1], y_pred[:, :, :, 1]
+    y_true_1, y_pred_1 = y_true[:, :, :, 1] * alpha, y_pred[:, :, :, 1] * alpha
+    y_true_2, y_pred_2 = y_true[:, :, :, 2] * alpha, y_pred[:, :, :, 2] * alpha
     mse = tf.losses.mean_squared_error
-    return mse(y_true_0, y_pred_0) + mse(y_true_1, y_pred_1) \
-           + mse(y_pred[:, :, :, 0] + y_pred[:, :, :, 1], tf.ones_like(y_true[:, :, :, 0]))
+    return mse(y_true_0, y_pred_0) + mse(y_true_1, y_pred_1) + mse(y_true_2, y_pred_2)

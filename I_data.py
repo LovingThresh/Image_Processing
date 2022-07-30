@@ -193,7 +193,7 @@ def get_dataset_label(lines, batch_size,
                 np.random.shuffle(lines)
 
             # 1. 获取训练文件的名字
-            train_x_name = lines[read_line].split(',')[0]
+            train_x_name = lines[read_line].replace('\n', '')
 
             # 根据图片名字读取图片
             img = cv2.imread(A_img_paths + train_x_name)
@@ -208,18 +208,20 @@ def get_dataset_label(lines, batch_size,
             x_train.append(img_array)
 
             # 2.1 获取训练样本标签的名字
-            train_y_name = lines[read_line].split(',')[1].replace('\n', '')
+            train_y_name = lines[read_line].replace('\n', '')
 
             # 2.2 获取Teacher训练样本标签的名字,此处将文件的后缀.png改成.jpg就能转移到相应的Teacher_Label了
             if KD:
                 train_teacher_y_name = lines[read_line].split(',')[0].replace('\n', '')[:-4] + '.jpg'
 
             # 根据图片名字读取图片
+            if '.jpg' in train_y_name:
+                train_y_name = train_y_name[:-4] + '.png'
             img_array = cv2.imread(B_img_paths + train_y_name)
             img_array = cv2.resize(img_array, (448, 448))
             if img_array.shape == (600, 800, 3):
                 img_array = cv2.dilate(img_array, kernel=(5, 5), iterations=5)
-            img_array = cv2.dilate(img_array, kernel=(3, 3), iterations=5)
+            # img_array = cv2.dilate(img_array, kernel=(3, 3), iterations=5)
             if KD:
                 img_teacher_array = cv2.imread(C_img_paths + train_teacher_y_name, cv2.IMREAD_GRAYSCALE)
             # img.show()
@@ -230,15 +232,16 @@ def get_dataset_label(lines, batch_size,
             # img_array, 三个通道数相同， 没法做交叉熵， 所以下面要进行”图像分层“
 
             # 生成标签， 标签的shape是（227， 227， class_numbers) = (227, 227, 2), 里面的值全是0
-            labels = np.zeros((img_array.shape[0], img_array.shape[1], 2), np.int)
+            labels = np.zeros((img_array.shape[0], img_array.shape[1], 3), np.int)
 
             # 下面将(224,224,3) => (224,224,2),不仅是通道数的变化，还有，
             # 原本背景和裂缝在一个通道里面，现在将斑马线和背景放在不同的通道里面。
             # 如，labels,第0通道放背景，是背景的位置，显示为1，其余位置显示为0
             # labels, 第1通道放斑马线，图上斑马线的位置，显示1，其余位置显示为0
             # 相当于合并的图层分层！！！！
-            labels[:, :, 0] = (img_array[:, :, 1] == 255).astype(int).reshape(size)
-            labels[:, :, 1] = (img_array[:, :, 1] != 255).astype(int).reshape(size)
+            labels[:, :, 0] = (img_array[:, :, 0] == 0).astype(int).reshape(size)
+            labels[:, :, 1] = (img_array[:, :, 1] == 1).astype(int).reshape(size)
+            labels[:, :, 2] = (img_array[:, :, 2] == 2).astype(int).reshape(size)
             labels = labels.astype(np.float32)
             # labels[:, :, 0] = (img_array[:, :, 1] == 1).astype(int).reshape(size)
             # labels[:, :, 1] = (img_array[:, :, 1] != 1).astype(int).reshape(size)
@@ -309,13 +312,13 @@ def get_dataset_label(lines, batch_size,
 
                 image, label = DataAugmentation(image, label, D_seed=seed)
 
-                label = label.reshape((448, 448, 2))
+                label = label.reshape((448, 448, 3))
                 data = image, np.asarray([label, label, label, label])
 
                 yield data
 
             else:
-                label = label.reshape((448, 448, 2))
+                label = label.reshape((448, 448, 3))
                 data = image, np.asarray([label, label, label, label])
 
                 yield data

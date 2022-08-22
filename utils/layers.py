@@ -30,15 +30,15 @@ class A_GlobalAveragePooling2D(layers.GlobalAveragePooling2D):
             input_shape = tf.TensorShape(input_shape).as_list()
             return tf.TensorShape([input_shape[0], 1, 1, input_shape[3]])
 
-    def get_config(self):
-        config = super(A_GlobalAveragePooling2D, self).get_config()
-        config['keep_dim'] = self.keep_dims
-        return config
+    # def get_config(self):
+    #     config = super(A_GlobalAveragePooling2D, self).get_config()
+    #     config['keep_dims'] = self.keep_dims
+    #     return config
 
 
-class Concatenate(layers.Concatenate):
+class A_Concatenate(layers.Concatenate):
     def __init__(self, out_size=None, axis=-1, name=None):
-        super(Concatenate, self).__init__(axis=axis, name=name)
+        super(A_Concatenate, self).__init__(axis=axis, name=name)
         self.out_size = out_size
 
     def call(self, inputs):
@@ -49,7 +49,7 @@ class Concatenate(layers.Concatenate):
 
     def compute_output_shape(self, input_shape):
         if self.out_size is None:
-            return super(Concatenate, self).compute_output_shape(input_shape)
+            return super(A_Concatenate, self).compute_output_shape(input_shape)
         else:
             if not isinstance(input_shape, list):
                 raise ValueError('A `Concatenate` layer should be called '
@@ -63,10 +63,10 @@ class Concatenate(layers.Concatenate):
                 output_shape[self.axis] += shape[self.axis]
             return tuple([output_shape[0]] + list(self.out_size) + [output_shape[-1]])
 
-    def get_config(self):
-        config = super(Concatenate, self).get_config()
-        config['out_size'] = self.out_size
-        return config
+    # def get_config(self):
+    #     config = super(A_Concatenate, self).get_config()
+    #     config['out_size'] = self.out_size
+    #     return config
 
 
 class PixelShuffle(layers.Layer):
@@ -97,7 +97,7 @@ class PixelShuffle(layers.Layer):
 
         return tf.TensorShape([input_shape[0], new_h, new_w, new_c])
 
-    def get_config(self):
-        config = super(PixelShuffle, self).get_config()
-        config['block_size'] = self.block_size
-        return config
+    # def get_config(self):
+    #     config = super(PixelShuffle, self).get_config()
+    #     config['block_size'] = self.block_size
+    #     return config

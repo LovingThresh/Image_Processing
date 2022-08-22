@@ -9,6 +9,8 @@ import datetime
 import time
 import os
 import shutil
+
+import utils.layers
 from builders.model_builder import builder
 
 # from keras_flops import get_flops
@@ -42,33 +44,6 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 #                               parameter
 # ----------------------------------------------------------------------
 
-parser = argparse.ArgumentParser()
-parser.add_argument('--dataset', default='Stage_1')
-parser.add_argument('--datasets_dir', default=r'Stage_1')
-parser.add_argument('--epoch', type=int, default=100)
-parser.add_argument('--load_size', type=int, default=512)
-parser.add_argument('--crop_size', type=int, default=512)
-parser.add_argument('--batch_size', type=int, default=1)
-
-parser.add_argument('--loss', default='binary_crossentropy loss')
-parser.add_argument('--loss_parameter', default='1')
-
-parser.add_argument('--model', default='ResNet')
-parser.add_argument('--Student_model', default='False')
-parser.add_argument('--Student_model_Convolution', default='Standard Convolution')
-
-parser.add_argument("--mode", default='client')
-parser.add_argument("--port", default=52162)
-parser.add_argument('--Illustrate', default=' with Attention with No ShallowConnect with DataArgumentation'
-                                            ' No Knowledge Distillation'
-                                            ' Res-Net SaveModel'
-                                            ' 在Pad函数做了适应性调整，以适应TensorRT'
-                                            ' StandardConv2D + 1'
-                                            ' 实验结果 - 18！！'
-                                            ' 使用binary_crossentropy_loss'
-                                            ' Stage_1数据集,使用数据增强函数, 然后用binary_crossentropy_loss')
-args = parser.parse_args()
-
 # ----------------------------------------------------------------------
 #                               dataset
 # ----------------------------------------------------------------------
@@ -78,14 +53,15 @@ args = parser.parse_args()
 # train_dataset = get_dataset_label(lines[:num_train], batch_size)
 # validation_dataset = get_dataset_label(lines[num_train:], batch_size)
 
-train_lines, num_train = get_data(path='T:/Data_liu/data_third/train.txt', training=False)
-validation_lines, num_val = get_data(path=r'T:/Data_liu/data_third/val.txt', training=False)
+train_lines, num_train = get_data(path=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\crack\train.txt', training=False)
+validation_lines, num_val = get_data(path=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\crack\val.txt', training=False)
 
 # train_lines, num_train = get_data(path=r'L:\CRACK500\train.txt', training=False)
 # validation_lines, num_val = get_data(path=r'L:\CRACK500\val.txt', training=False)
 # test_lines, num_test = get_data(path=r'L:\CRACK500\test.txt', training=False)
 
 batch_size = 1
+epoch = 100
 # 下面的代码适用于测试的
 # -------------------------------------------------------------
 # train_lines, num_train = train_lines[:2], 2
@@ -97,20 +73,22 @@ batch_size = 1
 #                                        非Teacher训练
 # ---------------------------------------------------------------------------------------------------
 train_dataset = get_dataset_label(train_lines, batch_size,
-                                  A_img_paths='T:/Data_liu/data_third/img_dir/train/',
-                                  B_img_paths='T:/Data_liu/data_third/ann_dir/train/',
+                                  A_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\crack\train_Positive/',
+                                  B_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\crack\train_Positive_CAM_mask__/',
                                   shuffle=True,
                                   KD=False,
                                   training=True,
                                   Augmentation=True)
 validation_dataset = get_dataset_label(validation_lines, batch_size,
-                                       A_img_paths='T:/Data_liu/data_third/img_dir/val/',
-                                       B_img_paths='T:/Data_liu/data_third/ann_dir/val/',
+                                       A_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\crack\val_Positive/',
+                                       B_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\crack\val_Positive_mask/',
                                        shuffle=False,
                                        KD=False,
                                        training=False,
                                        Augmentation=False)
 a = next(train_dataset)
+b = next(validation_dataset)
+
 # train_dataset = get_dataset_label(train_lines, batch_size,
 #                                   A_img_paths=r'L:\CRACK500\traincrop/',
 #                                   B_img_paths=r'L:\CRACK500\traincrop/',
@@ -198,12 +176,12 @@ temperature = 10
 # 纯净版包括哪些条件——普通卷积、无注意力机制、损失函数为平衡状态、KD方式为温度升降同时
 # 条件均满足————可开始消融实验
 # 消融实验-1-纯净版+注意力机制+不平衡损失函数+普通蒸馏（200改10）
-model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), output_channels=3, attention=True, ShallowConnect=False, dim=64,
-                                                 n_blocks=8,
-                                                 StudentNet=False, Temperature=temperature)
+# model = module.ResnetGenerator_with_ThreeChannel((448, 448, 3), output_channels=3, attention=True, ShallowConnect=False, dim=64,
+#                                                  n_blocks=8,
+#                                                  StudentNet=False, Temperature=temperature)
 # ——————————————————————————————————————新测试——————————————————————————————————————
 
-# model, base_model = builder(2, (448, 448), model='BiSegNet', base_model='MobileNetV2')
+model, base_model = builder(2, (224, 224), model='UNet')
 
 # model = seg_fc_hrnet(448, 448, channel=3, classes=2)
 
@@ -368,7 +346,6 @@ if training or KD:
     manager = tf.train.CheckpointManager(checkpoints, directory=os.path.join(checkpoints_directory, "ckpt"),
                                          max_to_keep=3)
     checkpoints = CheckpointSaver(manager=manager)
-    py.args_to_yaml('E/output/{}/settings.yml'.format(c), args)
     output_dir = r'E/output/{}'.format(c)
     module_dir = py.join(output_dir, 'module_code')
     py.mkdir(module_dir)
@@ -401,12 +378,12 @@ if training or KD:
                   #       },
                   # Metrics.Asymmetry_Binary_Loss,
 
-                  metrics=['accuracy', M_IOU_0, M_Precision_1, M_Recall_1, M_F1_1, M_IOU_1, M_IOU_2])
+                  metrics=['accuracy', A_IOU, A_Precision, A_Recall])
 
     if training:
         model.fit(train_dataset,
                   steps_per_epoch=max(1, num_train // batch_size),
-                  epochs=args.epoch,
+                  epochs=epoch,
                   validation_data=validation_dataset,
                   validation_steps=max(1, num_val // batch_size),
                   initial_epoch=0,
@@ -439,7 +416,7 @@ if training or KD:
 
         model.fit_generator(train_dataset,
                             steps_per_epoch=200,
-                            epochs=args.epoch,
+                            epochs=epoch,
                             validation_data=validation_dataset,
                             validation_steps=200,
                             initial_epoch=0,
@@ -462,14 +439,19 @@ if test:
     C_test_img_paths = r'C:\Users\liuye\Desktop\data\val\teacher_mask/'
     test_dataset_label = get_test_dataset_label(test_lines, A_test_img_paths, B_test_img_paths,
                                                 KD=False)
-    model = keras.models.load_model(r'C:\Users\liuye\Desktop\ep125-val_loss1040.307',
-                                    custom_objects={'Precision': A_Precision,
-                                                    'Recall': A_Recall,
-                                                    'F1': A_F1,
-                                                    'IOU': A_IOU,
+
+    model = keras.models.load_model(r'E/output/2022-08-22-20-33-07.563915/checkpoint/ep003-val_loss466.862',
+                                    custom_objects={
+                                                    # 'Concatenate': utils.layers.Concatenate,
+                                                    # 'A_Concatenate': utils.layers.A_Concatenate,
+                                                    # 'A_GlobalAveragePooling2D': utils.layers.A_GlobalAveragePooling2D,
+                                                    'A_Precision': Metrics.A_Precision,
+                                                    'A_Recall': Metrics.A_Recall,
+                                                    'A_F1': Metrics.A_F1,
+                                                    'A_IOU': Metrics.A_IOU,
                                                     # 'H_KD_Loss': H_KD_Loss,
                                                     # 'S_KD_Loss': S_KD_Loss,
-                                                    'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss
+                                                    'Asymmetry_Binary_Loss': Metrics.Asymmetry_Binary_Loss
                                                     })
     model.compile(optimizer=optimizer,
                   loss=Metrics.Asymmetry_Binary_Loss,

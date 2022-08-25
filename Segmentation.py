@@ -44,6 +44,18 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 #                               parameter
 # ----------------------------------------------------------------------
 
+parser = argparse.ArgumentParser(description='Train a CAM model')
+parser.add_argument('dataset', type=str, help='train dataset config')
+parser.add_argument('dataset_type', type=str, help='train dataset config')
+parser.add_argument('size', type=int, help='train dataset config')
+
+args = parser.parse_args()
+
+
+data_path = args.dataset
+data_type = args.dataset_type
+size = (args.size, args.size)
+
 # ----------------------------------------------------------------------
 #                               dataset
 # ----------------------------------------------------------------------
@@ -53,15 +65,15 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 # train_dataset = get_dataset_label(lines[:num_train], batch_size)
 # validation_dataset = get_dataset_label(lines[num_train:], batch_size)
 
-train_lines, num_train = get_data(path=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\crack\train.txt', training=False)
-validation_lines, num_val = get_data(path=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\crack\val.txt', training=False)
+train_lines, num_train = get_data(path=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\{}\train.txt'.format(data_path), training=False)
+validation_lines, num_val = get_data(path=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\{}\val.txt'.format(data_path), training=False)
 
 # train_lines, num_train = get_data(path=r'L:\CRACK500\train.txt', training=False)
 # validation_lines, num_val = get_data(path=r'L:\CRACK500\val.txt', training=False)
 # test_lines, num_test = get_data(path=r'L:\CRACK500\test.txt', training=False)
 
 batch_size = 1
-epoch = 100
+epoch = 10
 # 下面的代码适用于测试的
 # -------------------------------------------------------------
 # train_lines, num_train = train_lines[:2], 2
@@ -73,15 +85,15 @@ epoch = 100
 #                                        非Teacher训练
 # ---------------------------------------------------------------------------------------------------
 train_dataset = get_dataset_label(train_lines, batch_size,
-                                  A_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\crack\train_Positive/',
-                                  B_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\crack\train_Positive_CAM_mask__/',
+                                  A_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\{}\train_Positive/'.format(data_path),
+                                  B_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\{}\{}/'.format(data_path, data_type),
                                   shuffle=True,
                                   KD=False,
                                   training=True,
                                   Augmentation=True)
 validation_dataset = get_dataset_label(validation_lines, batch_size,
-                                       A_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\crack\val_Positive/',
-                                       B_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\crack\val_Positive_mask/',
+                                       A_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\{}\val_Positive/'.format(data_path),
+                                       B_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\{}\val_Positive_mask/'.format(data_path),
                                        shuffle=False,
                                        KD=False,
                                        training=False,
@@ -181,7 +193,7 @@ temperature = 10
 #                                                  StudentNet=False, Temperature=temperature)
 # ——————————————————————————————————————新测试——————————————————————————————————————
 
-model, base_model = builder(2, (224, 224), model='UNet')
+model, base_model = builder(2, size, model='DeepLabV3')
 
 # model = seg_fc_hrnet(448, 448, channel=3, classes=2)
 

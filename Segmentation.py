@@ -10,6 +10,9 @@ import time
 import os
 import shutil
 
+import cv2
+import numpy as np
+
 import utils.layers
 from builders.model_builder import builder
 
@@ -44,18 +47,20 @@ os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 #                               parameter
 # ----------------------------------------------------------------------
 
-parser = argparse.ArgumentParser(description='Train a CAM model')
-parser.add_argument('dataset', type=str, help='train dataset config')
-parser.add_argument('dataset_type', type=str, help='train dataset config')
-parser.add_argument('size', type=int, help='train dataset config')
+# parser = argparse.ArgumentParser(description='Train a CAM model')
+# parser.add_argument('dataset', type=str, help='train dataset config')
+# parser.add_argument('dataset_type', type=str, help='train dataset config')
+# parser.add_argument('size', type=int, help='train dataset config')
+#
+# args = parser.parse_args()
 
-args = parser.parse_args()
 
-
-data_path = args.dataset
-data_type = args.dataset_type
-size = (args.size, args.size)
-
+# data_path = args.dataset
+# data_type = args.dataset_type
+# size = (args.size, args.size)
+size = (224, 224)
+data_path = 'crack'
+data_type = 'train_Positive_CAM_mask'
 # ----------------------------------------------------------------------
 #                               dataset
 # ----------------------------------------------------------------------
@@ -86,21 +91,20 @@ epoch = 10
 # ---------------------------------------------------------------------------------------------------
 train_dataset = get_dataset_label(train_lines, batch_size,
                                   A_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\{}\train_Positive/'.format(data_path),
-                                  B_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\{}\{}/'.format(data_path, data_type),
+                                  B_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\{}\ann_dir/{}/'.format(data_path, data_type),
                                   shuffle=True,
                                   KD=False,
                                   training=True,
                                   Augmentation=True)
 validation_dataset = get_dataset_label(validation_lines, batch_size,
                                        A_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\{}\val_Positive/'.format(data_path),
-                                       B_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\{}\val_Positive_mask/'.format(data_path),
+                                       B_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\{}\ann_dir\val_true/'.format(data_path),
                                        shuffle=False,
                                        KD=False,
                                        training=False,
                                        Augmentation=False)
 a = next(train_dataset)
 b = next(validation_dataset)
-
 # train_dataset = get_dataset_label(train_lines, batch_size,
 #                                   A_img_paths=r'L:\CRACK500\traincrop/',
 #                                   B_img_paths=r'L:\CRACK500\traincrop/',
@@ -193,7 +197,7 @@ temperature = 10
 #                                                  StudentNet=False, Temperature=temperature)
 # ——————————————————————————————————————新测试——————————————————————————————————————
 
-model, base_model = builder(2, size, model='DeepLabV3')
+model, base_model = builder(2, size, model='UNet')
 
 # model = seg_fc_hrnet(448, 448, channel=3, classes=2)
 
@@ -451,16 +455,17 @@ if test:
     C_test_img_paths = r'C:\Users\liuye\Desktop\data\val\teacher_mask/'
     test_dataset_label = get_test_dataset_label(test_lines, A_test_img_paths, B_test_img_paths,
                                                 KD=False)
-
-    model = keras.models.load_model(r'E/output/2022-08-22-20-33-07.563915/checkpoint/ep003-val_loss466.862',
+    initial_learning_rate = 5e-5
+    optimizer = keras.optimizers.RMSprop(initial_learning_rate)
+    model = keras.models.load_model(r'M:\CycleGAN(WSSS)\File\checpoint\output\2022-08-27-15-47-15.393470\checkpoint\ep001-val_loss276.262',
                                     custom_objects={
                                                     # 'Concatenate': utils.layers.Concatenate,
                                                     # 'A_Concatenate': utils.layers.A_Concatenate,
                                                     # 'A_GlobalAveragePooling2D': utils.layers.A_GlobalAveragePooling2D,
-                                                    'A_Precision': Metrics.A_Precision,
-                                                    'A_Recall': Metrics.A_Recall,
-                                                    'A_F1': Metrics.A_F1,
-                                                    'A_IOU': Metrics.A_IOU,
+                                                    'A_Precision': A_Precision,
+                                                    'A_Recall': A_Recall,
+                                                    'A_F1': A_F1,
+                                                    'A_IOU': A_IOU,
                                                     # 'H_KD_Loss': H_KD_Loss,
                                                     # 'S_KD_Loss': S_KD_Loss,
                                                     'Asymmetry_Binary_Loss': Metrics.Asymmetry_Binary_Loss
@@ -468,7 +473,7 @@ if test:
     model.compile(optimizer=optimizer,
                   loss=Metrics.Asymmetry_Binary_Loss,
                   metrics=['accuracy', A_Precision, A_Recall, A_F1, A_IOU, Asymmetry_Binary_Loss])
-    model.evaluate(test_dataset_label[0], test_dataset_label[1], batch_size=1)
+    model.evaluate(validation_dataset, steps=1000)
     # 尝试输出TensorFlow Lite模型
     if out_tensorflow_lite:
         converter = tf.lite.TFLiteConverter.from_keras_model(model)
@@ -661,3 +666,101 @@ if test:
 # with open(save_path + 'val.txt', 'w') as f:
 #     for file in file_list:
 #         f.write(file + '\n')
+
+
+for h, i in enumerate(validation_dataset):
+    if h > 999:
+        break
+    prediction = model.predict(i[0])
+    prediction = prediction[:, :, :, 1].reshape((224, 224))
+    prediction = np.uint8(prediction > 0.5)
+    cv2.imwrite('prediction_output_MCFF_0.5/' + validation_lines[h].split(',')[0][:-4]+'.png', prediction)
+
+
+def A_Precision(y_true, y_pred):
+    """精确率"""
+    y_pred = tf.cast(y_pred > tf.constant(0.3), tf.float32)
+
+    tp = K.sum(
+        K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)) * K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))  # true positives
+    pp = K.sum(K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))  # predicted positives
+    precision = (tp  + 1e-8) / (pp + 1e-8)
+    return precision
+
+
+def A_Recall(y_true, y_pred):
+    """召回率"""
+    y_pred = tf.cast(y_pred > tf.constant(0.3), tf.float32)
+    tp = K.sum(
+        K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)) * K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))  # true positives
+    pp = K.sum(K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)))  # possible positives
+
+    recall = (tp  + 1e-8) / (pp + 1e-8)
+    return recall
+
+
+def A_F1(y_true, y_pred):
+    """F1-score"""
+    y_pred = tf.cast(y_pred > tf.constant(0.3), tf.float32)
+    precision = A_Precision(y_true, y_pred)
+    recall = A_Recall(y_true, y_pred)
+    f1 = 2 * (precision * recall) / (precision + recall + 1e-8)
+    return f1
+
+
+def A_IOU(y_true: tf.Tensor,
+          y_pred: tf.Tensor):
+    y_pred = tf.cast(y_pred > tf.constant(0.3), tf.float32)
+    predict = K.round(K.clip(y_pred[:, :, :, 0], 0, 1))
+    Intersection = K.sum(K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)) * predict)
+    Union = K.sum(K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)) + predict)
+    iou = (Intersection + 1e-8) / (Union - Intersection + 1e-8)
+    return iou
+
+def A_AC(y_true: tf.Tensor,
+          y_pred: tf.Tensor):
+    y_pred = tf.cast(y_pred > tf.constant(0.3), tf.float32)
+    predict = K.round(K.clip(y_pred[:, :, :, 0], 0, 1))
+    Intersection = K.sum(tf.cast(K.round(K.clip(y_true[-1:, :, :, 0], 0, 1))  == predict, dtype=tf.float32))
+    Union = 224 * 224
+    iou = (Intersection + 1e-8) / (Union + 1e-8)
+    return iou
+
+
+o_img_path = r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\crack\val_Positive/'
+p_img_path = r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\crack\ann_dir\val_true/'
+save_path = r'prediction_output_CRFs_0.5/'
+
+A_iou_list = np.array([])
+A_pr_list = np.array([])
+A_re_list = np.array([])
+A_f1_list = np.array([])
+A_ac_list = np.array([])
+
+for file in os.listdir(o_img_path):
+    img_path_ = o_img_path + file
+    p_img_path_ = p_img_path + file[:-4] + '.png'
+    save_path_ = save_path + file[:-4] + '.png'
+    prediction = cv2.imread(save_path_, cv2.IMREAD_GRAYSCALE)
+    true = cv2.imread(p_img_path_, cv2.IMREAD_GRAYSCALE)
+    prediction = prediction.astype(np.float32)
+    true = true.astype(np.float32)
+    prediction = tf.convert_to_tensor(prediction.reshape((1, 1, 224, 224)))
+    true = tf.convert_to_tensor(true.reshape((1, 1, 224, 224)))
+    iou = A_IOU(true, prediction)
+    pr = A_Precision(true, prediction)
+    re = A_Recall(true, prediction)
+    f1 = A_F1(true, prediction)
+    AC = tf.keras.metrics.Accuracy(
+        name='accuracy', dtype=None)
+    ac = AC(true, prediction)
+    A_iou_list = np.append(A_iou_list, iou.numpy())
+    A_pr_list = np.append(A_pr_list, pr.numpy())
+    A_re_list = np.append(A_re_list, re.numpy())
+    A_f1_list = np.append(A_f1_list, f1.numpy())
+    A_ac_list = np.append(A_ac_list, ac.numpy())
+np.mean(A_iou_list)
+np.mean(A_pr_list)
+np.mean(A_re_list)
+np.mean(A_f1_list)
+np.mean(A_ac_list)

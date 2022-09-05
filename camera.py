@@ -12,11 +12,6 @@ import common
 TRT_LOGGER = trt.Logger(trt.Logger.WARNING)
 trt_runtime = trt.Runtime(TRT_LOGGER)
 
-## VideCapture里面的序号
-# 0 : 默认为笔记本上的摄像头(如果有的话) / USB摄像头 webcam
-# 1 : USB摄像头2
-# 2 ：USB摄像头3 以此类推
-# -1：代表最新插入的USB设备
 
 # 创建一个video capture的实例
 cap = cv2.VideoCapture(0)
@@ -29,15 +24,6 @@ cv2.namedWindow('image_win', flags=cv2.WINDOW_NORMAL | cv2.WINDOW_KEEPRATIO | cv
 
 # 图像计数 从1开始
 img_count = 1
-
-# 帮助信息
-helpInfo = '''
-=======阿凯贴心小助手=======
-提示-按键前需要选中当前画面显示的窗口
-
-按键Q： 退出程序
-按键C： Capture 拍照
-'''
 
 
 # 载入TensorRT 引擎

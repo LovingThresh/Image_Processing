@@ -242,22 +242,22 @@ batch_size = 1
 # model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=16, n_blocks=4)
 
 #
-# model = keras.models.load_model(r'E:\output\2022-03-06-23-18-41.346776_SOTA4\checkpoint\ep025-val_loss2001.124',
-#                                 custom_objects={'M_Precision': M_Precision,
-#                                                 'M_Recall': M_Recall,
-#                                                 'M_F1': M_F1,
-#                                                 'M_IOU': M_IOU,
-#                                                 'A_Precision': A_Precision,
-#                                                 'A_Recall': A_Recall,
-#                                                 'A_F1': A_F1,
-#                                                 # 'mean_iou_keras': mean_iou_keras,
-#                                                 'A_IOU': A_IOU,
-#                                                 # 'H_KD_Loss': H_KD_Loss,
-#                                                 # 'S_KD_Loss': S_KD_Loss,
-#                                                 'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss,
-#                                                 # 'DilatedConv2D': Layer.DilatedConv2D,
-#                                                 }
-#                                  )
+model = keras.models.load_model(r'C:\Users\liuye\Desktop\ep083-val_loss5790.019',
+                                custom_objects={'M_Precision': M_Precision,
+                                                'M_Recall': M_Recall,
+                                                'M_F1': M_F1,
+                                                'M_IOU': M_IOU,
+                                                'A_Precision': A_Precision,
+                                                'A_Recall': A_Recall,
+                                                'A_F1': A_F1,
+                                                # 'mean_iou_keras': mean_iou_keras,
+                                                'A_IOU': A_IOU,
+                                                # 'H_KD_Loss': H_KD_Loss,
+                                                # 'S_KD_Loss': S_KD_Loss,
+                                                'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss,
+                                                # 'DilatedConv2D': Layer.DilatedConv2D,
+                                                }
+                                 )
 # input = model.input
 # output = model.layers[-1].input
 # output = tf.math.softmax(output)

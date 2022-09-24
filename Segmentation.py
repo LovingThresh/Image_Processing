@@ -39,7 +39,6 @@ from tensorflow.keras import losses
 import matplotlib.pyplot as plt
 from Callback import CheckpointSaver, EarlyStopping, CheckpointPlot, DynamicLearningRate
 
-
 gpus = tf.config.experimental.list_physical_devices('GPU')
 tf.config.experimental.set_memory_growth(gpus[0], True)
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
@@ -70,8 +69,10 @@ data_type = 'train_Positive_CAM_mask'
 # train_dataset = get_dataset_label(lines[:num_train], batch_size)
 # validation_dataset = get_dataset_label(lines[num_train:], batch_size)
 
-train_lines, num_train = get_data(path=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\{}\train.txt'.format(data_path), training=False)
-validation_lines, num_val = get_data(path=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\{}\val.txt'.format(data_path), training=False)
+train_lines, num_train = get_data(
+    path=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\{}\train.txt'.format(data_path), training=False)
+validation_lines, num_val = get_data(
+    path=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\{}\val.txt'.format(data_path), training=False)
 
 # train_lines, num_train = get_data(path=r'L:\CRACK500\train.txt', training=False)
 # validation_lines, num_val = get_data(path=r'L:\CRACK500\val.txt', training=False)
@@ -90,15 +91,19 @@ epoch = 10
 #                                        非Teacher训练
 # ---------------------------------------------------------------------------------------------------
 train_dataset = get_dataset_label(train_lines, batch_size,
-                                  A_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\{}\train_Positive/'.format(data_path),
-                                  B_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\{}\ann_dir/{}/'.format(data_path, data_type),
+                                  A_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\{}\train_Positive/'.format(
+                                      data_path),
+                                  B_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\{}\ann_dir/{}/'.format(
+                                      data_path, data_type),
                                   shuffle=True,
                                   KD=False,
                                   training=True,
                                   Augmentation=True)
 validation_dataset = get_dataset_label(validation_lines, batch_size,
-                                       A_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\{}\val_Positive/'.format(data_path),
-                                       B_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\{}\ann_dir\val_true/'.format(data_path),
+                                       A_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\{}\val_Positive/'.format(
+                                           data_path),
+                                       B_img_paths=r'P:\GAN\CycleGAN-liuye-master\CycleGAN-liuye-master\datasets\{}\ann_dir\val_true/'.format(
+                                           data_path),
                                        shuffle=False,
                                        KD=False,
                                        training=False,
@@ -257,7 +262,7 @@ model = keras.models.load_model(r'C:\Users\liuye\Desktop\ep083-val_loss5790.019'
                                                 'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss,
                                                 # 'DilatedConv2D': Layer.DilatedConv2D,
                                                 }
-                                 )
+                                )
 # input = model.input
 # output = model.layers[-1].input
 # output = tf.math.softmax(output)
@@ -457,19 +462,19 @@ if test:
                                                 KD=False)
     initial_learning_rate = 5e-5
     optimizer = keras.optimizers.RMSprop(initial_learning_rate)
-    model = keras.models.load_model(r'M:\CycleGAN(WSSS)\File\checpoint\output\2022-08-27-15-47-15.393470\checkpoint\ep001-val_loss276.262',
+    model = keras.models.load_model(r'E:\output\2022-03-06-23-18-41.346776_SOTA4\checkpoint\ep025-val_loss2001.124',
                                     custom_objects={
-                                                    # 'Concatenate': utils.layers.Concatenate,
-                                                    # 'A_Concatenate': utils.layers.A_Concatenate,
-                                                    # 'A_GlobalAveragePooling2D': utils.layers.A_GlobalAveragePooling2D,
-                                                    'A_Precision': A_Precision,
-                                                    'A_Recall': A_Recall,
-                                                    'A_F1': A_F1,
-                                                    'A_IOU': A_IOU,
-                                                    # 'H_KD_Loss': H_KD_Loss,
-                                                    # 'S_KD_Loss': S_KD_Loss,
-                                                    'Asymmetry_Binary_Loss': Metrics.Asymmetry_Binary_Loss
-                                                    })
+                                        'M_Precision': M_Precision,
+                                        'M_Recall': M_Recall,
+                                        'M_F1': M_F1,
+                                        'M_IOU': M_IOU,
+                                        'mean_iou_keras': mean_iou_keras,
+                                        'A_Precision': A_Precision,
+                                        'A_Recall': A_Recall,
+                                        'A_F1': A_F1,
+                                        'A_IOU': A_IOU,
+                                        'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss
+                                    })
     model.compile(optimizer=optimizer,
                   loss=Metrics.Asymmetry_Binary_Loss,
                   metrics=['accuracy', A_Precision, A_Recall, A_F1, A_IOU, Asymmetry_Binary_Loss])
@@ -674,7 +679,7 @@ for h, i in enumerate(validation_dataset):
     prediction = model.predict(i[0])
     prediction = prediction[:, :, :, 1].reshape((224, 224))
     prediction = np.uint8(prediction > 0.5)
-    cv2.imwrite('prediction_output_MCFF_0.5/' + validation_lines[h].split(',')[0][:-4]+'.png', prediction)
+    cv2.imwrite('prediction_output_MCFF_0.5/' + validation_lines[h].split(',')[0][:-4] + '.png', prediction)
 
 
 def A_Precision(y_true, y_pred):
@@ -684,7 +689,7 @@ def A_Precision(y_true, y_pred):
     tp = K.sum(
         K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)) * K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))  # true positives
     pp = K.sum(K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))  # predicted positives
-    precision = (tp  + 1e-8) / (pp + 1e-8)
+    precision = (tp + 1e-8) / (pp + 1e-8)
     return precision
 
 
@@ -695,7 +700,7 @@ def A_Recall(y_true, y_pred):
         K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)) * K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))  # true positives
     pp = K.sum(K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)))  # possible positives
 
-    recall = (tp  + 1e-8) / (pp + 1e-8)
+    recall = (tp + 1e-8) / (pp + 1e-8)
     return recall
 
 
@@ -717,11 +722,12 @@ def A_IOU(y_true: tf.Tensor,
     iou = (Intersection + 1e-8) / (Union - Intersection + 1e-8)
     return iou
 
+
 def A_AC(y_true: tf.Tensor,
-          y_pred: tf.Tensor):
+         y_pred: tf.Tensor):
     y_pred = tf.cast(y_pred > tf.constant(0.3), tf.float32)
     predict = K.round(K.clip(y_pred[:, :, :, 0], 0, 1))
-    Intersection = K.sum(tf.cast(K.round(K.clip(y_true[-1:, :, :, 0], 0, 1))  == predict, dtype=tf.float32))
+    Intersection = K.sum(tf.cast(K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)) == predict, dtype=tf.float32))
     Union = 224 * 224
     iou = (Intersection + 1e-8) / (Union + 1e-8)
     return iou

@@ -8,7 +8,7 @@ The implementation of SegNet and Bayesian-SegNet based on Tensorflow.
 """
 from models import Network
 import tensorflow as tf
-
+import tensorflow_addons as tfa
 layers = tf.keras.layers
 models = tf.keras.models
 backend = tf.keras.backend
@@ -53,7 +53,8 @@ class SegNet(Network):
                           strides=strides,
                           padding='same',
                           kernel_initializer='he_normal')(x)
-        x = layers.BatchNormalization()(x)
+        instance_nor = tfa.layers.InstanceNormalization()
+        x = instance_nor(x)
         x = layers.ReLU()(x)
         return x
 
@@ -65,39 +66,41 @@ class SegNet(Network):
 
         if dropout:
             x = layers.Dropout(rate=0.5)(x)
-        x = layers.UpSampling2D(size=(2, 2))(x)
+        x = layers.Conv2DTranspose(x.shape[-1], (2, 2), (2, 2))(x)
         x = self._conv_bn_relu(x, 512, 3, strides=1)
         x = self._conv_bn_relu(x, 512, 3, strides=1)
         x = self._conv_bn_relu(x, 512, 3, strides=1)
 
         if dropout:
             x = layers.Dropout(rate=0.5)(x)
-        x = layers.UpSampling2D(size=(2, 2))(x)
+        x = layers.Conv2DTranspose(x.shape[-1], (2, 2), (2, 2))(x)
         x = self._conv_bn_relu(x, 512, 3, strides=1)
         x = self._conv_bn_relu(x, 512, 3, strides=1)
         x = self._conv_bn_relu(x, 256, 3, strides=1)
 
         if dropout:
             x = layers.Dropout(rate=0.5)(x)
-        x = layers.UpSampling2D(size=(2, 2))(x)
+        x = layers.Conv2DTranspose(x.shape[-1], (2, 2), (2, 2))(x)
         x = self._conv_bn_relu(x, 256, 3, strides=1)
         x = self._conv_bn_relu(x, 256, 3, strides=1)
         x = self._conv_bn_relu(x, 128, 3, strides=1)
 
         if dropout:
             x = layers.Dropout(rate=0.5)(x)
-        x = layers.UpSampling2D(size=(2, 2))(x)
+        x = layers.Conv2DTranspose(x.shape[-1], (2, 2), (2, 2))(x)
         x = self._conv_bn_relu(x, 128, 3, strides=1)
         x = self._conv_bn_relu(x, 64, 3, strides=1)
 
         if dropout:
             x = layers.Dropout(rate=0.5)(x)
-        x = layers.UpSampling2D(size=(2, 2))(x)
+        x = layers.Conv2DTranspose(x.shape[-1], (2, 2), (2, 2))(x)
         x = self._conv_bn_relu(x, 64, 3, strides=1)
         x = layers.Conv2D(num_classes, 1,
                           strides=1,
                           kernel_initializer='he_normal')(x)
-        x = layers.BatchNormalization()(x)
+        # x = layers.BatchNormalization()(x)
+        instance_nor = tfa.layers.InstanceNormalization()
+        x = instance_nor(x)
         # 增加Softmax层
         x = layers.Softmax()(x)
         outputs = x

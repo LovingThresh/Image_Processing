@@ -7,6 +7,7 @@ The implementation of UNet based on Tensorflow.
 """
 from models import Network
 import tensorflow as tf
+import tensorflow_addons as tfa
 
 layers = tf.keras.layers
 models = tf.keras.models
@@ -44,7 +45,8 @@ class UNet(Network):
                           strides=strides,
                           padding='same',
                           kernel_initializer='he_normal')(x)
-        x = layers.BatchNormalization()(x)
+        x = tfa.layers.InstanceNormalization()(x)
+        # x = layers.BatchNormalization()(x)
         x = layers.ReLU()(x)
         return x
 
@@ -55,34 +57,35 @@ class UNet(Network):
 
         x = layers.Dropout(0.5)(c5)
 
-        x = layers.UpSampling2D(size=(2, 2))(x)
+        x = layers.Conv2DTranspose(x.shape[-1], (2, 2), (2, 2))(x)
         x = self._conv_bn_relu(x, 512, 2, strides=1)
         x = layers.Concatenate()([x, c4])
         x = self._conv_bn_relu(x, 512, 3, strides=1)
         x = self._conv_bn_relu(x, 512, 3, strides=1)
 
-        x = layers.UpSampling2D(size=(2, 2))(x)
+        x = layers.Conv2DTranspose(x.shape[-1], (2, 2), (2, 2))(x)
         x = self._conv_bn_relu(x, 256, 2, strides=1)
         x = layers.Concatenate()([x, c3])
         x = self._conv_bn_relu(x, 256, 3, strides=1)
         x = self._conv_bn_relu(x, 256, 3, strides=1)
 
-        x = layers.UpSampling2D(size=(2, 2))(x)
+        x = layers.Conv2DTranspose(x.shape[-1], (2, 2), (2, 2))(x)
         x = self._conv_bn_relu(x, 128, 2, strides=1)
         x = layers.Concatenate()([x, c2])
         x = self._conv_bn_relu(x, 128, 3, strides=1)
         x = self._conv_bn_relu(x, 128, 3, strides=1)
 
-        x = layers.UpSampling2D(size=(2, 2))(x)
+        x = layers.Conv2DTranspose(x.shape[-1], (2, 2), (2, 2))(x)
         x = self._conv_bn_relu(x, 64, 2, strides=1)
         x = layers.Concatenate()([x, c1])
         x = self._conv_bn_relu(x, 64, 3, strides=1)
         x = self._conv_bn_relu(x, 64, 3, strides=1)
 
-        x = layers.UpSampling2D(size=(2, 2))(x)
+        x = layers.Conv2DTranspose(x.shape[-1], (2, 2), (2, 2))(x)
         x = layers.Conv2D(num_classes, 1, strides=1,
                           kernel_initializer='he_normal')(x)
-        x = layers.BatchNormalization()(x)
+        x = tfa.layers.InstanceNormalization()(x)
+        # x = layers.BatchNormalization()(x)
 
         outputs = x
         return models.Model(inputs, outputs, name=self.version)

@@ -57,15 +57,15 @@ class PSPNet(Network):
         h, w = inputs_h // 8, inputs_w // 8
         x = self.encoder(inputs)
 
-        if not (h % 6 == 0 and w % 6 == 0):
+        if not (h % 8 == 0 and w % 8 == 0):
             raise ValueError('\'pyramid pooling\' size must be divided by 6, but received {size}'.format(size=(h, w)))
         pool_size = [(h, w),
                      (h // 2, w // 2),
                      (h // 3, w // 3),
-                     (h // 6, w // 6)]
+                     (h // 8, w // 8)]
 
         # pyramid pooling
-        x1 = custom_layers.GlobalAveragePooling2D(keep_dims=True)(x)
+        x1 = custom_layers.A_GlobalAveragePooling2D(keep_dims=True)(x)
         x1 = layers.Conv2D(512, 1, strides=1, kernel_initializer='he_normal')(x1)
         x1 = layers.BatchNormalization()(x1)
         x1 = layers.ReLU()(x1)
@@ -82,6 +82,7 @@ class PSPNet(Network):
         x3 = layers.BatchNormalization()(x3)
         x3 = layers.ReLU()(x3)
         x3 = layers.UpSampling2D(size=pool_size[2])(x3)
+        x3 = layers.ZeroPadding2D(padding=(1, 1))(x3)
 
         x6 = layers.AveragePooling2D(pool_size=pool_size[3])(x)
         x6 = layers.Conv2D(512, 1, strides=1, kernel_initializer='he_normal')(x6)
@@ -98,7 +99,8 @@ class PSPNet(Network):
         x = layers.Conv2D(num_classes, 1, strides=1, kernel_initializer='he_normal')(x)
         x = layers.BatchNormalization()(x)
 
-        x = layers.UpSampling2D(size=(8, 8), interpolation='bilinear')(x)
+        x = layers.Conv2DTranspose(x.shape[-1], (8, 8), (8, 8))(x)
+        # x = layers.UpSampling2D(size=(8, 8), interpolation='bilinear')(x)
 
         outputs = x
 

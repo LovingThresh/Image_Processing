@@ -200,7 +200,7 @@ def get_dataset_label(lines, batch_size,
             # img = img.resize(size)
             img_array = np.array(img)
             # img_array = to_clahe(img_array)
-            img_array = cv2.resize(img_array, (448, 448))
+            img_array = cv2.resize(img_array, (224, 224))
             size = (img_array.shape[0], img_array.shape[1])
             # img_teacher_array = cv2.imread(C_img_paths + train_teacher_y_name, cv2.IMREAD_GRAYSCALE)
             img_array = img_array / 255.0  # 标准化
@@ -215,13 +215,14 @@ def get_dataset_label(lines, batch_size,
                 train_teacher_y_name = lines[read_line].split(',')[0].replace('\n', '')[:-4] + '.jpg'
 
             # 根据图片名字读取图片
-            img_array = cv2.imread(B_img_paths + train_y_name)
-            img_array = cv2.resize(img_array, (448, 448))
-            if img_array.shape == (600, 800, 3):
-                img_array = cv2.dilate(img_array, kernel=(5, 5), iterations=5)
-            img_array = cv2.dilate(img_array, kernel=(3, 3), iterations=5)
+            img_array = cv2.imread(B_img_paths + train_y_name[:-4] + '.jpg')
+            if img_array is None:
+                img_array = cv2.imread(B_img_paths + train_y_name[:-4] + '.png')
+            img_array = cv2.resize(img_array, size)
             if KD:
                 img_teacher_array = cv2.imread(C_img_paths + train_teacher_y_name, cv2.IMREAD_GRAYSCALE)
+            else:
+                img_teacher_array = 0
             # img.show()
             # print(train_y_name)
             # img = img.resize(size)  # 改变图片大小 -> (227, 227)
@@ -237,17 +238,20 @@ def get_dataset_label(lines, batch_size,
             # 如，labels,第0通道放背景，是背景的位置，显示为1，其余位置显示为0
             # labels, 第1通道放斑马线，图上斑马线的位置，显示1，其余位置显示为0
             # 相当于合并的图层分层！！！！
-            labels[:, :, 0] = (img_array[:, :, 1] == 255).astype(int).reshape(size)
-            labels[:, :, 1] = (img_array[:, :, 1] != 255).astype(int).reshape(size)
+            labels[:, :, 0] = (img_array[:, :, 0] == 0).astype(int).reshape(size)
+            labels[:, :, 1] = (img_array[:, :, 1] != 0).astype(int).reshape(size)
             labels = labels.astype(np.float32)
             # labels[:, :, 0] = (img_array[:, :, 1] == 1).astype(int).reshape(size)
             # labels[:, :, 1] = (img_array[:, :, 1] != 1).astype(int).reshape(size)
             if KD:
-                teacher_label = ((img_teacher_array - 127.5) / 127.5).astype(np.float32).reshape(512, 512, 1)
+                teacher_label = ((img_teacher_array - 127.5) / 127.5).astype(np.float32).reshape(448, 448, 1)
                 teacher_label_opposite = 1 - teacher_label
                 teacher_label = np.concatenate([teacher_label, teacher_label_opposite], axis=2)
+            else:
+                teacher_label = 0
 
             y_train.append(labels)
+
             if KD:
                 y_teacher_train.append(teacher_label)
 
@@ -309,14 +313,14 @@ def get_dataset_label(lines, batch_size,
 
                 image, label = DataAugmentation(image, label, D_seed=seed)
 
-                label = label.reshape((448, 448, 2))
-                data = image, np.asarray([label, label, label, label])
+                label = label.reshape((size[0], size[1], 2))
+                data = image, np.asarray([label])
 
                 yield data
 
             else:
-                label = label.reshape((448, 448, 2))
-                data = image, np.asarray([label, label, label, label])
+                label = label.reshape((size[0], size[1], 2))
+                data = image, np.asarray([label])
 
                 yield data
 

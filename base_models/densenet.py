@@ -7,7 +7,7 @@ Some codes are based on official tensorflow source codes.
 @Project: https://github.com/luyanger1799/amazing-semantic-segmentation
 
 """
-from utils.layers import Concatenate
+from utils.layers import A_Concatenate
 import tensorflow as tf
 
 layers = tf.keras.layers
@@ -104,7 +104,7 @@ class DenseNet(object):
                            use_bias=False,
                            name=name + '_2_conv',
                            dilation_rate=dilation)(x1)
-        x = Concatenate(out_size=(h, w), axis=bn_axis, name=name + '_concat')([x, x1])
+        x = A_Concatenate(out_size=(h, w), axis=bn_axis, name=name + '_concat')([x, x1])
         return x
 
     def __call__(self, inputs, output_stages='c5', **kwargs):

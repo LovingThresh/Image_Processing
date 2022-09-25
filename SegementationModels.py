@@ -3,7 +3,7 @@
 import numpy as np
 
 import tensorflow as tf
-import tensorflow.keras as keras
+from tensorflow import keras
 import Layer
 
 pretrained_url = "https://github.com/fchollet/deep-learning-models/" \

@@ -1,17 +1,14 @@
 import numpy as np
+
 from Metrics import *
 from Layer import *
-import tensorflow as tf
 import tensorflow_addons as tfa
-import tensorflow.keras as keras
-from tensorflow.keras.layers import *
-from tensorflow.keras.models import *
-
+import tensorflow as tf
+from tensorflow import keras
 
 # ==============================================================================
 # =                                  networks                                  =
 # ==============================================================================
-
 
 # ==================================Res-Net======================================
 def _get_norm_layer(norm):
@@ -287,7 +284,7 @@ def decoder(feature_map_list, class_number, input_height=227, input_width=227, e
     x = Conv2DTranspose(class_number, (5, 5), (1, 1), 'valid')(x)
     x = BatchNormalization()(x)
 
-    x = tf.tanh(x)
+    x = keras.layers.Softmax()(x)
 
     return x
 
@@ -690,20 +687,33 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(448, 448, 3),
         h = x
 
         # 为什么这里不用padding参数呢？使用到了‘REFLECT’
+
         h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='CONSTANT')
 
-        h = keras.layers.Conv2D(dim, 3, padding='valid', use_bias=False)(h)
+        h = keras.layers.Conv2D(dim, (3, 3), 1, padding='valid', use_bias=False)(h)
         h = Norm()(h)
         h = tf.nn.relu(h)
 
         h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='CONSTANT')
-        h = keras.layers.Conv2D(dim, 3, padding='valid', use_bias=False)(h)
+        h = keras.layers.Conv2D(dim, (3, 3), 1, padding='valid', use_bias=False)(h)
         h = Norm()(h)
 
         return keras.layers.add([x, h])
+        # dim = x.shape[-1]
+        # h = x
+        # x = keras.layers.DepthwiseConv2D(kernel_size=(7, 7), strides=(1, 1), padding='same', use_bias=False)(x)
+        # x = Norm()(x)
+        # x = keras.layers.Conv2D(filters=dim * 4, kernel_size=(1, 1), strides=(1, 1), padding='same',
+        #                         use_bias=False)(x)
+        # x = keras.activations.gelu(x)
+        # x = keras.layers.Conv2D(filters=dim, kernel_size=(1, 1), strides=(1, 1), padding='same', use_bias=False)(x)
+        #
+        # x = keras.layers.Add()([x, h])
+
+        # return x
 
     # 0
-    h = inputs = keras.Input(shape=input_shape)
+    h = inputs = keras.Input(shape=input_shape, name='input_0')
     # h = tf.pad(h, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='CONSTANT')
 
     # 针对x进行膨胀卷积
@@ -725,8 +735,8 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(448, 448, 3),
     y2 = keras.layers.Conv2D(dim, (1, 3), strides=1, padding='same', use_bias=False)(y2)
     y = keras.layers.Add()([y1, y2])
     y = keras.layers.Conv2D(dim, 7, padding='same', use_bias=False)(y)
-    # y = Norm()(y)
-    # y = tf.nn.relu(y)
+    y = Norm()(y)
+    y = tf.nn.relu(y)
     # 1
 
     # h = tf.pad(h, [[0, 0], [3, 3], [3, 3], [0, 0]], mode='CONSTANT')
@@ -831,21 +841,21 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(448, 448, 3),
         # attention_mask = tf.sigmoid(h[:, :, :, :1])
         content_mask = h[:, :, :, 1:]
         attention_mask = tf.expand_dims(attention_mask, axis=3)
-        attention_mask = tf.concat([attention_mask, attention_mask], axis=3)
+        attention_mask = tf.concat([attention_mask, attention_mask, attention_mask], axis=3)
         h = content_mask * attention_mask
 
         attention_mask = tf.sigmoid(x[:, :, :, 0])
         # attention_mask = tf.sigmoid(h[:, :, :, :1])
         content_mask = x[:, :, :, 1:]
         attention_mask = tf.expand_dims(attention_mask, axis=3)
-        attention_mask = tf.concat([attention_mask, attention_mask], axis=3)
+        attention_mask = tf.concat([attention_mask, attention_mask, attention_mask], axis=3)
         x = content_mask * attention_mask
 
         attention_mask = tf.sigmoid(y[:, :, :, 0])
         # attention_mask = tf.sigmoid(h[:, :, :, :1])
         content_mask = y[:, :, :, 1:]
         attention_mask = tf.expand_dims(attention_mask, axis=3)
-        attention_mask = tf.concat([attention_mask, attention_mask], axis=3)
+        attention_mask = tf.concat([attention_mask, attention_mask, attention_mask], axis=3)
         y = content_mask * attention_mask
         # content_mask.shape=(B,H,W,C[通道数是输入时的C，此例中为2])  attention_mask.shape=(B,H,W,1) *[可解释为expand] C)
 
@@ -853,16 +863,17 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(448, 448, 3),
         # attention_mask = tf.sigmoid(h[:, :, :, :1])
         content_mask = mix[:, :, :, 1:]
         attention_mask = tf.expand_dims(attention_mask, axis=3)
-        attention_mask = tf.concat([attention_mask, attention_mask], axis=3)
+        attention_mask = tf.concat([attention_mask, attention_mask, attention_mask], axis=3)
         mix = content_mask * attention_mask
     # h = tf.tanh(h)
-
-    if (Temperature != 0) & (StudentNet):
+    mix = keras.layers.Add()([h, y, x, mix])
+    if (Temperature != 0) & StudentNet:
         h = h / Temperature
         x = x / Temperature
         y = y / Temperature
         mix_for_real = mix
         mix = mix / Temperature
+        mix_for_real_low_T = keras.layers.Softmax(name='Label_mix_for_real_low_T')(mix_for_real)
         mix_for_real = keras.layers.Softmax(name='Label_mix_for_real')(mix_for_real / Temperature)
 
     h = keras.layers.Softmax(name='Label_h')(h)
@@ -870,7 +881,4 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(448, 448, 3),
     y = keras.layers.Softmax(name='Label_y')(y)
     mix = keras.layers.Softmax(name='Label_mix')(mix)
 
-    return keras.Model(inputs=inputs, outputs=[h, x, y, mix, mix_for_real])
-
-
-
+    return keras.Model(inputs=inputs, outputs=[h, x, y, mix])

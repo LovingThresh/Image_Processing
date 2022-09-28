@@ -686,19 +686,37 @@ def ResnetGenerator_with_ThreeChannel(input_shape=(448, 448, 3),
 
     # 受保护的用法
     def _residual_block(x):
-        dim = x.shape[-1]
-        h = x
 
-        # 为什么这里不用padding参数呢？使用到了‘REFLECT’
-        h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='CONSTANT')
+        x_res = x
+        x_dim = x_res.shape[-1]
+        h_res = x_res
 
-        h = keras.layers.Conv2D(dim, 3, padding='valid', use_bias=False)(h)
-        h = Norm()(h)
-        h = tf.nn.relu(h)
+        h_res = tf.pad(h_res, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='CONSTANT')
 
-        h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='CONSTANT')
-        h = keras.layers.Conv2D(dim, 3, padding='valid', use_bias=False)(h)
-        h = Norm()(h)
+        h_res = keras.layers.DepthwiseConv2D(3, padding='valid', use_bias=False)(h_res)
+        h_res = keras.layers.Conv2D(x_dim, 1, padding='same', use_bias=False)(h_res)
+        h_res = Norm()(h_res)
+        h_res = tf.nn.relu(h_res)
+
+        h_res = tf.pad(h_res, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='CONSTANT')
+        h_res = keras.layers.DepthwiseConv2D(3, padding='valid', use_bias=False)(h_res)
+        h_res = keras.layers.Conv2D(x_dim, 1, padding='same', use_bias=False)(h_res)
+        h_res = Norm()(h_res)
+
+        h = h_res
+        # dim = x.shape[-1]
+        # h = x
+        #
+        # # 为什么这里不用padding参数呢？使用到了‘REFLECT’
+        # h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='CONSTANT')
+        #
+        # h = keras.layers.Conv2D(dim, 3, padding='valid', use_bias=False)(h)
+        # h = Norm()(h)
+        # h = tf.nn.relu(h)
+        #
+        # h = tf.pad(h, [[0, 0], [1, 1], [1, 1], [0, 0]], mode='CONSTANT')
+        # h = keras.layers.Conv2D(dim, 3, padding='valid', use_bias=False)(h)
+        # h = Norm()(h)
 
         return keras.layers.add([x, h])
 

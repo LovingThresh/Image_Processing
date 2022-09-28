@@ -500,7 +500,7 @@ def get_teacher_dataset_label \
             # 根据相应标签载入真实标签
             train_y_name = lines[read_line].split(',')[1].replace('\n', '')
             img_array = cv2.imread(B_img_paths + train_y_name)
-            img_array = cv2.dilate(img_array, kernel=(3, 3), iterations=3)
+            # img_array = cv2.dilate(img_array, kernel=(3, 3), iterations=3)
 
             labels = np.zeros((img_array.shape[0], img_array.shape[1], 2), np.int)
 

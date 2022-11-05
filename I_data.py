@@ -1,5 +1,6 @@
 import random
 
+import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 import tf2lib as tl
@@ -362,7 +363,7 @@ def get_test_dataset_label(lines,
         img_array = cv2.imread(B_img_paths + train_y_name)
         if img_array.shape == (600, 800, 3):
             img_array = cv2.dilate(img_array, kernel=(5, 5), iterations=5)
-        img_array = cv2.dilate(img_array, kernel=(3, 3), iterations=3)
+        # img_array = cv2.dilate(img_array, kernel=(3, 3), iterations=3)
         img_teacher_array = cv2.imread(C_img_paths + train_teacher_y_name, cv2.IMREAD_GRAYSCALE)
 
         # img.show()
@@ -380,7 +381,7 @@ def get_test_dataset_label(lines,
         # labels, 第1通道放斑马线，图上斑马线的位置，显示1，其余位置显示为0
         # 相当于合并的图层分层！！！！
 
-        labels[:, :, 0] = (img_array[:, :, 0] == 255).astype(int).reshape(size)
+        # labels[:, :, 0] = (img_array[:, :, 0] == 255).astype(int).reshape(size)
         labels[:, :, 0] = (img_array[:, :, 0] == 255).astype(int).reshape(size)
         labels[:, :, 1] = (img_array[:, :, 0] != 255).astype(int).reshape(size)
 
@@ -549,3 +550,56 @@ def get_teacher_dataset_label \
             read_line = (read_line + 1) % numbers
 
         yield np.array(x_train), np.array(y_train)
+
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+data  = pd.read_csv(r'M:\CycleGAN(WSSS)\File\time.csv')
+index = np.arange(0, 6)
+test_bar = data
+class_01 = test_bar[0:1].values.reshape((6,))
+class_02 = test_bar[1:2].values.reshape((6,))
+class_03 = test_bar[2:3].values.reshape((6,))
+class_04 = test_bar[3:4].values.reshape((6,))
+class_05 = test_bar[4:5].values.reshape((6,))
+
+plt.figure(figsize=(8, 5), dpi=800)
+y_label = ('CrackCAM', 'GradCAM', 'GradCAM++', 'ScoreCAM', 'AblationCAM', 'Ours')
+y_pos = np.arange(len(y_label))
+
+plt.barh(index, class_01, height=.5, color='#edafb8', label='CycleGAN')
+plt.barh(index, class_02, height=.5, color='#76c893', label='Classification', left=class_01)
+plt.barh(index, class_03, height=.5, color='#52b69a', label='CAMs', left=class_01 + class_02)
+plt.barh(index, class_04, height=.5, color='#168aad', label='CRF', left=class_01 + class_02 + class_03)
+plt.barh(index, class_05, height=.5, color='#1a759f', label='Segmentation', left=class_01 + class_02 + class_03 + class_04)
+plt.yticks(index, y_label)
+# 自定义y轴坐标
+plt.xlabel('Cost Time (h)')
+plt.legend()
+plt.savefig(r'M:\CycleGAN(WSSS)\File\time.png')
+
+data  = pd.read_csv(r'M:\CycleGAN(WSSS)\File\time_for_MCFF.csv')
+index = np.arange(0, 6)
+test_bar = data
+class_01 = test_bar[0:1].values.reshape((6,))
+class_02 = test_bar[1:2].values.reshape((6,))
+class_03 = test_bar[2:3].values.reshape((6,))
+class_04 = test_bar[3:4].values.reshape((6,))
+class_05 = test_bar[4:5].values.reshape((6,))
+
+plt.figure(figsize=(8, 5), dpi=800)
+y_label = ('CrackCAM', 'GradCAM', 'GradCAM++', 'ScoreCAM', 'AblationCAM', 'Ours')
+y_pos = np.arange(len(y_label))
+
+plt.barh(index, class_01, height=.5, color='#edafb8', label='CycleGAN')
+plt.barh(index, class_02, height=.5, color='#76c893', label='Classification', left=class_01)
+plt.barh(index, class_03, height=.5, color='#52b69a', label='CAMs', left=class_01 + class_02)
+plt.barh(index, class_04, height=.5, color='#168aad', label='CRF', left=class_01 + class_02 + class_03)
+plt.barh(index, class_05, height=.5, color='#1a759f', label='Segmentation', left=class_01 + class_02 + class_03 + class_04)
+plt.yticks(index, y_label)
+# 自定义y轴坐标
+plt.xlabel('Cost Time (h)')
+plt.legend()
+plt.savefig(r'M:\CycleGAN(WSSS)\File\time_MCFF.png')
+

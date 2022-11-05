@@ -66,9 +66,9 @@ args = parser.parse_args()
 # train_dataset = get_dataset_label(lines[:num_train], batch_size)
 # validation_dataset = get_dataset_label(lines[num_train:], batch_size)
 
-train_lines, num_train = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\train.txt', training=False)
-validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\val.txt', training=False)
-test_lines, num_test = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4\test.txt', training=False)
+train_lines, num_train = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4_k_cross_validation\train.txt', training=False)
+validation_lines, num_val = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4_k_cross_validation\val.txt', training=False)
+test_lines, num_test = get_data(path=r'L:\ALASegmentationNets_v2\Data\Stage_4_k_cross_validation\test.txt', training=False)
 batch_size = 1
 
 # 下面的代码适用于测试的
@@ -112,24 +112,24 @@ batch_size = 1
 # ---------------------------------------------------------------------------------------------------
 # 当temperature设置为0时，train_dataset不对标签做处理，即real_mix的值域是1~0
 train_dataset = get_teacher_dataset_label(train_lines,
-                                          A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\img/',
-                                          B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\mask/',
-                                          h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_h\label/',
-                                          x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_x\label/',
-                                          y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_y\label/',
-                                          mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\train\teacher_mask\teacher_label_mix\label/',
+                                          A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4_k_cross_validation\all_data\img/',
+                                          B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4_k_cross_validation\all_data\mask/',
+                                          h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4_k_cross_validation\all_data\teacher_mask\teacher_label_h\label/',
+                                          x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4_k_cross_validation\all_data\teacher_mask\teacher_label_x\label/',
+                                          y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4_k_cross_validation\all_data\teacher_mask\teacher_label_y\label/',
+                                          mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4_k_cross_validation\all_data\teacher_mask\teacher_label_mix\label/',
                                           batch_size=batch_size,
                                           shuffle=True,
                                           temperature=0
                                           )
 
 validation_dataset = get_teacher_dataset_label(validation_lines,
-                                               A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\img/',
-                                               B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\mask/',
-                                               h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_h\label/',
-                                               x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_x\label/',
-                                               y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_y\label/',
-                                               mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\val\teacher_mask\teacher_label_mix\label/',
+                                               A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4_k_cross_validation\all_data\img/',
+                                               B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4_k_cross_validation\all_data\mask/',
+                                               h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4_k_cross_validation\all_data\teacher_mask\teacher_label_h\label/',
+                                               x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4_k_cross_validation\all_data\teacher_mask\teacher_label_x\label/',
+                                               y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4_k_cross_validation\all_data\teacher_mask\teacher_label_y\label/',
+                                               mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4_k_cross_validation\all_data\teacher_mask\teacher_label_mix\label/',
                                                batch_size=batch_size,
                                                shuffle=False,
                                                temperature=0,
@@ -137,12 +137,12 @@ validation_dataset = get_teacher_dataset_label(validation_lines,
                                                )
 
 test_dataset = get_teacher_dataset_label(test_lines,
-                                         A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\img/',
-                                         B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\mask/',
-                                         h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_h\label/',
-                                         x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_x\label/',
-                                         y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_y\label/',
-                                         mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4\test\teacher_mask\teacher_label_mix\label/',
+                                         A_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4_k_cross_validation\all_data\img/',
+                                         B_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4_k_cross_validation\all_data\mask/',
+                                         h_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4_k_cross_validation\all_data\teacher_mask\teacher_label_h\label/',
+                                         x_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4_k_cross_validation\all_data\teacher_mask\teacher_label_x\label/',
+                                         y_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4_k_cross_validation\all_data\teacher_mask\teacher_label_y\label/',
+                                         mix_img_paths=r'L:\ALASegmentationNets_v2\Data\Stage_4_k_cross_validation\all_data\teacher_mask\teacher_label_mix\label/',
                                          batch_size=batch_size,
                                          shuffle=False,
                                          temperature=0
@@ -198,23 +198,74 @@ print(profile)
 # model = module.ResnetGenerator_with_ThreeChannel(attention=True, ShallowConnect=False, dim=64)
 
 
-# model = keras.models.load_model(r'E:\output\2021-12-24-23-54-00.417022\checkpoint\ep040-val_loss164.132',
-#                                 custom_objects={'M_Precision': M_Precision,
-#                                                 'M_Recall': M_Recall,
-#                                                 'M_F1': M_F1,
-#                                                 'M_IOU': M_IOU,
-#                                                 'A_Precision': A_Precision,
-#                                                 'A_Recall': A_Recall,
-#                                                 'A_F1': A_F1,
-#                                                 'mean_iou_keras': mean_iou_keras,
-#                                                 'A_IOU': A_IOU,
-#                                                 'H_KD_Loss': H_KD_Loss,
-#                                                 'S_KD_Loss': S_KD_Loss,
-#                                                 # 'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss,
-#                                                 # 'DilatedConv2D': Layer.DilatedConv2D,
-#                                                 }
-#                                 )
-# model.evaluate(validation_dataset, steps=250)
+def M_Precision(y_true, y_pred):
+    """精确率"""
+
+    y_pred = tf.cast(y_pred > tf.constant(0.38), tf.float32)
+
+    max_pool_2d = tf.keras.layers.MaxPooling2D(pool_size=(5, 5), strides=(1, 1), padding='same')
+    y_true_max = max_pool_2d(y_true)
+    # true positives
+    tp = K.sum(K.round(K.round(K.clip(y_pred[:, :, :, 0], 0, 1)) * K.round(K.clip(y_true_max[-1:, :, :, 0], 0, 1))))
+    pp = K.sum(K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))  # predicted positives
+    precision = tp / (pp + 1e-8)
+    return precision
+
+
+# 只看核心区域
+def M_Recall(y_true, y_pred):
+    """召回率"""
+
+    y_pred = tf.cast(y_pred > tf.constant(0.38), tf.float32)
+    tp = K.sum(
+        K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)) * K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))  # true positives
+    pp = K.sum(K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)))  # possible positives
+
+    recall = tp / (pp + 1e-8)
+    return recall
+
+
+def M_F1(y_true, y_pred):
+    """F1-score"""
+    precision = M_Precision(y_true, y_pred)
+    recall = M_Recall(y_true, y_pred)
+    f1 = 2 * (precision * recall) / (precision + recall + 1e-8)
+    return f1
+
+
+def M_IOU(y_true: tf.Tensor,
+          y_pred: tf.Tensor):
+    y_pred = tf.cast(y_pred > tf.constant(0.38), tf.float32)
+    max_pool_2d = tf.keras.layers.MaxPooling2D(pool_size=(5, 5), strides=(1, 1), padding='same')
+    y_true_max = max_pool_2d(y_true)
+    predict = K.round(K.clip(y_pred[:, :, :, 0], 0, 1))
+    Intersection = K.sum(
+        K.round(K.clip(y_true_max[-1:, :, :, 0], 0, 1)) * predict)
+    Union = K.sum(K.round(K.clip(y_true_max[-1:, :, :, 0], 0, 1)) * predict) + \
+            (K.sum(K.round(K.clip(y_true[-1:, :, :, 0], 0, 1))) - K.sum(K.round(K.clip(y_true[-1:, :, :, 0], 0, 1)) *
+                                                                        K.round(K.clip(y_pred[:, :, :, 0], 0, 1)))) + \
+            (K.sum(K.round(K.clip(y_pred[:, :, :, 0], 0, 1))) - K.sum(K.round(K.clip(y_true_max[-1:, :, :, 0], 0, 1)) *
+                                                                      K.round(K.clip(y_pred[:, :, :, 0], 0, 1))))
+    iou = Intersection / (Union + 1e-8)
+
+    return iou
+model = keras.models.load_model(r'C:\Users\liuye\Desktop\ep083-val_loss5790.019',
+                                custom_objects={'M_Precision': M_Precision,
+                                                'M_Recall': M_Recall,
+                                                'M_F1': M_F1,
+                                                'M_IOU': M_IOU,
+                                                'A_Precision': A_Precision,
+                                                'A_Recall': A_Recall,
+                                                'A_F1': A_F1,
+                                                'mean_iou_keras': mean_iou_keras,
+                                                'A_IOU': A_IOU,
+                                                # 'H_KD_Loss': H_KD_Loss,
+                                                # 'S_KD_Loss': S_KD_Loss,
+                                                'Asymmetry_Binary_Loss': Asymmetry_Binary_Loss,
+                                                # 'DilatedConv2D': Layer.DilatedConv2D,
+                                                }
+                                )
+model.evaluate(validation_dataset, steps=250)
 # model = segnet((512, 512), 2)
 # model.summary()
 # initial_learning_rate = 3e-6
